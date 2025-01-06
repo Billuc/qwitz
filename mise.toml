@@ -1,0 +1,5 @@
+[tools]
+gleam = "latest"
+
+[env]
+DATABASE_URL = "postgres://billuc:582B1llaud@localhost:5432/qwitz"
