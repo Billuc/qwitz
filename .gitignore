@@ -3,3 +3,5 @@
 /build
 erl_crash.dump
 server/.env
+mise.local.toml
+server/sql.schema

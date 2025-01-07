@@ -1,6 +1,5 @@
 import envoy
 import gleam/erlang/process
-import gleam/http/request
 import gleam/io
 import gleam/result
 import gleamrpc
@@ -8,10 +7,10 @@ import gleamrpc/http/server as rpc_http
 import glisten
 import mist
 import pog
-
-pub type Context {
-  Context(req: request.Request(mist.Connection), db: pog.Connection)
-}
+import server/context
+import server/question/question_service
+import server/qwiz/qwiz_service
+import server/user/user_service
 
 fn get_db() {
   envoy.get("DATABASE_URL")
@@ -35,7 +34,10 @@ pub fn main() {
   use db <- result.try(get_db())
 
   gleamrpc.with_server(rpc_http.http_server())
-  |> gleamrpc.with_context(Context(_, db))
+  |> gleamrpc.with_context(context.Context(_, db))
+  |> user_service.register
+  |> qwiz_service.register
+  |> question_service.register
   |> rpc_http.init_mist(8080)
   |> mist.start_http
   |> result.map_error(log_error)

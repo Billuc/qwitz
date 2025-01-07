@@ -20,6 +20,23 @@ Owned by: public._migrations.id
  id     | integer | yes  | id
 primary key, btree, for table "public._migrations"
 
+             Table "public.questions"
+  Column  | Type | Collation | Nullable | Default 
+----------+------+-----------+----------+---------
+ id       | uuid |           | not null | 
+ question | text |           | not null | 
+ qwiz_id  | uuid |           | not null | 
+Indexes:
+    "questions_pkey" PRIMARY KEY, btree (id)
+Foreign-key constraints:
+    "questions_qwiz_id_fkey" FOREIGN KEY (qwiz_id) REFERENCES qwizes(id)
+
+   Index "public.questions_pkey"
+ Column | Type | Key? | Definition 
+--------+------+------+------------
+ id     | uuid | yes  | id
+primary key, btree, for table "public.questions"
+
              Table "public.qwizes"
  Column | Type | Collation | Nullable | Default 
 --------+------+-----------+----------+---------
@@ -28,6 +45,8 @@ primary key, btree, for table "public._migrations"
  owner  | uuid |           | not null | 
 Indexes:
     "qwizes_pkey" PRIMARY KEY, btree (id)
+Referenced by:
+    TABLE "questions" CONSTRAINT "questions_qwiz_id_fkey" FOREIGN KEY (qwiz_id) REFERENCES qwizes(id)
 
     Index "public.qwizes_pkey"
  Column | Type | Key? | Definition 

@@ -1,21 +1,21 @@
 import gleam/result
 import gleamrpc
-import server
+import server/context
 import shared/user
 import youid/uuid
 
 const uuid = "ba98a633-dcfe-44d2-97c4-ef4885af08bf"
 
-pub fn register_user_service(
-  server: gleamrpc.ProcedureServerInstance(_, _, server.Context, _),
-) -> gleamrpc.ProcedureServerInstance(_, _, server.Context, _) {
+pub fn register(
+  server: gleamrpc.ProcedureServerInstance(_, _, context.Context, _),
+) -> gleamrpc.ProcedureServerInstance(_, _, context.Context, _) {
   server
   |> gleamrpc.with_implementation(user.login(), login)
 }
 
 fn login(
   _data: user.LoginData,
-  _ctx: server.Context,
+  _ctx: context.Context,
 ) -> Result(user.User, gleamrpc.ProcedureError) {
   uuid
   |> uuid.from_string
