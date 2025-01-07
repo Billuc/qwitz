@@ -30,7 +30,7 @@ primary key, btree, for table "public._migrations"
 Indexes:
     "answers_pkey" PRIMARY KEY, btree (id)
 Foreign-key constraints:
-    "answers_question_id_fkey" FOREIGN KEY (question_id) REFERENCES questions(id)
+    "answers_question_id_fkey" FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 
     Index "public.answers_pkey"
  Column | Type | Key? | Definition 
@@ -47,9 +47,9 @@ primary key, btree, for table "public.answers"
 Indexes:
     "questions_pkey" PRIMARY KEY, btree (id)
 Foreign-key constraints:
-    "questions_qwiz_id_fkey" FOREIGN KEY (qwiz_id) REFERENCES qwizes(id)
+    "questions_qwiz_id_fkey" FOREIGN KEY (qwiz_id) REFERENCES qwizes(id) ON DELETE CASCADE
 Referenced by:
-    TABLE "answers" CONSTRAINT "answers_question_id_fkey" FOREIGN KEY (question_id) REFERENCES questions(id)
+    TABLE "answers" CONSTRAINT "answers_question_id_fkey" FOREIGN KEY (question_id) REFERENCES questions(id) ON DELETE CASCADE
 
    Index "public.questions_pkey"
  Column | Type | Key? | Definition 
@@ -66,7 +66,7 @@ primary key, btree, for table "public.questions"
 Indexes:
     "qwizes_pkey" PRIMARY KEY, btree (id)
 Referenced by:
-    TABLE "questions" CONSTRAINT "questions_qwiz_id_fkey" FOREIGN KEY (qwiz_id) REFERENCES qwizes(id)
+    TABLE "questions" CONSTRAINT "questions_qwiz_id_fkey" FOREIGN KEY (qwiz_id) REFERENCES qwizes(id) ON DELETE CASCADE
 
     Index "public.qwizes_pkey"
  Column | Type | Key? | Definition 
