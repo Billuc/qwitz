@@ -1,8 +1,10 @@
 import gleam/int
 import gleam/io
+import gleam/result
 import gleam/string
 import gleamrpc
 import pog
+import server/context
 
 pub fn get_one(res: pog.Returned(a)) -> Result(a, gleamrpc.ProcedureError) {
   case res.rows {
@@ -13,6 +15,19 @@ pub fn get_one(res: pog.Returned(a)) -> Result(a, gleamrpc.ProcedureError) {
 
 pub fn get_all(res: pog.Returned(a)) -> List(a) {
   res.rows
+}
+
+pub fn transaction(
+  context: context.Context,
+  callback: fn(pog.Connection) -> Result(r, pog.QueryError),
+) {
+  {
+    use db <- pog.transaction(context.db)
+
+    callback(db)
+    |> result.map_error(query_error_to_string)
+  }
+  |> result.map_error(transaction_error_to_procedure_error)
 }
 
 pub fn query_error_to_procedure_error(
@@ -66,4 +81,41 @@ pub fn query_error_to_procedure_error(
       gleamrpc.ProcedureError("Database Error")
     }
   }
+}
+
+fn query_error_to_string(err: pog.QueryError) -> String {
+  case err {
+    pog.ConnectionUnavailable -> "Connection unavailable"
+    pog.ConstraintViolated(message, constraint, details) ->
+      "Constraint violated : "
+      <> message
+      <> " ; constraint : "
+      <> constraint
+      <> " ; details : "
+      <> details
+    pog.PostgresqlError(code, name, message) ->
+      "Postgresql Error [" <> code <> ": " <> name <> "] : " <> message
+    pog.QueryTimeout -> "Query Timeout"
+    pog.UnexpectedArgumentCount(expected, got) ->
+      "Unexpected Argument Count : "
+      <> int.to_string(got)
+      <> " instead of "
+      <> int.to_string(expected)
+    pog.UnexpectedArgumentType(expected, got) ->
+      "Unexpected Argument Type : " <> got <> " instead of " <> expected
+    pog.UnexpectedResultType(decode_errors) ->
+      "Unexpected Result Type : " <> string.inspect(decode_errors)
+  }
+}
+
+fn transaction_error_to_procedure_error(
+  err: pog.TransactionError,
+) -> gleamrpc.ProcedureError {
+  case err {
+    pog.TransactionQueryError(q_err) -> query_error_to_string(q_err)
+    pog.TransactionRolledBack(reason) -> reason
+  }
+  |> io.println_error
+
+  gleamrpc.ProcedureError("Database Error ! See logs")
 }
