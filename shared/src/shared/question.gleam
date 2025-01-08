@@ -2,10 +2,20 @@ import convert
 import gleam/option
 import gleamrpc
 import shared
+import shared/answer
 import youid/uuid
 
 pub type Question {
   Question(id: uuid.Uuid, qwiz_id: uuid.Uuid, question: String)
+}
+
+pub type QuestionWithAnswers {
+  QuestionWithAnswers(
+    id: uuid.Uuid,
+    qwiz_id: uuid.Uuid,
+    question: String,
+    answers: List(answer.Answer),
+  )
 }
 
 pub type CreateQuestion {
@@ -34,6 +44,35 @@ pub fn question_converter() -> convert.Converter(Question) {
   })
 }
 
+pub fn question_with_answers_converter() -> convert.Converter(
+  QuestionWithAnswers,
+) {
+  convert.object({
+    use id <- convert.field(
+      "id",
+      fn(v: QuestionWithAnswers) { Ok(v.id) },
+      shared.uuid_converter(),
+    )
+    use qwiz_id <- convert.field(
+      "qwiz_id",
+      fn(v: QuestionWithAnswers) { Ok(v.qwiz_id) },
+      shared.uuid_converter(),
+    )
+    use question <- convert.field(
+      "question",
+      fn(v: QuestionWithAnswers) { Ok(v.question) },
+      convert.string(),
+    )
+    use answers <- convert.field(
+      "answers",
+      fn(v: QuestionWithAnswers) { Ok(v.answers) },
+      convert.list(answer.answer_converter()),
+    )
+
+    convert.success(QuestionWithAnswers(id:, qwiz_id:, question:, answers:))
+  })
+}
+
 pub fn create_question_converter() -> convert.Converter(CreateQuestion) {
   convert.object({
     use qwiz_id <- convert.field(
@@ -50,16 +89,13 @@ pub fn create_question_converter() -> convert.Converter(CreateQuestion) {
   })
 }
 
-pub fn get_questions() -> gleamrpc.Procedure(Nil, List(Question)) {
+pub fn get_questions() -> gleamrpc.Procedure(
+  uuid.Uuid,
+  List(QuestionWithAnswers),
+) {
   gleamrpc.query("get_questions", option.None)
-  |> gleamrpc.params(convert.null())
-  |> gleamrpc.returns(convert.list(question_converter()))
-}
-
-pub fn get_question() -> gleamrpc.Procedure(uuid.Uuid, Question) {
-  gleamrpc.query("get_question", option.None)
   |> gleamrpc.params(shared.uuid_converter())
-  |> gleamrpc.returns(question_converter())
+  |> gleamrpc.returns(convert.list(question_with_answers_converter()))
 }
 
 pub fn create_question() -> gleamrpc.Procedure(CreateQuestion, Question) {

@@ -61,18 +61,6 @@ pub fn create_answer_converter() -> convert.Converter(CreateAnswer) {
   })
 }
 
-pub fn get_answers() -> gleamrpc.Procedure(Nil, List(Answer)) {
-  gleamrpc.query("get_answers", option.None)
-  |> gleamrpc.params(convert.null())
-  |> gleamrpc.returns(convert.list(answer_converter()))
-}
-
-pub fn get_answer() -> gleamrpc.Procedure(uuid.Uuid, Answer) {
-  gleamrpc.query("get_answer", option.None)
-  |> gleamrpc.params(shared.uuid_converter())
-  |> gleamrpc.returns(answer_converter())
-}
-
 pub fn create_answer() -> gleamrpc.Procedure(CreateAnswer, Answer) {
   gleamrpc.mutation("create_answer", option.None)
   |> gleamrpc.params(create_answer_converter())

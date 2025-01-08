@@ -24,22 +24,34 @@ WHERE id = $2;
   |> pog.execute(db)
 }
 
-/// Runs the `create_qwiz` query
-/// defined in `./src/server/qwiz/sql/create_qwiz.sql`.
+/// A row you get from running the `get_all_qwizes` query
+/// defined in `./src/server/qwiz/sql/get_all_qwizes.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v2.1.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetAllQwizesRow {
+  GetAllQwizesRow(id: Uuid, name: String, owner: Uuid)
+}
+
+/// Runs the `get_all_qwizes` query
+/// defined in `./src/server/qwiz/sql/get_all_qwizes.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v2.1.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn create_qwiz(db, arg_1, arg_2, arg_3) {
-  let decoder = decode.map(decode.dynamic, fn(_) { Nil })
+pub fn get_all_qwizes(db) {
+  let decoder = {
+    use id <- decode.field(0, uuid_decoder())
+    use name <- decode.field(1, decode.string)
+    use owner <- decode.field(2, uuid_decoder())
+    decode.success(GetAllQwizesRow(id:, name:, owner:))
+  }
 
-  let query = "INSERT INTO qwizes(id, name, owner)
-VALUES ($1, $2, $3);"
+  let query = "SELECT id, name, owner
+FROM qwizes;"
 
   pog.query(query)
-  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
-  |> pog.parameter(pog.text(arg_2))
-  |> pog.parameter(pog.text(uuid.to_string(arg_3)))
   |> pog.returning(decoder)
   |> pog.execute(db)
 }
@@ -96,34 +108,22 @@ WHERE id = $1;"
   |> pog.execute(db)
 }
 
-/// A row you get from running the `get_all_qwizes` query
-/// defined in `./src/server/qwiz/sql/get_all_qwizes.sql`.
-///
-/// > 🐿️ This type definition was generated automatically using v2.1.0 of the
-/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub type GetAllQwizesRow {
-  GetAllQwizesRow(id: Uuid, name: String, owner: Uuid)
-}
-
-/// Runs the `get_all_qwizes` query
-/// defined in `./src/server/qwiz/sql/get_all_qwizes.sql`.
+/// Runs the `create_qwiz` query
+/// defined in `./src/server/qwiz/sql/create_qwiz.sql`.
 ///
 /// > 🐿️ This function was generated automatically using v2.1.0 of
 /// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
 ///
-pub fn get_all_qwizes(db) {
-  let decoder = {
-    use id <- decode.field(0, uuid_decoder())
-    use name <- decode.field(1, decode.string)
-    use owner <- decode.field(2, uuid_decoder())
-    decode.success(GetAllQwizesRow(id:, name:, owner:))
-  }
+pub fn create_qwiz(db, arg_1, arg_2, arg_3) {
+  let decoder = decode.map(decode.dynamic, fn(_) { Nil })
 
-  let query = "SELECT id, name, owner
-FROM qwizes;"
+  let query = "INSERT INTO qwizes(id, name, owner)
+VALUES ($1, $2, $3);"
 
   pog.query(query)
+  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
+  |> pog.parameter(pog.text(arg_2))
+  |> pog.parameter(pog.text(uuid.to_string(arg_3)))
   |> pog.returning(decoder)
   |> pog.execute(db)
 }
