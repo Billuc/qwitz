@@ -5,6 +5,18 @@ import gleam/string
 import gleamrpc
 import pog
 import server/context
+import shared
+import youid/uuid
+
+pub fn shared_to_youid(uuid: shared.Uuid) -> uuid.Uuid {
+  let assert Ok(new_uuid) = uuid.from_string(uuid.data)
+    as "Decoded UUIDs should be valid"
+  new_uuid
+}
+
+pub fn youid_to_shared(uuid: uuid.Uuid) -> shared.Uuid {
+  shared.Uuid(uuid |> uuid.to_string())
+}
 
 pub fn get_one(res: pog.Returned(a)) -> Result(a, gleamrpc.ProcedureError) {
   case res.rows {

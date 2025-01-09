@@ -5,6 +5,7 @@ import server/answer/sql as answer_sql
 import server/context
 import server/db_utils
 import server/question/sql
+import shared
 import shared/answer
 import shared/question
 import youid/uuid
@@ -20,10 +21,10 @@ pub fn register(
 }
 
 fn get(
-  params: uuid.Uuid,
+  params: shared.Uuid,
   context: context.Context,
 ) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
-  sql.get_question(context.db, params)
+  sql.get_question(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.then(db_utils.get_one)
   |> result.then(fn(v: sql.GetQuestionRow) {
@@ -31,12 +32,17 @@ fn get(
     |> result.map_error(db_utils.query_error_to_procedure_error)
     |> result.map(fn(res) {
       use row <- list.map(res.rows)
-      answer.Answer(row.id, row.question_id, row.answer, row.correct)
+      answer.Answer(
+        db_utils.youid_to_shared(row.id),
+        db_utils.youid_to_shared(row.question_id),
+        row.answer,
+        row.correct,
+      )
     })
     |> result.map(question.QuestionWithAnswers(
-      id: v.id,
+      id: db_utils.youid_to_shared(v.id),
       question: v.question,
-      qwiz_id: v.qwiz_id,
+      qwiz_id: db_utils.youid_to_shared(v.qwiz_id),
       answers: _,
     ))
   })
@@ -48,25 +54,34 @@ fn create(
 ) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
   let id = uuid.v4()
 
-  sql.create_question(context.db, id, params.qwiz_id, params.question)
+  sql.create_question(
+    context.db,
+    id,
+    db_utils.shared_to_youid(params.qwiz_id),
+    params.question,
+  )
   |> result.map_error(db_utils.query_error_to_procedure_error)
-  |> result.then(fn(_) { get(id, context) })
+  |> result.then(fn(_) { get(db_utils.youid_to_shared(id), context) })
 }
 
 fn update(
   params: question.Question,
   context: context.Context,
 ) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
-  sql.update_question(context.db, params.question, params.id)
+  sql.update_question(
+    context.db,
+    params.question,
+    db_utils.shared_to_youid(params.id),
+  )
   |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.then(fn(_) { get(params.id, context) })
 }
 
 fn delete(
-  params: uuid.Uuid,
+  params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, gleamrpc.ProcedureError) {
-  sql.delete_question(context.db, params)
+  sql.delete_question(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.replace(Nil)
 }

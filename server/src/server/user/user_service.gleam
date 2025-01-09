@@ -1,10 +1,11 @@
 import gleam/result
 import gleamrpc
 import server/context
+import shared
 import shared/user
 import youid/uuid
 
-const uuid = "ba98a633-dcfe-44d2-97c4-ef4885af08bf"
+const uuid = shared.Uuid("ba98a633-dcfe-44d2-97c4-ef4885af08bf")
 
 pub fn register(
   server: gleamrpc.ProcedureServerInstance(_, _, context.Context, _),
@@ -17,8 +18,5 @@ fn login(
   _data: user.LoginData,
   _ctx: context.Context,
 ) -> Result(user.User, gleamrpc.ProcedureError) {
-  uuid
-  |> uuid.from_string
-  |> result.replace_error(gleamrpc.ProcedureError("Invalid UUID : " <> uuid))
-  |> result.map(user.User(_, "Bob"))
+  Ok(user.User(uuid, "Bob"))
 }

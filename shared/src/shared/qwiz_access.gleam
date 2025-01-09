@@ -1,10 +1,10 @@
-import youid/uuid
+import shared
 
 pub type QwizAccess {
   QwizAccess(
-    id: uuid.Uuid,
-    user_id: uuid.Uuid,
-    qwiz_id: uuid.Uuid,
+    id: shared.Uuid,
+    user_id: shared.Uuid,
+    qwiz_id: shared.Uuid,
     access: AccessType,
   )
 }
