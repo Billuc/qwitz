@@ -1,3 +1,6 @@
+import shared/user
+
 pub type Msg {
-  Msg
+  Login(username: String, password: String)
+  SetUser(user: user.User)
 }
