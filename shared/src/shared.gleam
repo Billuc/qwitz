@@ -1,23 +1,28 @@
 import convert
-import gleam/bit_array
 import gleam/dynamic
-import gleam/result
-import youid/uuid
+import gleam/regexp
 
-pub fn uuid_converter() -> convert.Converter(uuid.Uuid) {
-  convert.bit_array()
+/// We have to use our own Uuid because youid isn't compatible with the browser
+pub type Uuid {
+  Uuid(data: String)
+}
+
+pub fn uuid_converter() -> convert.Converter(Uuid) {
+  convert.string()
   |> convert.map(
-    uuid.to_bit_array,
-    fn(v) {
-      uuid.from_bit_array(v)
-      |> result.replace_error([
-        dynamic.DecodeError(
-          "A valid UUID",
-          bit_array.base64_encode(v, True),
-          [],
-        ),
-      ])
+    fn(uuid: Uuid) { uuid.data },
+    fn(v: String) {
+      let assert Ok(re) =
+        regexp.from_string(
+          "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+        )
+        as "UUID regex should be valid !"
+
+      case re |> regexp.check(v) {
+        False -> Error([dynamic.DecodeError("A valid UUID", v, [])])
+        True -> Ok(Uuid(v))
+      }
     },
-    uuid.v4(),
+    Uuid("00000000-0000-0000-0000-000000000000"),
   )
 }

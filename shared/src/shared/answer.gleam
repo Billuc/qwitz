@@ -2,14 +2,18 @@ import convert
 import gleam/option
 import gleamrpc
 import shared
-import youid/uuid
 
 pub type Answer {
-  Answer(id: uuid.Uuid, question_id: uuid.Uuid, answer: String, correct: Bool)
+  Answer(
+    id: shared.Uuid,
+    question_id: shared.Uuid,
+    answer: String,
+    correct: Bool,
+  )
 }
 
 pub type CreateAnswer {
-  CreateAnswer(question_id: uuid.Uuid, answer: String, correct: Bool)
+  CreateAnswer(question_id: shared.Uuid, answer: String, correct: Bool)
 }
 
 pub fn answer_converter() -> convert.Converter(Answer) {
@@ -73,7 +77,7 @@ pub fn update_answer() -> gleamrpc.Procedure(Answer, Answer) {
   |> gleamrpc.returns(answer_converter())
 }
 
-pub fn delete_answer() -> gleamrpc.Procedure(uuid.Uuid, Nil) {
+pub fn delete_answer() -> gleamrpc.Procedure(shared.Uuid, Nil) {
   gleamrpc.mutation("delete_answer", option.None)
   |> gleamrpc.params(shared.uuid_converter())
   |> gleamrpc.returns(convert.null())

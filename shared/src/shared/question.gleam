@@ -3,23 +3,22 @@ import gleam/option
 import gleamrpc
 import shared
 import shared/answer
-import youid/uuid
 
 pub type Question {
-  Question(id: uuid.Uuid, qwiz_id: uuid.Uuid, question: String)
+  Question(id: shared.Uuid, qwiz_id: shared.Uuid, question: String)
 }
 
 pub type QuestionWithAnswers {
   QuestionWithAnswers(
-    id: uuid.Uuid,
-    qwiz_id: uuid.Uuid,
+    id: shared.Uuid,
+    qwiz_id: shared.Uuid,
     question: String,
     answers: List(answer.Answer),
   )
 }
 
 pub type CreateQuestion {
-  CreateQuestion(qwiz_id: uuid.Uuid, question: String)
+  CreateQuestion(qwiz_id: shared.Uuid, question: String)
 }
 
 pub fn question_converter() -> convert.Converter(Question) {
@@ -89,7 +88,7 @@ pub fn create_question_converter() -> convert.Converter(CreateQuestion) {
   })
 }
 
-pub fn get_question() -> gleamrpc.Procedure(uuid.Uuid, QuestionWithAnswers) {
+pub fn get_question() -> gleamrpc.Procedure(shared.Uuid, QuestionWithAnswers) {
   gleamrpc.query("get_question", option.None)
   |> gleamrpc.params(shared.uuid_converter())
   |> gleamrpc.returns(question_with_answers_converter())
@@ -110,7 +109,7 @@ pub fn update_question() -> gleamrpc.Procedure(Question, QuestionWithAnswers) {
   |> gleamrpc.returns(question_with_answers_converter())
 }
 
-pub fn delete_question() -> gleamrpc.Procedure(uuid.Uuid, Nil) {
+pub fn delete_question() -> gleamrpc.Procedure(shared.Uuid, Nil) {
   gleamrpc.mutation("delete_question", option.None)
   |> gleamrpc.params(shared.uuid_converter())
   |> gleamrpc.returns(convert.null())

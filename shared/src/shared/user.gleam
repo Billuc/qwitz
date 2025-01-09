@@ -2,10 +2,9 @@ import convert
 import gleam/option
 import gleamrpc
 import shared
-import youid/uuid
 
 pub type User {
-  User(id: uuid.Uuid, pseudo: String)
+  User(id: shared.Uuid, pseudo: String)
 }
 
 pub type LoginData {

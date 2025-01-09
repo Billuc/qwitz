@@ -3,23 +3,22 @@ import gleam/option
 import gleamrpc
 import shared
 import shared/question
-import youid/uuid
 
 pub type Qwiz {
-  Qwiz(id: uuid.Uuid, name: String, owner: uuid.Uuid)
+  Qwiz(id: shared.Uuid, name: String, owner: shared.Uuid)
 }
 
 pub type QwizWithQuestions {
   QwizWithQuestions(
-    id: uuid.Uuid,
+    id: shared.Uuid,
     name: String,
-    owner: uuid.Uuid,
+    owner: shared.Uuid,
     questions: List(question.Question),
   )
 }
 
 pub type UpsertQwiz {
-  UpsertQwiz(name: String, owner: uuid.Uuid)
+  UpsertQwiz(name: String, owner: shared.Uuid)
 }
 
 pub fn qwiz_converter() -> convert.Converter(Qwiz) {
@@ -94,7 +93,7 @@ pub fn get_qwizes() -> gleamrpc.Procedure(Nil, List(Qwiz)) {
   |> gleamrpc.returns(convert.list(qwiz_converter()))
 }
 
-pub fn get_qwiz() -> gleamrpc.Procedure(uuid.Uuid, QwizWithQuestions) {
+pub fn get_qwiz() -> gleamrpc.Procedure(shared.Uuid, QwizWithQuestions) {
   gleamrpc.query("get_qwiz", option.None)
   |> gleamrpc.params(shared.uuid_converter())
   |> gleamrpc.returns(qwiz_with_questions_converter())
@@ -112,7 +111,7 @@ pub fn update_qwiz() -> gleamrpc.Procedure(Qwiz, QwizWithQuestions) {
   |> gleamrpc.returns(qwiz_with_questions_converter())
 }
 
-pub fn delete_qwiz() -> gleamrpc.Procedure(uuid.Uuid, Nil) {
+pub fn delete_qwiz() -> gleamrpc.Procedure(shared.Uuid, Nil) {
   gleamrpc.mutation("delete_qwiz", option.None)
   |> gleamrpc.params(shared.uuid_converter())
   |> gleamrpc.returns(convert.null())
