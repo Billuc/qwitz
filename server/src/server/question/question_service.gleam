@@ -1,8 +1,7 @@
-import gleam/dict
 import gleam/list
-import gleam/option
 import gleam/result
 import gleamrpc
+import server/answer/sql as answer_sql
 import server/context
 import server/db_utils
 import server/question/sql
@@ -14,108 +13,60 @@ pub fn register(
   server: gleamrpc.ProcedureServerInstance(_, _, context.Context, _),
 ) -> gleamrpc.ProcedureServerInstance(_, _, context.Context, _) {
   server
-  |> gleamrpc.with_implementation(question.get_questions(), get_all)
+  |> gleamrpc.with_implementation(question.get_question(), get)
   |> gleamrpc.with_implementation(question.create_question(), create)
   |> gleamrpc.with_implementation(question.update_question(), update)
   |> gleamrpc.with_implementation(question.delete_question(), delete)
 }
 
-fn get_all(
+fn get(
   params: uuid.Uuid,
   context: context.Context,
-) -> Result(List(question.QuestionWithAnswers), gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.get_all_questions(db, params)
-  }
-  |> result.map(db_utils.get_all)
-  |> result.map(fn(v: List(sql.GetAllQuestionsRow)) {
-    v
-    |> list.fold(dict.new(), fn(acc, curr) {
-      acc
-      |> dict.upsert(curr.question_id, upsert_question_with_answers(_, curr))
+) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
+  sql.get_question(context.db, params)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
+  |> result.then(db_utils.get_one)
+  |> result.then(fn(v: sql.GetQuestionRow) {
+    answer_sql.get_all_answers(context.db, v.id)
+    |> result.map_error(db_utils.query_error_to_procedure_error)
+    |> result.map(fn(res) {
+      use row <- list.map(res.rows)
+      answer.Answer(row.id, row.question_id, row.answer, row.correct)
     })
-    |> dict.values
+    |> result.map(question.QuestionWithAnswers(
+      id: v.id,
+      question: v.question,
+      qwiz_id: v.qwiz_id,
+      answers: _,
+    ))
   })
-}
-
-fn upsert_question_with_answers(
-  old_value: option.Option(question.QuestionWithAnswers),
-  row: sql.GetAllQuestionsRow,
-) -> question.QuestionWithAnswers {
-  case old_value {
-    option.None -> row_to_question_with_answers(row)
-    option.Some(q) ->
-      question.QuestionWithAnswers(
-        ..q,
-        answers: add_answer_from_row(q.answers, row),
-      )
-  }
-}
-
-fn row_to_question_with_answers(
-  v: sql.GetAllQuestionsRow,
-) -> question.QuestionWithAnswers {
-  question.QuestionWithAnswers(
-    v.question_id,
-    v.qwiz_id,
-    v.question,
-    add_answer_from_row([], v),
-  )
-}
-
-fn add_answer_from_row(
-  answers: List(answer.Answer),
-  v: sql.GetAllQuestionsRow,
-) -> List(answer.Answer) {
-  case v.answer_id, v.answer, v.correct {
-    option.Some(answer_id), option.Some(answer), option.Some(correct) -> [
-      answer.Answer(answer_id, v.question_id, answer, correct),
-      ..answers
-    ]
-    _, _, _ -> answers
-  }
 }
 
 fn create(
   params: question.CreateQuestion,
   context: context.Context,
-) -> Result(question.Question, gleamrpc.ProcedureError) {
+) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
   let id = uuid.v4()
 
-  {
-    use db <- db_utils.transaction(context)
-    sql.create_question(db, id, params.qwiz_id, params.question)
-    |> result.then(fn(_) { sql.get_question(db, id) })
-  }
-  |> result.then(db_utils.get_one)
-  |> result.map(fn(v: sql.GetQuestionRow) {
-    question.Question(id: v.id, qwiz_id: v.qwiz_id, question: v.question)
-  })
+  sql.create_question(context.db, id, params.qwiz_id, params.question)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
+  |> result.then(fn(_) { get(id, context) })
 }
 
 fn update(
   params: question.Question,
   context: context.Context,
-) -> Result(question.Question, gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.update_question(db, params.question, params.id)
-    |> result.then(fn(_) { sql.get_question(db, params.id) })
-  }
-  |> result.then(db_utils.get_one)
-  |> result.map(fn(v: sql.GetQuestionRow) {
-    question.Question(id: v.id, qwiz_id: v.qwiz_id, question: v.question)
-  })
+) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
+  sql.update_question(context.db, params.question, params.id)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
+  |> result.then(fn(_) { get(params.id, context) })
 }
 
 fn delete(
   params: uuid.Uuid,
   context: context.Context,
 ) -> Result(Nil, gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.delete_question(db, params)
-  }
+  sql.delete_question(context.db, params)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.replace(Nil)
 }

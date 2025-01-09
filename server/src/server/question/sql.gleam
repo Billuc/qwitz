@@ -1,7 +1,84 @@
 import gleam/dynamic/decode
-import gleam/option.{type Option}
 import pog
 import youid/uuid.{type Uuid}
+
+/// A row you get from running the `get_question` query
+/// defined in `./src/server/question/sql/get_question.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v2.1.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetQuestionRow {
+  GetQuestionRow(id: Uuid, qwiz_id: Uuid, question: String)
+}
+
+/// Runs the `get_question` query
+/// defined in `./src/server/question/sql/get_question.sql`.
+///
+/// > 🐿️ This function was generated automatically using v2.1.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_question(db, arg_1) {
+  let decoder = {
+    use id <- decode.field(0, uuid_decoder())
+    use qwiz_id <- decode.field(1, uuid_decoder())
+    use question <- decode.field(2, decode.string)
+    decode.success(GetQuestionRow(id:, qwiz_id:, question:))
+  }
+
+  let query = "SELECT 
+  id, 
+  qwiz_id, 
+  question
+FROM 
+  questions
+WHERE 
+  id = $1;"
+
+  pog.query(query)
+  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
+
+/// A row you get from running the `get_all_questions` query
+/// defined in `./src/server/question/sql/get_all_questions.sql`.
+///
+/// > 🐿️ This type definition was generated automatically using v2.1.0 of the
+/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub type GetAllQuestionsRow {
+  GetAllQuestionsRow(id: Uuid, qwiz_id: Uuid, question: String)
+}
+
+/// Runs the `get_all_questions` query
+/// defined in `./src/server/question/sql/get_all_questions.sql`.
+///
+/// > 🐿️ This function was generated automatically using v2.1.0 of
+/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
+///
+pub fn get_all_questions(db, arg_1) {
+  let decoder = {
+    use id <- decode.field(0, uuid_decoder())
+    use qwiz_id <- decode.field(1, uuid_decoder())
+    use question <- decode.field(2, decode.string)
+    decode.success(GetAllQuestionsRow(id:, qwiz_id:, question:))
+  }
+
+  let query = "SELECT 
+  id, 
+  qwiz_id, 
+  question
+FROM 
+  questions
+WHERE
+  qwiz_id = $1;"
+
+  pog.query(query)
+  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
+  |> pog.returning(decoder)
+  |> pog.execute(db)
+}
 
 /// Runs the `create_question` query
 /// defined in `./src/server/question/sql/create_question.sql`.
@@ -54,136 +131,6 @@ pub fn delete_question(db, arg_1) {
 
   let query = "DELETE FROM questions
 WHERE id = $1;"
-
-  pog.query(query)
-  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
-  |> pog.returning(decoder)
-  |> pog.execute(db)
-}
-
-/// A row you get from running the `get_all_questions` query
-/// defined in `./src/server/question/sql/get_all_questions.sql`.
-///
-/// > 🐿️ This type definition was generated automatically using v2.1.0 of the
-/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub type GetAllQuestionsRow {
-  GetAllQuestionsRow(
-    question_id: Uuid,
-    qwiz_id: Uuid,
-    question: String,
-    answer_id: Option(Uuid),
-    answer: Option(String),
-    correct: Option(Bool),
-  )
-}
-
-/// Runs the `get_all_questions` query
-/// defined in `./src/server/question/sql/get_all_questions.sql`.
-///
-/// > 🐿️ This function was generated automatically using v2.1.0 of
-/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub fn get_all_questions(db, arg_1) {
-  let decoder = {
-    use question_id <- decode.field(0, uuid_decoder())
-    use qwiz_id <- decode.field(1, uuid_decoder())
-    use question <- decode.field(2, decode.string)
-    use answer_id <- decode.field(3, decode.optional(uuid_decoder()))
-    use answer <- decode.field(4, decode.optional(decode.string))
-    use correct <- decode.field(5, decode.optional(decode.bool))
-    decode.success(
-      GetAllQuestionsRow(
-        question_id:,
-        qwiz_id:,
-        question:,
-        answer_id:,
-        answer:,
-        correct:,
-      ),
-    )
-  }
-
-  let query = "SELECT 
-  q.id AS question_id, 
-  q.qwiz_id, 
-  q.question, 
-  a.id AS answer_id, 
-  a.answer, 
-  a.correct 
-FROM 
-  questions q
-LEFT JOIN 
-  answers a 
-ON 
-  q.id = a.question_id
-WHERE
-  q.qwiz_id = $1;"
-
-  pog.query(query)
-  |> pog.parameter(pog.text(uuid.to_string(arg_1)))
-  |> pog.returning(decoder)
-  |> pog.execute(db)
-}
-
-/// A row you get from running the `get_question` query
-/// defined in `./src/server/question/sql/get_question.sql`.
-///
-/// > 🐿️ This type definition was generated automatically using v2.1.0 of the
-/// > [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub type GetQuestionRow {
-  GetQuestionRow(
-    question_id: Uuid,
-    qwiz_id: Uuid,
-    question: String,
-    answer_id: Option(Uuid),
-    answer: Option(String),
-    correct: Option(Bool),
-  )
-}
-
-/// Runs the `get_question` query
-/// defined in `./src/server/question/sql/get_question.sql`.
-///
-/// > 🐿️ This function was generated automatically using v2.1.0 of
-/// > the [squirrel package](https://github.com/giacomocavalieri/squirrel).
-///
-pub fn get_question(db, arg_1) {
-  let decoder = {
-    use question_id <- decode.field(0, uuid_decoder())
-    use qwiz_id <- decode.field(1, uuid_decoder())
-    use question <- decode.field(2, decode.string)
-    use answer_id <- decode.field(3, decode.optional(uuid_decoder()))
-    use answer <- decode.field(4, decode.optional(decode.string))
-    use correct <- decode.field(5, decode.optional(decode.bool))
-    decode.success(
-      GetQuestionRow(
-        question_id:,
-        qwiz_id:,
-        question:,
-        answer_id:,
-        answer:,
-        correct:,
-      ),
-    )
-  }
-
-  let query = "SELECT 
-  q.id AS question_id, 
-  q.qwiz_id, 
-  q.question, 
-  a.id AS answer_id, 
-  a.answer, 
-  a.correct 
-FROM 
-  questions q
-LEFT JOIN 
-  answers a 
-ON 
-  q.id = a.question_id
-WHERE 
-  q.id = $1;"
 
   pog.query(query)
   |> pog.parameter(pog.text(uuid.to_string(arg_1)))

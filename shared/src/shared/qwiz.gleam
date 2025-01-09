@@ -14,7 +14,7 @@ pub type QwizWithQuestions {
     id: uuid.Uuid,
     name: String,
     owner: uuid.Uuid,
-    questions: List(question.QuestionWithAnswers),
+    questions: List(question.Question),
   )
 }
 
@@ -64,7 +64,7 @@ pub fn qwiz_with_questions_converter() -> convert.Converter(QwizWithQuestions) {
     use questions <- convert.field(
       "questions",
       fn(v: QwizWithQuestions) { Ok(v.questions) },
-      convert.list(question.question_with_answers_converter()),
+      convert.list(question.question_converter()),
     )
 
     convert.success(QwizWithQuestions(id:, name:, owner:, questions:))

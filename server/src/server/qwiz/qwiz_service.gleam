@@ -1,9 +1,12 @@
 import gleam/list
 import gleam/result
 import gleamrpc
+import pog
 import server/context
 import server/db_utils
+import server/question/sql as question_sql
 import server/qwiz/sql
+import shared/question
 import shared/qwiz
 import youid/uuid
 
@@ -21,14 +24,23 @@ pub fn register(
 fn get(
   params: uuid.Uuid,
   context: context.Context,
-) -> Result(qwiz.Qwiz, gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.get_qwiz(db, params)
-  }
+) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
+  sql.get_qwiz(context.db, params)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.then(db_utils.get_one)
-  |> result.map(fn(v: sql.GetQwizRow) {
-    qwiz.Qwiz(id: v.id, name: v.name, owner: v.owner)
+  |> result.then(fn(v: sql.GetQwizRow) {
+    question_sql.get_all_questions(context.db, v.id)
+    |> result.map_error(db_utils.query_error_to_procedure_error)
+    |> result.map(fn(res) {
+      use row <- list.map(res.rows)
+      question.Question(row.id, row.qwiz_id, row.question)
+    })
+    |> result.map(qwiz.QwizWithQuestions(
+      id: v.id,
+      name: v.name,
+      owner: v.owner,
+      questions: _,
+    ))
   })
 }
 
@@ -36,13 +48,10 @@ fn get_all(
   _params: Nil,
   context: context.Context,
 ) -> Result(List(qwiz.Qwiz), gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.get_all_qwizes(db)
-  }
-  |> result.map(db_utils.get_all)
-  |> result.map(fn(v: List(sql.GetAllQwizesRow)) {
-    use qwiz_row <- list.map(v)
+  sql.get_all_qwizes(context.db)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
+  |> result.map(fn(v: pog.Returned(sql.GetAllQwizesRow)) {
+    use qwiz_row <- list.map(v.rows)
     qwiz.Qwiz(qwiz_row.id, qwiz_row.name, qwiz_row.owner)
   })
 }
@@ -50,24 +59,20 @@ fn get_all(
 fn create(
   params: qwiz.UpsertQwiz,
   context: context.Context,
-) -> Result(qwiz.Qwiz, gleamrpc.ProcedureError) {
+) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
   let id = uuid.v4()
 
-  {
-    use db <- db_utils.transaction(context)
-    sql.create_qwiz(db, id, params.name, params.owner)
-  }
+  sql.create_qwiz(context.db, id, params.name, params.owner)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.then(fn(_) { get(id, context) })
 }
 
 fn update(
   params: qwiz.Qwiz,
   context: context.Context,
-) -> Result(qwiz.Qwiz, gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.update_qwiz(db, params.name, params.id)
-  }
+) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
+  sql.update_qwiz(context.db, params.name, params.id)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.then(fn(_) { get(params.id, context) })
 }
 
@@ -75,9 +80,7 @@ fn delete(
   params: uuid.Uuid,
   context: context.Context,
 ) -> Result(Nil, gleamrpc.ProcedureError) {
-  {
-    use db <- db_utils.transaction(context)
-    sql.delete_qwiz(db, params)
-  }
+  sql.delete_qwiz(context.db, params)
+  |> result.map_error(db_utils.query_error_to_procedure_error)
   |> result.replace(Nil)
 }

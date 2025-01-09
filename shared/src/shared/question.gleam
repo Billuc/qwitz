@@ -89,25 +89,25 @@ pub fn create_question_converter() -> convert.Converter(CreateQuestion) {
   })
 }
 
-pub fn get_questions() -> gleamrpc.Procedure(
-  uuid.Uuid,
-  List(QuestionWithAnswers),
-) {
-  gleamrpc.query("get_questions", option.None)
+pub fn get_question() -> gleamrpc.Procedure(uuid.Uuid, QuestionWithAnswers) {
+  gleamrpc.query("get_question", option.None)
   |> gleamrpc.params(shared.uuid_converter())
-  |> gleamrpc.returns(convert.list(question_with_answers_converter()))
+  |> gleamrpc.returns(question_with_answers_converter())
 }
 
-pub fn create_question() -> gleamrpc.Procedure(CreateQuestion, Question) {
+pub fn create_question() -> gleamrpc.Procedure(
+  CreateQuestion,
+  QuestionWithAnswers,
+) {
   gleamrpc.mutation("create_question", option.None)
   |> gleamrpc.params(create_question_converter())
-  |> gleamrpc.returns(question_converter())
+  |> gleamrpc.returns(question_with_answers_converter())
 }
 
-pub fn update_question() -> gleamrpc.Procedure(Question, Question) {
+pub fn update_question() -> gleamrpc.Procedure(Question, QuestionWithAnswers) {
   gleamrpc.mutation("update_question", option.None)
   |> gleamrpc.params(question_converter())
-  |> gleamrpc.returns(question_converter())
+  |> gleamrpc.returns(question_with_answers_converter())
 }
 
 pub fn delete_question() -> gleamrpc.Procedure(uuid.Uuid, Nil) {
