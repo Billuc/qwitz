@@ -27,8 +27,8 @@ packages = [
   { name = "gleam_regexp", version = "1.0.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_regexp", source = "hex", outer_checksum = "A3655FDD288571E90EE9C4009B719FEF59FA16AFCDF3952A76A125AF23CF1592" },
   { name = "gleam_stdlib", version = "0.52.0", build_tools = ["gleam"], requirements = [], otp_app = "gleam_stdlib", source = "hex", outer_checksum = "50703862DF26453B277688FFCDBE9DD4AC45B3BD9742C0B370DB62BC1629A07D" },
   { name = "gleam_yielder", version = "1.1.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleam_yielder", source = "hex", outer_checksum = "8E4E4ECFA7982859F430C57F549200C7749823C106759F4A19A78AEA6687717A" },
-  { name = "gleamrpc", version = "2.1.4", build_tools = ["gleam"], requirements = ["convert", "gleam_stdlib"], otp_app = "gleamrpc", source = "hex", outer_checksum = "C08172989B0F29BD8E341ACC668BCBE2E2DDC75BFF3928420CE8174A55A162F6" },
-  { name = "gleamrpc_http_client", version = "1.0.1", build_tools = ["gleam"], requirements = ["convert", "convert_http_query", "convert_json", "gleam_fetch", "gleam_http", "gleam_httpc", "gleam_javascript", "gleam_json", "gleam_stdlib", "gleamrpc"], otp_app = "gleamrpc_http_client", source = "hex", outer_checksum = "D3DA3DAB53A69360F5E6F851304663A1F9AA45B89026D864A03D260FE351C49F" },
+  { name = "gleamrpc", version = "2.1.5", build_tools = ["gleam"], requirements = ["convert", "gleam_stdlib"], otp_app = "gleamrpc", source = "hex", outer_checksum = "0E89C0609B6D3CB3C5579E0B21A0B9FD7C52EC8AAABF504621CA80B78F2C8AAC" },
+  { name = "gleamrpc_http_client", version = "1.0.2", build_tools = ["gleam"], requirements = ["convert", "convert_http_query", "convert_json", "gleam_fetch", "gleam_http", "gleam_httpc", "gleam_javascript", "gleam_json", "gleam_stdlib", "gleamrpc"], otp_app = "gleamrpc_http_client", source = "hex", outer_checksum = "A43246D006EACE84C384A7F25F4B5B2ED6A226E6B13362C2215C4DE563156E36" },
   { name = "gleeunit", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_stdlib"], otp_app = "gleeunit", source = "hex", outer_checksum = "F7A7228925D3EE7D0813C922E062BFD6D7E9310F0BEE585D3A42F3307E3CFD13" },
   { name = "glint", version = "1.2.0", build_tools = ["gleam"], requirements = ["gleam_community_ansi", "gleam_community_colour", "gleam_stdlib", "snag"], otp_app = "glint", source = "hex", outer_checksum = "EA4B47B5A6147CA524AE81862EE1BE1C5A194757B26897233BD26BD3F7A54930" },
   { name = "glisten", version = "7.0.0", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_otp", "gleam_stdlib", "logging", "telemetry"], otp_app = "glisten", source = "hex", outer_checksum = "028C0882EAC7ABEDEFBE92CE4D1FEDADE95FA81B1B1AB099C4F91C133BEF2C42" },
@@ -39,6 +39,7 @@ packages = [
   { name = "lustre_dev_tools", version = "1.6.5", build_tools = ["gleam"], requirements = ["argv", "filepath", "fs", "gleam_community_ansi", "gleam_crypto", "gleam_deque", "gleam_erlang", "gleam_http", "gleam_httpc", "gleam_json", "gleam_otp", "gleam_package_interface", "gleam_regexp", "gleam_stdlib", "glint", "glisten", "lustre", "mist", "repeatedly", "simplifile", "term_size", "tom", "wisp"], otp_app = "lustre_dev_tools", source = "hex", outer_checksum = "3B362BDCBB56B22BF9DFF6765E4C2CD8171374ACE8EA1B75EA3D6F1FB4937094" },
   { name = "marceau", version = "1.3.0", build_tools = ["gleam"], requirements = [], otp_app = "marceau", source = "hex", outer_checksum = "2D1C27504BEF45005F5DFB18591F8610FB4BFA91744878210BDC464412EC44E9" },
   { name = "mist", version = "4.0.4", build_tools = ["gleam"], requirements = ["gleam_erlang", "gleam_http", "gleam_otp", "gleam_stdlib", "gleam_yielder", "glisten", "gramps", "hpack_erl", "logging"], otp_app = "mist", source = "hex", outer_checksum = "9F87DA535A75AA1B8B37D27E59B1E60A1BE34EB2CA63BE8B211D75E5D10BEEAF" },
+  { name = "modem", version = "2.0.1", build_tools = ["gleam"], requirements = ["gleam_stdlib", "lustre"], otp_app = "modem", source = "hex", outer_checksum = "B446119A85DC9C31FEA0DCB204072E40356CB246C9D091CBBF2E4678CDB05A2D" },
   { name = "platform", version = "1.0.0", build_tools = ["gleam"], requirements = [], otp_app = "platform", source = "hex", outer_checksum = "8339420A95AD89AAC0F82F4C3DB8DD401041742D6C3F46132A8739F6AEB75391" },
   { name = "plinth", version = "0.5.6", build_tools = ["gleam"], requirements = ["conversation", "gleam_javascript", "gleam_json", "gleam_stdlib"], otp_app = "plinth", source = "hex", outer_checksum = "7A9BEAB98F4BC6859803D5ABCD0F3B4C3578A747F12BF32F9E234F8325F5F0E0" },
   { name = "repeatedly", version = "2.1.2", build_tools = ["gleam"], requirements = [], otp_app = "repeatedly", source = "hex", outer_checksum = "93AE1938DDE0DC0F7034F32C1BF0D4E89ACEBA82198A1FE21F604E849DA5F589" },
@@ -58,5 +59,6 @@ gleamrpc_http_client = { version = ">= 1.0.1 and < 2.0.0" }
 gleeunit = { version = ">= 1.0.0 and < 2.0.0" }
 lustre = { version = ">= 4.6.3 and < 5.0.0" }
 lustre_dev_tools = { version = ">= 1.6.5 and < 2.0.0" }
+modem = { version = ">= 2.0.1 and < 3.0.0" }
 plinth = { version = ">= 0.5.6 and < 1.0.0" }
 shared = { path = "../shared" }

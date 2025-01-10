@@ -14,7 +14,7 @@ pub fn uuid_converter() -> convert.Converter(Uuid) {
     fn(v: String) {
       let assert Ok(re) =
         regexp.from_string(
-          "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+          "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
         )
         as "UUID regex should be valid !"
 

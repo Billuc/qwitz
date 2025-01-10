@@ -31,15 +31,26 @@ fn log_error(error: glisten.StartError) -> Nil {
 }
 
 pub fn main() {
-  use db <- result.try(get_db())
-
-  gleamrpc.with_server(rpc_http.http_server())
-  |> gleamrpc.with_context(context.Context(_, db))
-  |> user_service.register
-  |> qwiz_service.register
-  |> question_service.register
-  |> rpc_http.init_mist(8080)
-  |> mist.start_http
-  |> result.map_error(log_error)
-  |> result.map(fn(_) { process.sleep_forever() })
+  case get_db() {
+    Error(Nil) -> io.println_error("Couldn't connect to the database")
+    Ok(db) -> {
+      gleamrpc.with_server(rpc_http.http_server())
+      |> gleamrpc.with_context(context.Context(_, db))
+      |> gleamrpc.with_middleware(
+        rpc_http.cors_middleware(
+          rpc_http.CorsOrigins([
+            "http://localhost:1234", "http://127.0.0.1:1234",
+          ]),
+        ),
+      )
+      |> user_service.register
+      |> qwiz_service.register
+      |> question_service.register
+      |> rpc_http.init_mist(8080)
+      |> mist.start_http
+      |> result.map_error(log_error)
+      |> result.map(fn(_) { process.sleep_forever() })
+      |> result.unwrap_both
+    }
+  }
 }
