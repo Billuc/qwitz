@@ -1,22 +1,14 @@
-import envoy
 import gleam/erlang/process
 import gleam/io
-import gleam/result
 import gleamrpc
 import gleamrpc/http/server as rpc_http
 import glisten
 import mist
-import pog
 import server/context
+import server/db_utils
 import server/question/question_service
 import server/qwiz/qwiz_service
 import server/user/user_service
-
-fn get_db() {
-  envoy.get("DATABASE_URL")
-  |> result.then(pog.url_config)
-  |> result.map(pog.connect)
-}
 
 fn log_error(error: glisten.StartError) -> Nil {
   let message = case error {
@@ -31,26 +23,30 @@ fn log_error(error: glisten.StartError) -> Nil {
 }
 
 pub fn main() {
-  case get_db() {
-    Error(Nil) -> io.println_error("Couldn't connect to the database")
-    Ok(db) -> {
-      gleamrpc.with_server(rpc_http.http_server())
-      |> gleamrpc.with_context(context.Context(_, db))
-      |> gleamrpc.with_middleware(
-        rpc_http.cors_middleware(
-          rpc_http.CorsOrigins([
-            "http://localhost:1234", "http://127.0.0.1:1234",
-          ]),
-        ),
-      )
-      |> user_service.register
-      |> qwiz_service.register
-      |> question_service.register
-      |> rpc_http.init_mist(8080)
-      |> mist.start_http
-      |> result.map_error(log_error)
-      |> result.map(fn(_) { process.sleep_forever() })
-      |> result.unwrap_both
-    }
+  use db <- db_utils.init_db()
+
+  let rpc_server =
+    gleamrpc.with_server(rpc_http.http_server())
+    |> gleamrpc.with_context(context.Context(_, db))
+    |> gleamrpc.with_middleware(
+      rpc_http.cors_middleware(
+        rpc_http.CorsOrigins(["http://localhost:1234", "http://127.0.0.1:1234"]),
+      ),
+    )
+
+  let rpc_server =
+    rpc_server
+    |> user_service.register
+    |> qwiz_service.register
+    |> question_service.register
+
+  let mist_server =
+    rpc_server
+    |> rpc_http.init_mist(8080)
+    |> mist.start_http
+
+  case mist_server {
+    Error(err) -> log_error(err)
+    Ok(_) -> process.sleep_forever()
   }
 }

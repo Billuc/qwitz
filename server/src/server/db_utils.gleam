@@ -1,3 +1,4 @@
+import envoy
 import gleam/int
 import gleam/io
 import gleam/result
@@ -10,6 +11,18 @@ import youid/uuid
 
 pub type DatabaseError {
   DatabaseError(message: String)
+}
+
+pub fn init_db(on_success: fn(pog.Connection) -> Nil) {
+  let db_res =
+    envoy.get("DATABASE_URL")
+    |> result.then(pog.url_config)
+    |> result.map(pog.connect)
+
+  case db_res {
+    Error(Nil) -> io.println_error("Couldn't connect to the database")
+    Ok(db) -> on_success(db)
+  }
 }
 
 pub fn shared_to_youid(uuid: shared.Uuid) -> uuid.Uuid {
