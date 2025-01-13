@@ -1,5 +1,16 @@
 [tools]
 gleam = "latest"
+watchexec = "2.1.2"
 
 [env]
 DATABASE_URL = "postgres://billuc:582B1llaud@localhost:5432/qwitz"
+
+[tasks."dev:client"]
+run = "gleam run -m lustre/dev start"
+dir = "{{ config_root }}/client"
+sources = ["shared/src/**/*.gleam"]
+
+[tasks."dev:server"]
+run = "gleam run"
+dir = "{{ config_root }}/server"
+sources = ["server/src/**/*.gleam", "shared/src/**/*.gleam"]
