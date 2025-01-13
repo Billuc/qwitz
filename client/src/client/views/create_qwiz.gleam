@@ -23,11 +23,13 @@ fn on_submit(
   model: model.Model,
   v: dynamic.Dynamic,
 ) -> Result(model.Msg, List(dynamic.DecodeError)) {
-  io.debug(v)
   event.prevent_default(v)
 
   case model.user {
-    option.None -> Error([dynamic.DecodeError("", "No user", [])])
+    option.None -> {
+      io.println_error("No user logged in ! Log in before")
+      Error([dynamic.DecodeError("", "No user", [])])
+    }
     option.Some(user) -> {
       get_element(qwiz_name)
       |> result.then(get_value)

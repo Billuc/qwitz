@@ -12,13 +12,12 @@ pub fn client() -> gleamrpc.ProcedureClient(
 }
 
 pub fn rpc_effect(
-  client: gleamrpc.ProcedureClient(a, b, client.GleamRpcHttpClientError),
   procedure: gleamrpc.Procedure(a, b),
   data: a,
   to_msg: fn(b) -> m,
 ) -> effect.Effect(m) {
   effect.from(fn(dispatch) {
-    let procedure_call = procedure |> gleamrpc.with_client(client)
+    let procedure_call = procedure |> gleamrpc.with_client(client())
     use result <- gleamrpc.call(procedure_call, data)
 
     case result {
