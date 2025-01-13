@@ -6,6 +6,7 @@ import gleam/string
 import gleamrpc
 import pog
 import server/context
+import server/log
 import shared
 import youid/uuid
 
@@ -14,15 +15,19 @@ pub type DatabaseError {
 }
 
 pub fn init_db(on_success: fn(pog.Connection) -> Nil) {
-  let db_res =
-    envoy.get("DATABASE_URL")
-    |> result.then(pog.url_config)
-    |> result.map(pog.connect)
+  use db_uri <- log.assert_or_log(
+    envoy.get("DATABASE_URL"),
+    "Couldn't get DATABASE_URL from environment",
+  )
 
-  case db_res {
-    Error(Nil) -> io.println_error("Couldn't connect to the database")
-    Ok(db) -> on_success(db)
-  }
+  use db <- log.assert_or_log(
+    db_uri
+      |> pog.url_config,
+    "Invalid config from uri " <> db_uri,
+  )
+
+  log.log("Connected to the database at " <> db_uri)
+  on_success(db |> pog.connect)
 }
 
 pub fn shared_to_youid(uuid: shared.Uuid) -> uuid.Uuid {
