@@ -2,6 +2,7 @@ import client/model
 import client/views/common
 import gleam/list
 import gleam/option
+import lustre/attribute
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -18,6 +19,7 @@ pub fn view(qwiz: option.Option(qwiz.QwizWithQuestions)) {
           html.h1([], [html.text(qwiz.name), delete_qwiz_button(qwiz.id)]),
         ]),
         question_list(qwiz.questions),
+        create_question_button(),
       ])
     }
   }
@@ -36,4 +38,10 @@ fn question_row(question: question.Question) {
 
 fn delete_qwiz_button(id: shared.Uuid) {
   html.button([event.on_click(model.DeleteQwiz(id))], [html.text("Delete")])
+}
+
+fn create_question_button() {
+  html.a([attribute.href(model.CreateQuestionRoute |> model.route_to_url)], [
+    html.text("Add question"),
+  ])
 }

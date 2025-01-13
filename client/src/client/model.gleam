@@ -1,8 +1,9 @@
-import client/services/qwiz as qwiz_service
+import client/services/qwiz_service
 import gleam/option
 import gleam/uri
 import lustre/effect
 import shared
+import shared/question
 import shared/qwiz
 import shared/user
 
@@ -25,6 +26,10 @@ pub type Msg {
   SetQwiz(qwiz: qwiz.QwizWithQuestions)
   DeleteQwiz(id: shared.Uuid)
   QwizDeleted(id: shared.Uuid)
+  CreateQuestion(qwiz_id: shared.Uuid, question: String)
+  QuestionCreated(question.QuestionWithAnswers)
+  DeleteQuestion(id: shared.Uuid)
+  QuestionDeleted(id: shared.Uuid)
 }
 
 pub type Route {
@@ -40,7 +45,18 @@ pub fn on_url_change(uri: uri.Uri) -> Route {
     ["qwizes"] -> QwizesRoute
     ["qwizes", "create"] -> CreateQwizRoute
     ["qwiz", id] -> QwizRoute(shared.Uuid(id))
+    ["questions", "create"] -> CreateQuestionRoute
     _ -> HomeRoute
+  }
+}
+
+pub fn route_to_url(route: Route) -> String {
+  case route {
+    CreateQuestionRoute -> "/questions/create"
+    CreateQwizRoute -> "/qwizes/create"
+    HomeRoute -> "/"
+    QwizRoute(id) -> "/qwiz/" <> id.data
+    QwizesRoute -> "/qwizes"
   }
 }
 

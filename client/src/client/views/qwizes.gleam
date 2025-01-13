@@ -17,10 +17,14 @@ pub fn view(model: model.Model) {
 
 fn qwiz_row(qwiz: qwiz.Qwiz) {
   html.div([], [
-    html.a([attribute.href("/qwiz/" <> qwiz.id.data)], [html.text(qwiz.name)]),
+    html.a([attribute.href(model.QwizRoute(qwiz.id) |> model.route_to_url)], [
+      html.text(qwiz.name),
+    ]),
   ])
 }
 
 pub fn create_qwiz_button() {
-  html.a([attribute.href("/qwizes/create")], [html.text("Create Qwiz")])
+  html.a([attribute.href(model.CreateQwizRoute |> model.route_to_url)], [
+    html.text("Create Qwiz"),
+  ])
 }

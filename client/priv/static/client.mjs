@@ -196,12 +196,12 @@ function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
   }
 }
 function byteArrayToFloat(byteArray, start3, end, isBigEndian) {
-  const view6 = new DataView(byteArray.buffer);
+  const view7 = new DataView(byteArray.buffer);
   const byteSize = end - start3;
   if (byteSize === 8) {
-    return view6.getFloat64(start3, !isBigEndian);
+    return view7.getFloat64(start3, !isBigEndian);
   } else if (byteSize === 4) {
-    return view6.getFloat32(start3, !isBigEndian);
+    return view7.getFloat32(start3, !isBigEndian);
   } else {
     const msg = `Sized floats must be 32-bit or 64-bit on JavaScript, got size of ${byteSize * 8} bits`;
     throw new globalThis.Error(msg);
@@ -346,6 +346,14 @@ function unwrap(option, default$) {
     return default$;
   }
 }
+function map(option, fun) {
+  if (option instanceof Some) {
+    let x = option[0];
+    return new Some(fun(x));
+  } else {
+    return new None();
+  }
+}
 
 // build/dev/javascript/gleam_stdlib/gleam/string_tree.mjs
 function append(tree, second) {
@@ -414,7 +422,7 @@ function split2(x, substring) {
     let _pipe = x;
     let _pipe$1 = identity(_pipe);
     let _pipe$2 = split(_pipe$1, substring);
-    return map(_pipe$2, identity);
+    return map2(_pipe$2, identity);
   }
 }
 
@@ -444,7 +452,7 @@ function base64_url_decode(encoded) {
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/result.mjs
-function map2(result, fun) {
+function map3(result, fun) {
   if (result.isOk()) {
     let x = result[0];
     return new Ok(fun(x));
@@ -568,7 +576,7 @@ function push_path(error2, name) {
   let name$1 = identity(name);
   let decoder = any(
     toList([decode_string, (x) => {
-      return map2(int(x), to_string);
+      return map3(int(x), to_string);
     }])
   );
   let name$2 = (() => {
@@ -610,7 +618,7 @@ function map_errors(result, f) {
   return map_error(
     result,
     (_capture) => {
-      return map(_capture, f);
+      return map2(_capture, f);
     }
   );
 }
@@ -1793,7 +1801,7 @@ function map_loop(loop$list, loop$fun, loop$acc) {
     }
   }
 }
-function map(list4, fun) {
+function map2(list4, fun) {
   return map_loop(list4, fun, toList([]));
 }
 function try_map_loop(loop$list, loop$fun, loop$acc) {
@@ -1871,7 +1879,7 @@ function flatten(lists) {
   return flatten_loop(lists, toList([]));
 }
 function flat_map(list4, fun) {
-  let _pipe = map(list4, fun);
+  let _pipe = map2(list4, fun);
   return flatten(_pipe);
 }
 function fold(loop$list, loop$initial, loop$fun) {
@@ -2048,7 +2056,7 @@ function preprocessed_array(from2) {
 }
 function array2(entries, inner_type) {
   let _pipe = entries;
-  let _pipe$1 = map(_pipe, inner_type);
+  let _pipe$1 = map2(_pipe, inner_type);
   return preprocessed_array(_pipe$1);
 }
 
@@ -2268,7 +2276,7 @@ function do_keyed(el, key2) {
 }
 function keyed(el, children2) {
   return el(
-    map(
+    map2(
       children2,
       (_use0) => {
         let key2 = _use0[0];
@@ -2693,13 +2701,13 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {Gleam.Ok<(action: Lustre.Action<Lustre.Client, Msg>>) => void>}
    */
-  static start({ init: init4, update: update2, view: view6 }, selector, flags) {
+  static start({ init: init4, update: update2, view: view7 }, selector, flags) {
     if (!is_browser())
       return new Error(new NotABrowser());
     const root = selector instanceof HTMLElement ? selector : document.querySelector(selector);
     if (!root)
       return new Error(new ElementNotFound(selector));
-    const app = new _LustreClientApplication(root, init4(flags), update2, view6);
+    const app = new _LustreClientApplication(root, init4(flags), update2, view7);
     return new Ok((action) => app.send(action));
   }
   /**
@@ -2710,11 +2718,11 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {LustreClientApplication}
    */
-  constructor(root, [init4, effects], update2, view6) {
+  constructor(root, [init4, effects], update2, view7) {
     this.root = root;
     this.#model = init4;
     this.#update = update2;
-    this.#view = view6;
+    this.#view = view7;
     this.#tickScheduled = window.requestAnimationFrame(
       () => this.#tick(effects.all.toArray(), true)
     );
@@ -2828,20 +2836,20 @@ var LustreClientApplication = class _LustreClientApplication {
 };
 var start = LustreClientApplication.start;
 var LustreServerApplication = class _LustreServerApplication {
-  static start({ init: init4, update: update2, view: view6, on_attribute_change }, flags) {
+  static start({ init: init4, update: update2, view: view7, on_attribute_change }, flags) {
     const app = new _LustreServerApplication(
       init4(flags),
       update2,
-      view6,
+      view7,
       on_attribute_change
     );
     return new Ok((action) => app.send(action));
   }
-  constructor([model, effects], update2, view6, on_attribute_change) {
+  constructor([model, effects], update2, view7, on_attribute_change) {
     this.#model = model;
     this.#update = update2;
-    this.#view = view6;
-    this.#html = view6(model);
+    this.#view = view7;
+    this.#html = view7(model);
     this.#onAttributeChange = on_attribute_change;
     this.#renderers = /* @__PURE__ */ new Map();
     this.#handlers = handlers(this.#html);
@@ -2943,11 +2951,11 @@ var prevent_default = (event2) => event2.preventDefault();
 
 // build/dev/javascript/lustre/lustre.mjs
 var App = class extends CustomType {
-  constructor(init4, update2, view6, on_attribute_change) {
+  constructor(init4, update2, view7, on_attribute_change) {
     super();
     this.init = init4;
     this.update = update2;
-    this.view = view6;
+    this.view = view7;
     this.on_attribute_change = on_attribute_change;
   }
 };
@@ -2959,8 +2967,8 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init4, update2, view6) {
-  return new App(init4, update2, view6, new None());
+function application(init4, update2, view7) {
+  return new App(init4, update2, view7, new None());
 }
 function start2(app, selector, flags) {
   return guard(
@@ -4216,6 +4224,28 @@ function string2() {
     ""
   );
 }
+function bool3() {
+  return new Converter(
+    (v) => {
+      return new BoolValue(v);
+    },
+    (v) => {
+      if (v instanceof BoolValue) {
+        let val = v.value;
+        return new Ok(val);
+      } else {
+        let other = v;
+        return new Error(
+          toList([
+            new DecodeError("BoolValue", get_type(other), toList([]))
+          ])
+        );
+      }
+    },
+    new Bool(),
+    false
+  );
+}
 function null$2() {
   return new Converter(
     (_) => {
@@ -4243,7 +4273,7 @@ function list3(of) {
       return new ListValue(
         (() => {
           let _pipe = v;
-          return map(_pipe, of.encoder);
+          return map2(_pipe, of.encoder);
         })()
       );
     },
@@ -4526,11 +4556,81 @@ function uuid_converter() {
   );
 }
 
+// build/dev/javascript/shared/shared/answer.mjs
+var Answer = class extends CustomType {
+  constructor(id2, question_id, answer, correct) {
+    super();
+    this.id = id2;
+    this.question_id = question_id;
+    this.answer = answer;
+    this.correct = correct;
+  }
+};
+function answer_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "question_id",
+          (v) => {
+            return new Ok(v.question_id);
+          },
+          uuid_converter(),
+          (question_id) => {
+            return field2(
+              "answer",
+              (v) => {
+                return new Ok(v.answer);
+              },
+              string2(),
+              (answer) => {
+                return field2(
+                  "correct",
+                  (v) => {
+                    return new Ok(v.correct);
+                  },
+                  bool3(),
+                  (correct) => {
+                    return success(
+                      new Answer(id2, question_id, answer, correct)
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+
 // build/dev/javascript/shared/shared/question.mjs
 var Question = class extends CustomType {
   constructor(id2, qwiz_id, question) {
     super();
     this.id = id2;
+    this.qwiz_id = qwiz_id;
+    this.question = question;
+  }
+};
+var QuestionWithAnswers = class extends CustomType {
+  constructor(id2, qwiz_id, question, answers) {
+    super();
+    this.id = id2;
+    this.qwiz_id = qwiz_id;
+    this.question = question;
+    this.answers = answers;
+  }
+};
+var CreateQuestion = class extends CustomType {
+  constructor(qwiz_id, question) {
+    super();
     this.qwiz_id = qwiz_id;
     this.question = question;
   }
@@ -4566,6 +4666,82 @@ function question_converter() {
       }
     )
   );
+}
+function question_with_answers_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "qwiz_id",
+          (v) => {
+            return new Ok(v.qwiz_id);
+          },
+          uuid_converter(),
+          (qwiz_id) => {
+            return field2(
+              "question",
+              (v) => {
+                return new Ok(v.question);
+              },
+              string2(),
+              (question) => {
+                return field2(
+                  "answers",
+                  (v) => {
+                    return new Ok(v.answers);
+                  },
+                  list3(answer_converter()),
+                  (answers) => {
+                    return success(
+                      new QuestionWithAnswers(id2, qwiz_id, question, answers)
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function create_question_converter() {
+  return object3(
+    field2(
+      "qwiz_id",
+      (v) => {
+        return new Ok(v.qwiz_id);
+      },
+      uuid_converter(),
+      (qwiz_id) => {
+        return field2(
+          "question",
+          (v) => {
+            return new Ok(v.question);
+          },
+          string2(),
+          (question) => {
+            return success(new CreateQuestion(qwiz_id, question));
+          }
+        );
+      }
+    )
+  );
+}
+function create_question() {
+  let _pipe = mutation("create_question", new None());
+  let _pipe$1 = params(_pipe, create_question_converter());
+  return returns(_pipe$1, question_with_answers_converter());
+}
+function delete_question() {
+  let _pipe = mutation("delete_question", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, null$2());
 }
 
 // build/dev/javascript/shared/shared/qwiz.mjs
@@ -4846,7 +5022,7 @@ function encode_dict(val, path) {
   let result_partition = (() => {
     let _pipe2 = val;
     let _pipe$12 = map_to_list(_pipe2);
-    let _pipe$2 = map(
+    let _pipe$2 = map2(
       _pipe$12,
       (kv) => {
         let $ = encode_dict_key(kv[0]);
@@ -4992,7 +5168,7 @@ function encode_value2(val) {
   } else if (val instanceof ObjectValue) {
     let v = val.value;
     return object2(
-      map(v, (f) => {
+      map2(v, (f) => {
         return [f[0], encode_value2(f[1])];
       })
     );
@@ -5035,7 +5211,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = decode_string(_pipe);
-      return map2(
+      return map3(
         _pipe$1,
         (var0) => {
           return new StringValue(var0);
@@ -5046,7 +5222,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = bool(_pipe);
-      return map2(_pipe$1, (var0) => {
+      return map3(_pipe$1, (var0) => {
         return new BoolValue(var0);
       });
     };
@@ -5054,7 +5230,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = float(_pipe);
-      return map2(_pipe$1, (var0) => {
+      return map3(_pipe$1, (var0) => {
         return new FloatValue(var0);
       });
     };
@@ -5062,7 +5238,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = int(_pipe);
-      return map2(_pipe$1, (var0) => {
+      return map3(_pipe$1, (var0) => {
         return new IntValue(var0);
       });
     };
@@ -5101,8 +5277,8 @@ function decode_value(of) {
           );
         }
       );
-      let _pipe$3 = map2(_pipe$2, reverse);
-      return map2(_pipe$3, (var0) => {
+      let _pipe$3 = map3(_pipe$2, reverse);
+      return map3(_pipe$3, (var0) => {
         return new ListValue(var0);
       });
     };
@@ -5148,8 +5324,8 @@ function decode_value(of) {
           );
         }
       );
-      let _pipe$3 = map2(_pipe$2, from_list);
-      return map2(_pipe$3, (var0) => {
+      let _pipe$3 = map3(_pipe$2, from_list);
+      return map3(_pipe$3, (var0) => {
         return new DictValue(var0);
       });
     };
@@ -5181,8 +5357,8 @@ function decode_value(of) {
           }
         }
       );
-      let _pipe$1 = map2(_pipe, reverse);
-      return map2(
+      let _pipe$1 = map3(_pipe, reverse);
+      return map3(
         _pipe$1,
         (var0) => {
           return new ObjectValue(var0);
@@ -5194,7 +5370,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = optional(decode_value(of$1))(_pipe);
-      return map2(
+      return map3(
         _pipe$1,
         (var0) => {
           return new OptionalValue(var0);
@@ -5214,13 +5390,13 @@ function decode_value(of) {
           if (type_val === "ok") {
             let _pipe = val;
             let _pipe$1 = field("value", decode_value(res))(_pipe);
-            let _pipe$2 = map2(
+            let _pipe$2 = map3(
               _pipe$1,
               (var0) => {
                 return new Ok(var0);
               }
             );
-            return map2(
+            return map3(
               _pipe$2,
               (var0) => {
                 return new ResultValue(var0);
@@ -5229,13 +5405,13 @@ function decode_value(of) {
           } else if (type_val === "error") {
             let _pipe = val;
             let _pipe$1 = field("value", decode_value(err))(_pipe);
-            let _pipe$2 = map2(
+            let _pipe$2 = map3(
               _pipe$1,
               (var0) => {
                 return new Error(var0);
               }
             );
-            return map2(
+            return map3(
               _pipe$2,
               (var0) => {
                 return new ResultValue(var0);
@@ -5274,7 +5450,7 @@ function decode_value(of) {
                   new DecodeError(
                     "One of: " + (() => {
                       let _pipe$1 = variants;
-                      let _pipe$2 = map(_pipe$1, (v) => {
+                      let _pipe$2 = map2(_pipe$1, (v) => {
                         return v[0];
                       });
                       return join(_pipe$2, "/");
@@ -5315,7 +5491,7 @@ function decode_value(of) {
           );
         }
       );
-      return map2(
+      return map3(
         _pipe$2,
         (var0) => {
           return new BitArrayValue(var0);
@@ -5472,7 +5648,7 @@ function set_query(req, query2) {
   };
   let query$1 = (() => {
     let _pipe = query2;
-    let _pipe$1 = map(_pipe, pair);
+    let _pipe$1 = map2(_pipe, pair);
     let _pipe$2 = intersperse(_pipe$1, "&");
     let _pipe$3 = concat2(_pipe$2);
     return new Some(_pipe$3);
@@ -5795,6 +5971,31 @@ function http_client(uri) {
   return new ProcedureClient(call2(uri));
 }
 
+// build/dev/javascript/plinth/document_ffi.mjs
+function getElementById(id2) {
+  let found = document.getElementById(id2);
+  if (!found) {
+    return new Error();
+  }
+  return new Ok(found);
+}
+
+// build/dev/javascript/plinth/element_ffi.mjs
+function getAttribute(element2, name) {
+  let attribute2 = element2.getAttribute(name);
+  if (attribute2) {
+    return new Ok(attribute2);
+  }
+  return new Error();
+}
+function value2(element2) {
+  let value3 = element2.value;
+  if (value3 != void 0) {
+    return new Ok(value3);
+  }
+  return new Error();
+}
+
 // build/dev/javascript/plinth/console_ffi.mjs
 function error(value3) {
   console.error(value3);
@@ -5827,8 +6028,37 @@ function rpc_effect(procedure, data, to_msg) {
     }
   );
 }
+function get_element(id2) {
+  let _pipe = getElementById(id2);
+  return replace_error(
+    _pipe,
+    toList([
+      new DecodeError("DOM element", "Element not found", toList([id2]))
+    ])
+  );
+}
+function get_value(element2) {
+  let _pipe = element2;
+  let _pipe$1 = value2(_pipe);
+  return replace_error(
+    _pipe$1,
+    toList([
+      new DecodeError(
+        "A value",
+        "",
+        toList([
+          (() => {
+            let _pipe$2 = element2;
+            let _pipe$3 = getAttribute(_pipe$2, "id");
+            return unwrap2(_pipe$3, "");
+          })()
+        ])
+      )
+    ])
+  );
+}
 
-// build/dev/javascript/client/client/services/qwiz.mjs
+// build/dev/javascript/client/client/services/qwiz_service.mjs
 function get_qwizes2(cb) {
   return rpc_effect(get_qwizes(), void 0, cb);
 }
@@ -5912,6 +6142,31 @@ var QwizDeleted = class extends CustomType {
     this.id = id2;
   }
 };
+var CreateQuestion2 = class extends CustomType {
+  constructor(qwiz_id, question) {
+    super();
+    this.qwiz_id = qwiz_id;
+    this.question = question;
+  }
+};
+var QuestionCreated = class extends CustomType {
+  constructor(x0) {
+    super();
+    this[0] = x0;
+  }
+};
+var DeleteQuestion = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var QuestionDeleted = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
 var HomeRoute = class extends CustomType {
 };
 var QwizesRoute = class extends CustomType {
@@ -5924,6 +6179,8 @@ var QwizRoute = class extends CustomType {
     this.id = id2;
   }
 };
+var CreateQuestionRoute = class extends CustomType {
+};
 function on_url_change(uri) {
   let $ = path_segments(uri.path);
   if ($.hasLength(1) && $.head === "qwizes") {
@@ -5933,8 +6190,24 @@ function on_url_change(uri) {
   } else if ($.hasLength(2) && $.head === "qwiz") {
     let id2 = $.tail.head;
     return new QwizRoute(new Uuid(id2));
+  } else if ($.hasLength(2) && $.head === "questions" && $.tail.head === "create") {
+    return new CreateQuestionRoute();
   } else {
     return new HomeRoute();
+  }
+}
+function route_to_url(route) {
+  if (route instanceof CreateQuestionRoute) {
+    return "/questions/create";
+  } else if (route instanceof CreateQwizRoute) {
+    return "/qwizes/create";
+  } else if (route instanceof HomeRoute) {
+    return "/";
+  } else if (route instanceof QwizRoute) {
+    let id2 = route.id;
+    return "/qwiz/" + id2.data;
+  } else {
+    return "/qwizes";
   }
 }
 function route_on_load(route) {
@@ -5952,6 +6225,18 @@ function route_on_load(route) {
   } else {
     return none();
   }
+}
+
+// build/dev/javascript/client/client/services/question_service.mjs
+function create_question2(qwiz_id, question, cb) {
+  return rpc_effect(
+    create_question(),
+    new CreateQuestion(qwiz_id, question),
+    cb
+  );
+}
+function delete_question2(id2, cb) {
+  return rpc_effect(delete_question(), id2, cb);
 }
 
 // build/dev/javascript/client/client/services/user_service.mjs
@@ -5999,63 +6284,79 @@ function on_click(msg) {
   });
 }
 
-// build/dev/javascript/plinth/document_ffi.mjs
-function getElementById(id2) {
-  let found = document.getElementById(id2);
-  if (!found) {
-    return new Error();
-  }
-  return new Ok(found);
-}
-
-// build/dev/javascript/plinth/element_ffi.mjs
-function getAttribute(element2, name) {
-  let attribute2 = element2.getAttribute(name);
-  if (attribute2) {
-    return new Ok(attribute2);
-  }
-  return new Error();
-}
-function value2(element2) {
-  let value3 = element2.value;
-  if (value3 != void 0) {
-    return new Ok(value3);
-  }
-  return new Error();
-}
-
-// build/dev/javascript/client/client/views/create_qwiz.mjs
-function get_element(id2) {
-  let _pipe = getElementById(id2);
-  return replace_error(
-    _pipe,
+// build/dev/javascript/client/client/views/create_question.mjs
+function no_qwiz_view() {
+  return div(
+    toList([]),
     toList([
-      new DecodeError("DOM element", "Element not found", toList([id2]))
+      h1(toList([]), toList([text2("Error: No qwiz selected !")])),
+      a(
+        toList([
+          href(
+            (() => {
+              let _pipe = new QwizesRoute();
+              return route_to_url(_pipe);
+            })()
+          )
+        ]),
+        toList([text2("Go back to qwizes")])
+      )
     ])
   );
 }
-function get_value(element2) {
-  let _pipe = element2;
-  let _pipe$1 = value2(_pipe);
-  return replace_error(
+var question_title = "question_title";
+function on_submit(qwiz, v) {
+  prevent_default(v);
+  let _pipe = get_element(question_title);
+  let _pipe$1 = then$(_pipe, get_value);
+  return map3(
     _pipe$1,
+    (_capture) => {
+      return new CreateQuestion2(qwiz.id, _capture);
+    }
+  );
+}
+function create_view(qwiz) {
+  return div(
+    toList([]),
     toList([
-      new DecodeError(
-        "A value",
-        "",
+      form(
         toList([
-          (() => {
-            let _pipe$2 = element2;
-            let _pipe$3 = getAttribute(_pipe$2, "id");
-            return unwrap2(_pipe$3, "");
-          })()
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit(qwiz, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(toList([id(question_title)]))
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Create")])
+          )
         ])
       )
     ])
   );
 }
+function view(qwiz) {
+  if (qwiz instanceof None) {
+    return no_qwiz_view();
+  } else {
+    let qwiz$1 = qwiz[0];
+    return create_view(qwiz$1);
+  }
+}
+
+// build/dev/javascript/client/client/views/create_qwiz.mjs
 var qwiz_name = "qwiz_name";
-function on_submit(model, v) {
+function on_submit2(model, v) {
   prevent_default(v);
   let $ = model.user;
   if ($ instanceof None) {
@@ -6067,7 +6368,7 @@ function on_submit(model, v) {
     let user = $[0];
     let _pipe = get_element(qwiz_name);
     let _pipe$1 = then$(_pipe, get_value);
-    return map2(
+    return map3(
       _pipe$1,
       (_capture) => {
         return new CreateQwiz(_capture, user.id);
@@ -6075,11 +6376,11 @@ function on_submit(model, v) {
     );
   }
 }
-function view(model) {
+function view2(model) {
   return form(
     toList([
       on2("submit", (_capture) => {
-        return on_submit(model, _capture);
+        return on_submit2(model, _capture);
       })
     ]),
     toList([
@@ -6098,7 +6399,7 @@ function view(model) {
 }
 
 // build/dev/javascript/client/client/views/home.mjs
-function view2(model) {
+function view3(model) {
   return button(
     toList([
       on2("click", (_) => {
@@ -6123,7 +6424,7 @@ function question_list(questions) {
     (_capture) => {
       return div(toList([]), _capture);
     },
-    map(questions, (q) => {
+    map2(questions, (q) => {
       return [q.id.data, question_row(q)];
     })
   );
@@ -6134,7 +6435,20 @@ function delete_qwiz_button(id2) {
     toList([text2("Delete")])
   );
 }
-function view3(qwiz) {
+function create_question_button() {
+  return a(
+    toList([
+      href(
+        (() => {
+          let _pipe = new CreateQuestionRoute();
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
+    toList([text2("Add question")])
+  );
+}
+function view4(qwiz) {
   if (qwiz instanceof None) {
     return not_found();
   } else {
@@ -6151,7 +6465,8 @@ function view3(qwiz) {
             )
           ])
         ),
-        question_list(qwiz$1.questions)
+        question_list(qwiz$1.questions),
+        create_question_button()
       ])
     );
   }
@@ -6163,7 +6478,14 @@ function qwiz_row(qwiz) {
     toList([]),
     toList([
       a(
-        toList([href("/qwiz/" + qwiz.id.data)]),
+        toList([
+          href(
+            (() => {
+              let _pipe = new QwizRoute(qwiz.id);
+              return route_to_url(_pipe);
+            })()
+          )
+        ]),
         toList([text2(qwiz.name)])
       )
     ])
@@ -6171,11 +6493,18 @@ function qwiz_row(qwiz) {
 }
 function create_qwiz_button() {
   return a(
-    toList([href("/qwizes/create")]),
+    toList([
+      href(
+        (() => {
+          let _pipe = new CreateQwizRoute();
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
     toList([text2("Create Qwiz")])
   );
 }
-function view4(model) {
+function view5(model) {
   return div(
     toList([]),
     toList([
@@ -6183,7 +6512,7 @@ function view4(model) {
         (_capture) => {
           return div(toList([]), _capture);
         },
-        map(
+        map2(
           model.qwizes,
           (qwiz) => {
             return [qwiz.id.data, qwiz_row(qwiz)];
@@ -6199,7 +6528,7 @@ function view4(model) {
 function init3(_) {
   let initial_route = (() => {
     let _pipe = do_initial_uri();
-    let _pipe$1 = map2(_pipe, on_url_change);
+    let _pipe$1 = map3(_pipe, on_url_change);
     return unwrap2(_pipe$1, new HomeRoute());
   })();
   return [
@@ -6222,7 +6551,14 @@ function init3(_) {
           if (initial_route instanceof HomeRoute) {
             return none();
           } else {
-            return push("/", new None(), new None());
+            return push(
+              (() => {
+                let _pipe = new HomeRoute();
+                return route_to_url(_pipe);
+              })(),
+              new None(),
+              new None()
+            );
           }
         })()
       ])
@@ -6255,7 +6591,14 @@ function update(model, msg) {
           _record.qwiz
         );
       })(),
-      push("/qwizes", new None(), new None())
+      push(
+        (() => {
+          let _pipe = new QwizesRoute();
+          return route_to_url(_pipe);
+        })(),
+        new None(),
+        new None()
+      )
     ];
   } else if (msg instanceof SetQwizes) {
     let qwizes = msg.qwizes;
@@ -6300,7 +6643,10 @@ function update(model, msg) {
         );
       })(),
       push(
-        "/qwiz/" + qwiz.id.data,
+        (() => {
+          let _pipe = new QwizRoute(qwiz.id);
+          return route_to_url(_pipe);
+        })(),
         new None(),
         new None()
       )
@@ -6344,7 +6690,7 @@ function update(model, msg) {
         }
       )
     ];
-  } else {
+  } else if (msg instanceof QwizDeleted) {
     let qwiz_id = msg.id;
     return [
       (() => {
@@ -6357,39 +6703,164 @@ function update(model, msg) {
             return filter(
               _pipe,
               (q) => {
-                return isEqual(q.id, qwiz_id);
+                return !isEqual(q.id, qwiz_id);
               }
             );
           })(),
           _record.qwiz
         );
       })(),
-      push("/qwizes", new None(), new None())
+      push(
+        (() => {
+          let _pipe = new QwizesRoute();
+          return route_to_url(_pipe);
+        })(),
+        new None(),
+        new None()
+      )
+    ];
+  } else if (msg instanceof CreateQuestion2) {
+    let qwiz_id = msg.qwiz_id;
+    let question = msg.question;
+    return [
+      model,
+      create_question2(
+        qwiz_id,
+        question,
+        (question2) => {
+          return new QuestionCreated(question2);
+        }
+      )
+    ];
+  } else if (msg instanceof QuestionCreated) {
+    let question = msg[0];
+    return [
+      (() => {
+        let _record = model;
+        return new Model2(
+          _record.route,
+          _record.user,
+          _record.qwizes,
+          (() => {
+            let _pipe = model.qwiz;
+            return map(
+              _pipe,
+              (qw) => {
+                let _record$1 = qw;
+                return new QwizWithQuestions(
+                  _record$1.id,
+                  _record$1.name,
+                  _record$1.owner,
+                  prepend(
+                    new Question(
+                      question.id,
+                      question.qwiz_id,
+                      question.question
+                    ),
+                    qw.questions
+                  )
+                );
+              }
+            );
+          })()
+        );
+      })(),
+      none()
+    ];
+  } else if (msg instanceof DeleteQuestion) {
+    let id2 = msg.id;
+    return [
+      model,
+      delete_question2(
+        id2,
+        (_) => {
+          return new QuestionDeleted(id2);
+        }
+      )
+    ];
+  } else {
+    let id2 = msg.id;
+    return [
+      (() => {
+        let _record = model;
+        return new Model2(
+          _record.route,
+          _record.user,
+          _record.qwizes,
+          (() => {
+            let _pipe = model.qwiz;
+            return map(
+              _pipe,
+              (qw) => {
+                return new QwizWithQuestions(
+                  qw.id,
+                  qw.name,
+                  qw.owner,
+                  (() => {
+                    let _pipe$1 = qw.questions;
+                    return filter(
+                      _pipe$1,
+                      (q) => {
+                        return !isEqual(q.id, id2);
+                      }
+                    );
+                  })()
+                );
+              }
+            );
+          })()
+        );
+      })(),
+      (() => {
+        let $ = model.qwiz;
+        if ($ instanceof None) {
+          return push(
+            (() => {
+              let _pipe = new QwizesRoute();
+              return route_to_url(_pipe);
+            })(),
+            new None(),
+            new None()
+          );
+        } else {
+          let qwiz = $[0];
+          return push(
+            (() => {
+              let _pipe = new QwizRoute(qwiz.id);
+              return route_to_url(_pipe);
+            })(),
+            new None(),
+            new None()
+          );
+        }
+      })()
     ];
   }
 }
-function view5(model) {
+function view6(model) {
   let $ = model.route;
   if ($ instanceof HomeRoute) {
-    return view2(model);
+    return view3(model);
   } else if ($ instanceof QwizesRoute) {
-    return view4(model);
+    return view5(model);
   } else if ($ instanceof CreateQwizRoute) {
-    return view(model);
-  } else if ($ instanceof QwizRoute) {
-    return view3(model.qwiz);
-  } else {
     return view2(model);
+  } else if ($ instanceof QwizRoute) {
+    return view4(model.qwiz);
+  } else if ($ instanceof CreateQuestionRoute) {
+    return view(model.qwiz);
+  } else {
+    return view3(model);
   }
 }
 function main() {
-  let app = application(init3, update, view5);
+  let app = application(init3, update, view6);
   let $ = start2(app, "#app", void 0);
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "client",
-      19,
+      22,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }
