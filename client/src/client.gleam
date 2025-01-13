@@ -1,21 +1,21 @@
 import client/model
+import client/services/answer_service
 import client/services/question_service
 import client/services/qwiz_service
 import client/services/user_service
+import client/views/create_answer
 import client/views/create_question
 import client/views/create_qwiz
 import client/views/home
+import client/views/question as question_view
 import client/views/qwiz as qwiz_view
 import client/views/qwizes as qwizes_view
-import gleam/list
 import gleam/option
 import gleam/result
 import lustre
 import lustre/effect
 import lustre/element
 import modem
-import shared/question
-import shared/qwiz
 
 pub fn main() {
   let app = lustre.application(init, update, view)
@@ -35,6 +35,7 @@ fn init(_) -> #(model.Model, effect.Effect(model.Msg)) {
       qwizes: [],
       route: model.HomeRoute,
       qwiz: option.None,
+      question: option.None,
     ),
     effect.batch([
       modem.init(fn(uri) { uri |> model.on_url_change |> model.ChangeRoute }),
@@ -74,10 +75,7 @@ fn update(
       model.QwizCreated(new_qwiz)
     })
     model.QwizCreated(qwiz) -> #(
-      model.Model(..model, qwizes: [
-        qwiz.Qwiz(id: qwiz.id, name: qwiz.name, owner: qwiz.owner),
-        ..model.qwizes
-      ]),
+      model,
       modem.push(
         model.QwizRoute(qwiz.id) |> model.route_to_url,
         option.None,
@@ -96,11 +94,8 @@ fn update(
       use _ <- qwiz_service.delete_qwiz(qwiz_id)
       model.QwizDeleted(qwiz_id)
     })
-    model.QwizDeleted(qwiz_id) -> #(
-      model.Model(
-        ..model,
-        qwizes: model.qwizes |> list.filter(fn(q) { q.id != qwiz_id }),
-      ),
+    model.QwizDeleted(_) -> #(
+      model,
       modem.push(
         model.QwizesRoute |> model.route_to_url,
         option.None,
@@ -112,55 +107,53 @@ fn update(
       model.QuestionCreated(question)
     })
     model.QuestionCreated(question) -> #(
-      model.Model(
-        ..model,
-        qwiz: model.qwiz
-          |> option.map(fn(qw) {
-            qwiz.QwizWithQuestions(..qw, questions: [
-              question.Question(
-                question.id,
-                question.qwiz_id,
-                question.question,
-              ),
-              ..qw.questions
-            ])
-          }),
+      model,
+      modem.push(
+        model.QuestionRoute(question.id) |> model.route_to_url,
+        option.None,
+        option.None,
       ),
-      effect.none(),
-      // Should move to the question page
     )
     model.DeleteQuestion(id) -> #(model, {
       use _ <- question_service.delete_question(id)
       model.QuestionDeleted(id)
     })
-    model.QuestionDeleted(id) -> #(
-      model.Model(
-        ..model,
-        qwiz: model.qwiz
-          |> option.map(fn(qw) {
-            qwiz.QwizWithQuestions(
-              qw.id,
-              qw.name,
-              qw.owner,
-              qw.questions |> list.filter(fn(q) { q.id != id }),
-            )
-          }),
-      ),
-      case model.qwiz {
-        option.None ->
-          modem.push(
-            model.QwizesRoute |> model.route_to_url,
-            option.None,
-            option.None,
-          )
-        option.Some(qwiz) ->
-          modem.push(
-            model.QwizRoute(qwiz.id) |> model.route_to_url,
-            option.None,
-            option.None,
-          )
-      },
+    model.QuestionDeleted(_) -> #(model, case model.qwiz {
+      option.None ->
+        modem.push(
+          model.QwizesRoute |> model.route_to_url,
+          option.None,
+          option.None,
+        )
+      option.Some(qwiz) ->
+        modem.push(
+          model.QwizRoute(qwiz.id) |> model.route_to_url,
+          option.None,
+          option.None,
+        )
+    })
+    model.SetQuestion(question) -> #(
+      model.Model(..model, question: option.Some(question)),
+      effect.none(),
     )
+    model.CreateAnswer(question_id, answer, correct) -> #(model, {
+      use a <- answer_service.create_answer(question_id, answer, correct)
+      model.AnswerCreated(a)
+    })
+    model.AnswerCreated(_) -> #(model, case model.question {
+      option.None ->
+        modem.push(
+          model.QwizesRoute |> model.route_to_url,
+          option.None,
+          option.None,
+        )
+      option.Some(question) ->
+        modem.push(
+          model.QuestionRoute(question.id) |> model.route_to_url,
+          option.None,
+          option.None,
+        )
+    })
   }
 }
 
@@ -171,6 +164,7 @@ fn view(model: model.Model) -> element.Element(model.Msg) {
     model.CreateQwizRoute -> create_qwiz.view(model)
     model.QwizRoute(_) -> qwiz_view.view(model.qwiz)
     model.CreateQuestionRoute -> create_question.view(model.qwiz)
-    _ -> home.view(model)
+    model.QuestionRoute(_) -> question_view.view(model.question)
+    model.CreateAnswerRoute -> create_answer.view(model.question)
   }
 }

@@ -51,3 +51,7 @@ pub fn get_value(
     ]),
   ])
 }
+
+pub fn get_checked(element: element.Element) -> Bool {
+  element |> element.get_checked
+}

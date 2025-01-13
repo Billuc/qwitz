@@ -33,7 +33,10 @@ fn question_list(questions: List(question.Question)) {
 }
 
 fn question_row(question: question.Question) {
-  html.a([], [html.text(question.question)])
+  html.a(
+    [attribute.href(model.QuestionRoute(question.id) |> model.route_to_url)],
+    [html.text(question.question)],
+  )
 }
 
 fn delete_qwiz_button(id: shared.Uuid) {

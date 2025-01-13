@@ -3,6 +3,10 @@ import lustre/effect
 import shared
 import shared/question
 
+pub fn get_question(question_id: shared.Uuid, cb) -> effect.Effect(c) {
+  utils.rpc_effect(question.get_question(), question_id, cb)
+}
+
 pub fn create_question(
   qwiz_id: shared.Uuid,
   question: String,
