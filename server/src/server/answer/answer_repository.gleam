@@ -62,7 +62,6 @@ pub fn create(
     params.correct,
   )
   |> result.map_error(db_utils.query_error_to_database_error)
-  |> result.then(db_utils.get_one)
   |> result.replace(db_utils.youid_to_shared(id))
 }
 
@@ -79,7 +78,6 @@ pub fn update(
     db_utils.shared_to_youid(params.id),
   )
   |> result.map_error(db_utils.query_error_to_database_error)
-  |> result.then(db_utils.get_one)
   |> result.replace(params.id)
 }
 

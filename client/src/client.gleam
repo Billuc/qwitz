@@ -6,16 +6,19 @@ import client/services/user_service
 import client/views/create_answer
 import client/views/create_question
 import client/views/create_qwiz
+import client/views/edit_answer
 import client/views/home
 import client/views/question as question_view
 import client/views/qwiz as qwiz_view
 import client/views/qwizes as qwizes_view
+import gleam/list
 import gleam/option
 import gleam/result
 import lustre
 import lustre/effect
 import lustre/element
 import modem
+import shared/question
 
 pub fn main() {
   let app = lustre.application(init, update, view)
@@ -154,6 +157,35 @@ fn update(
           option.None,
         )
     })
+    model.DeleteAnswer(id) -> #(model, {
+      use _ <- answer_service.delete_answer(id)
+      model.AnswerDeleted(id)
+    })
+    model.AnswerDeleted(id) -> #(
+      model.Model(
+        ..model,
+        question: model.question
+          |> option.map(fn(q) {
+            question.QuestionWithAnswers(
+              ..q,
+              answers: q.answers |> list.filter(fn(a) { a.id != id }),
+            )
+          }),
+      ),
+      effect.none(),
+    )
+    model.UpdateAnswer(a) -> #(model, {
+      use a <- answer_service.update_answer(a)
+      model.AnswerUpdated(a)
+    })
+    model.AnswerUpdated(a) -> #(
+      model,
+      modem.push(
+        model.QuestionRoute(a.question_id) |> model.route_to_url,
+        option.None,
+        option.None,
+      ),
+    )
   }
 }
 
@@ -162,9 +194,10 @@ fn view(model: model.Model) -> element.Element(model.Msg) {
     model.HomeRoute -> home.view(model)
     model.QwizesRoute -> qwizes_view.view(model)
     model.CreateQwizRoute -> create_qwiz.view(model)
-    model.QwizRoute(_) -> qwiz_view.view(model.qwiz)
+    model.QwizRoute(_) -> qwiz_view.view(model)
     model.CreateQuestionRoute -> create_question.view(model.qwiz)
-    model.QuestionRoute(_) -> question_view.view(model.question)
+    model.QuestionRoute(_) -> question_view.view(model)
     model.CreateAnswerRoute -> create_answer.view(model.question)
+    model.UpdateAnswerRoute(id) -> edit_answer.view(model, id)
   }
 }

@@ -16,6 +16,10 @@ pub fn create_answer(
   )
 }
 
-pub fn delete_question(id: shared.Uuid, cb: fn(Nil) -> d) -> effect.Effect(d) {
+pub fn update_answer(answer: answer.Answer, cb) -> effect.Effect(c) {
+  utils.rpc_effect(answer.update_answer(), answer, cb)
+}
+
+pub fn delete_answer(id: shared.Uuid, cb: fn(Nil) -> d) -> effect.Effect(d) {
   utils.rpc_effect(answer.delete_answer(), id, cb)
 }

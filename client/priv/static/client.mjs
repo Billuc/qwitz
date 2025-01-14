@@ -196,12 +196,12 @@ function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
   }
 }
 function byteArrayToFloat(byteArray, start3, end, isBigEndian) {
-  const view9 = new DataView(byteArray.buffer);
+  const view10 = new DataView(byteArray.buffer);
   const byteSize = end - start3;
   if (byteSize === 8) {
-    return view9.getFloat64(start3, !isBigEndian);
+    return view10.getFloat64(start3, !isBigEndian);
   } else if (byteSize === 4) {
-    return view9.getFloat32(start3, !isBigEndian);
+    return view10.getFloat32(start3, !isBigEndian);
   } else {
     const msg = `Sized floats must be 32-bit or 64-bit on JavaScript, got size of ${byteSize * 8} bits`;
     throw new globalThis.Error(msg);
@@ -338,12 +338,36 @@ function to_result(option, e) {
     return new Error(e);
   }
 }
+function from_result(result) {
+  if (result.isOk()) {
+    let a2 = result[0];
+    return new Some(a2);
+  } else {
+    return new None();
+  }
+}
 function unwrap(option, default$) {
   if (option instanceof Some) {
     let x = option[0];
     return x;
   } else {
     return default$;
+  }
+}
+function map(option, fun) {
+  if (option instanceof Some) {
+    let x = option[0];
+    return new Some(fun(x));
+  } else {
+    return new None();
+  }
+}
+function then$(option, fun) {
+  if (option instanceof Some) {
+    let x = option[0];
+    return fun(x);
+  } else {
+    return new None();
   }
 }
 
@@ -414,7 +438,7 @@ function split2(x, substring) {
     let _pipe = x;
     let _pipe$1 = identity(_pipe);
     let _pipe$2 = split(_pipe$1, substring);
-    return map(_pipe$2, identity);
+    return map2(_pipe$2, identity);
   }
 }
 
@@ -441,6 +465,79 @@ function base64_url_decode(encoded) {
   let _pipe$1 = replace(_pipe, "-", "+");
   let _pipe$2 = replace(_pipe$1, "_", "/");
   return base64_decode(_pipe$2);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/result.mjs
+function map3(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(fun(x));
+  } else {
+    let e = result[0];
+    return new Error(e);
+  }
+}
+function map_error(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(x);
+  } else {
+    let error2 = result[0];
+    return new Error(fun(error2));
+  }
+}
+function try$(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return fun(x);
+  } else {
+    let e = result[0];
+    return new Error(e);
+  }
+}
+function then$2(result, fun) {
+  return try$(result, fun);
+}
+function unwrap2(result, default$) {
+  if (result.isOk()) {
+    let v = result[0];
+    return v;
+  } else {
+    return default$;
+  }
+}
+function partition_loop(loop$results, loop$oks, loop$errors) {
+  while (true) {
+    let results = loop$results;
+    let oks = loop$oks;
+    let errors = loop$errors;
+    if (results.hasLength(0)) {
+      return [oks, errors];
+    } else if (results.atLeastLength(1) && results.head.isOk()) {
+      let a2 = results.head[0];
+      let rest = results.tail;
+      loop$results = rest;
+      loop$oks = prepend(a2, oks);
+      loop$errors = errors;
+    } else {
+      let e = results.head[0];
+      let rest = results.tail;
+      loop$results = rest;
+      loop$oks = oks;
+      loop$errors = prepend(e, errors);
+    }
+  }
+}
+function partition(results) {
+  return partition_loop(results, toList([]), toList([]));
+}
+function replace_error(result, error2) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(x);
+  } else {
+    return new Error(error2);
+  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
@@ -495,7 +592,7 @@ function push_path(error2, name) {
   let name$1 = identity(name);
   let decoder = any(
     toList([decode_string, (x) => {
-      return map2(int(x), to_string);
+      return map3(int(x), to_string);
     }])
   );
   let name$2 = (() => {
@@ -537,7 +634,7 @@ function map_errors(result, f) {
   return map_error(
     result,
     (_capture) => {
-      return map(_capture, f);
+      return map2(_capture, f);
     }
   );
 }
@@ -1677,6 +1774,33 @@ function reverse_loop(loop$remaining, loop$accumulator) {
 function reverse(list4) {
   return reverse_loop(list4, toList([]));
 }
+function filter_loop(loop$list, loop$fun, loop$acc) {
+  while (true) {
+    let list4 = loop$list;
+    let fun = loop$fun;
+    let acc = loop$acc;
+    if (list4.hasLength(0)) {
+      return reverse(acc);
+    } else {
+      let first$1 = list4.head;
+      let rest$1 = list4.tail;
+      let new_acc = (() => {
+        let $ = fun(first$1);
+        if ($) {
+          return prepend(first$1, acc);
+        } else {
+          return acc;
+        }
+      })();
+      loop$list = rest$1;
+      loop$fun = fun;
+      loop$acc = new_acc;
+    }
+  }
+}
+function filter(list4, predicate) {
+  return filter_loop(list4, predicate, toList([]));
+}
 function map_loop(loop$list, loop$fun, loop$acc) {
   while (true) {
     let list4 = loop$list;
@@ -1693,7 +1817,7 @@ function map_loop(loop$list, loop$fun, loop$acc) {
     }
   }
 }
-function map(list4, fun) {
+function map2(list4, fun) {
   return map_loop(list4, fun, toList([]));
 }
 function try_map_loop(loop$list, loop$fun, loop$acc) {
@@ -1771,7 +1895,7 @@ function flatten(lists) {
   return flatten_loop(lists, toList([]));
 }
 function flat_map(list4, fun) {
-  let _pipe = map(list4, fun);
+  let _pipe = map2(list4, fun);
   return flatten(_pipe);
 }
 function fold(loop$list, loop$initial, loop$fun) {
@@ -1810,6 +1934,25 @@ function index_fold_loop(loop$over, loop$acc, loop$with, loop$index) {
 }
 function index_fold(list4, initial, fun) {
   return index_fold_loop(list4, initial, fun, 0);
+}
+function find2(loop$list, loop$is_desired) {
+  while (true) {
+    let list4 = loop$list;
+    let is_desired = loop$is_desired;
+    if (list4.hasLength(0)) {
+      return new Error(void 0);
+    } else {
+      let x = list4.head;
+      let rest$1 = list4.tail;
+      let $ = is_desired(x);
+      if ($) {
+        return new Ok(x);
+      } else {
+        loop$list = rest$1;
+        loop$is_desired = is_desired;
+      }
+    }
+  }
 }
 function find_map(loop$list, loop$fun) {
   while (true) {
@@ -1872,79 +2015,6 @@ function key_find(keyword_list, desired_key) {
       }
     }
   );
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/result.mjs
-function map2(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(fun(x));
-  } else {
-    let e = result[0];
-    return new Error(e);
-  }
-}
-function map_error(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(x);
-  } else {
-    let error2 = result[0];
-    return new Error(fun(error2));
-  }
-}
-function try$(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return fun(x);
-  } else {
-    let e = result[0];
-    return new Error(e);
-  }
-}
-function then$(result, fun) {
-  return try$(result, fun);
-}
-function unwrap2(result, default$) {
-  if (result.isOk()) {
-    let v = result[0];
-    return v;
-  } else {
-    return default$;
-  }
-}
-function partition_loop(loop$results, loop$oks, loop$errors) {
-  while (true) {
-    let results = loop$results;
-    let oks = loop$oks;
-    let errors = loop$errors;
-    if (results.hasLength(0)) {
-      return [oks, errors];
-    } else if (results.atLeastLength(1) && results.head.isOk()) {
-      let a2 = results.head[0];
-      let rest = results.tail;
-      loop$results = rest;
-      loop$oks = prepend(a2, oks);
-      loop$errors = errors;
-    } else {
-      let e = results.head[0];
-      let rest = results.tail;
-      loop$results = rest;
-      loop$oks = oks;
-      loop$errors = prepend(e, errors);
-    }
-  }
-}
-function partition(results) {
-  return partition_loop(results, toList([]), toList([]));
-}
-function replace_error(result, error2) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(x);
-  } else {
-    return new Error(error2);
-  }
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2021,7 +2091,7 @@ function preprocessed_array(from2) {
 }
 function array2(entries, inner_type) {
   let _pipe = entries;
-  let _pipe$1 = map(_pipe, inner_type);
+  let _pipe$1 = map2(_pipe, inner_type);
   return preprocessed_array(_pipe$1);
 }
 
@@ -2163,6 +2233,9 @@ function handlers(element2) {
 function attribute(name, value3) {
   return new Attribute(name, identity(value3), false);
 }
+function property(name, value3) {
+  return new Attribute(name, identity(value3), true);
+}
 function on(name, handler) {
   return new Event2("on" + name, handler);
 }
@@ -2174,6 +2247,9 @@ function type_(name) {
 }
 function value(val) {
   return attribute("value", val);
+}
+function checked(is_checked) {
+  return property("checked", is_checked);
 }
 function href(uri) {
   return attribute("href", uri);
@@ -2241,7 +2317,7 @@ function do_keyed(el, key2) {
 }
 function keyed(el, children2) {
   return el(
-    map(
+    map2(
       children2,
       (_use0) => {
         let key2 = _use0[0];
@@ -2574,8 +2650,8 @@ function lustreServerEventHandler(event2) {
   return {
     tag,
     data: include.reduce(
-      (data2, property) => {
-        const path = property.split(".");
+      (data2, property2) => {
+        const path = property2.split(".");
         for (let i = 0, o = data2, e = event2; i < path.length; i++) {
           if (i === path.length - 1) {
             o[path[i]] = e[path[i]];
@@ -2666,13 +2742,13 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {Gleam.Ok<(action: Lustre.Action<Lustre.Client, Msg>>) => void>}
    */
-  static start({ init: init4, update: update2, view: view9 }, selector, flags) {
+  static start({ init: init4, update: update2, view: view10 }, selector, flags) {
     if (!is_browser())
       return new Error(new NotABrowser());
     const root = selector instanceof HTMLElement ? selector : document.querySelector(selector);
     if (!root)
       return new Error(new ElementNotFound(selector));
-    const app = new _LustreClientApplication(root, init4(flags), update2, view9);
+    const app = new _LustreClientApplication(root, init4(flags), update2, view10);
     return new Ok((action) => app.send(action));
   }
   /**
@@ -2683,11 +2759,11 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {LustreClientApplication}
    */
-  constructor(root, [init4, effects], update2, view9) {
+  constructor(root, [init4, effects], update2, view10) {
     this.root = root;
     this.#model = init4;
     this.#update = update2;
-    this.#view = view9;
+    this.#view = view10;
     this.#tickScheduled = window.requestAnimationFrame(
       () => this.#tick(effects.all.toArray(), true)
     );
@@ -2801,20 +2877,20 @@ var LustreClientApplication = class _LustreClientApplication {
 };
 var start = LustreClientApplication.start;
 var LustreServerApplication = class _LustreServerApplication {
-  static start({ init: init4, update: update2, view: view9, on_attribute_change }, flags) {
+  static start({ init: init4, update: update2, view: view10, on_attribute_change }, flags) {
     const app = new _LustreServerApplication(
       init4(flags),
       update2,
-      view9,
+      view10,
       on_attribute_change
     );
     return new Ok((action) => app.send(action));
   }
-  constructor([model, effects], update2, view9, on_attribute_change) {
+  constructor([model, effects], update2, view10, on_attribute_change) {
     this.#model = model;
     this.#update = update2;
-    this.#view = view9;
-    this.#html = view9(model);
+    this.#view = view10;
+    this.#html = view10(model);
     this.#onAttributeChange = on_attribute_change;
     this.#renderers = /* @__PURE__ */ new Map();
     this.#handlers = handlers(this.#html);
@@ -2916,11 +2992,11 @@ var prevent_default = (event2) => event2.preventDefault();
 
 // build/dev/javascript/lustre/lustre.mjs
 var App = class extends CustomType {
-  constructor(init4, update2, view9, on_attribute_change) {
+  constructor(init4, update2, view10, on_attribute_change) {
     super();
     this.init = init4;
     this.update = update2;
-    this.view = view9;
+    this.view = view10;
     this.on_attribute_change = on_attribute_change;
   }
 };
@@ -2932,8 +3008,8 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init4, update2, view9) {
-  return new App(init4, update2, view9, new None());
+function application(init4, update2, view10) {
+  return new App(init4, update2, view10, new None());
 }
 function start2(app, selector, flags) {
   return guard(
@@ -4238,7 +4314,7 @@ function list3(of) {
       return new ListValue(
         (() => {
           let _pipe = v;
-          return map(_pipe, of.encoder);
+          return map2(_pipe, of.encoder);
         })()
       );
     },
@@ -4313,7 +4389,7 @@ function field2(field_name, field_getter, field_type, next) {
               new DecodeError("Value", "None", toList([field_name]))
             ])
           );
-          return then$(_pipe$2, field_type.decoder);
+          return then$2(_pipe$2, field_type.decoder);
         })();
         return try$(field_value, (a2) => {
           return next(a2).decoder(v);
@@ -4337,7 +4413,7 @@ function map5(converter, encode_map, decode_map2, default_value) {
     },
     (v) => {
       let _pipe = converter.decoder(v);
-      return then$(_pipe, decode_map2);
+      return then$2(_pipe, decode_map2);
     },
     converter.type_def,
     default_value
@@ -4351,6 +4427,85 @@ function decode2(converter) {
 }
 function type_def(converter) {
   return converter.type_def;
+}
+
+// build/dev/javascript/gleamrpc/gleamrpc.mjs
+var Query = class extends CustomType {
+};
+var Mutation = class extends CustomType {
+};
+var Procedure = class extends CustomType {
+  constructor(name, router, type_2, params_type, return_type) {
+    super();
+    this.name = name;
+    this.router = router;
+    this.type_ = type_2;
+    this.params_type = params_type;
+    this.return_type = return_type;
+  }
+};
+var GleamRPCError = class extends CustomType {
+  constructor(error2) {
+    super();
+    this.error = error2;
+  }
+};
+var ProcedureClient = class extends CustomType {
+  constructor(call3) {
+    super();
+    this.call = call3;
+  }
+};
+var ProcedureCall = class extends CustomType {
+  constructor(procedure, client2) {
+    super();
+    this.procedure = procedure;
+    this.client = client2;
+  }
+};
+function query(name, router) {
+  return new Procedure(
+    name,
+    router,
+    new Query(),
+    null$2(),
+    null$2()
+  );
+}
+function mutation(name, router) {
+  return new Procedure(
+    name,
+    router,
+    new Mutation(),
+    null$2(),
+    null$2()
+  );
+}
+function params(procedure, params_converter) {
+  let _record = procedure;
+  return new Procedure(
+    _record.name,
+    _record.router,
+    _record.type_,
+    params_converter,
+    _record.return_type
+  );
+}
+function returns(procedure, return_converter) {
+  let _record = procedure;
+  return new Procedure(
+    _record.name,
+    _record.router,
+    _record.type_,
+    _record.params_type,
+    return_converter
+  );
+}
+function with_client(procedure, client2) {
+  return new ProcedureCall(procedure, client2);
+}
+function call(procedure_call, params2, callback) {
+  return procedure_call.client.call(procedure_call.procedure, params2, callback);
 }
 
 // build/dev/javascript/gleam_regexp/gleam_regexp_ffi.mjs
@@ -4440,85 +4595,6 @@ function uuid_converter() {
     },
     new Uuid("00000000-0000-0000-0000-000000000000")
   );
-}
-
-// build/dev/javascript/gleamrpc/gleamrpc.mjs
-var Query = class extends CustomType {
-};
-var Mutation = class extends CustomType {
-};
-var Procedure = class extends CustomType {
-  constructor(name, router, type_2, params_type, return_type) {
-    super();
-    this.name = name;
-    this.router = router;
-    this.type_ = type_2;
-    this.params_type = params_type;
-    this.return_type = return_type;
-  }
-};
-var GleamRPCError = class extends CustomType {
-  constructor(error2) {
-    super();
-    this.error = error2;
-  }
-};
-var ProcedureClient = class extends CustomType {
-  constructor(call3) {
-    super();
-    this.call = call3;
-  }
-};
-var ProcedureCall = class extends CustomType {
-  constructor(procedure, client2) {
-    super();
-    this.procedure = procedure;
-    this.client = client2;
-  }
-};
-function query(name, router) {
-  return new Procedure(
-    name,
-    router,
-    new Query(),
-    null$2(),
-    null$2()
-  );
-}
-function mutation(name, router) {
-  return new Procedure(
-    name,
-    router,
-    new Mutation(),
-    null$2(),
-    null$2()
-  );
-}
-function params(procedure, params_converter) {
-  let _record = procedure;
-  return new Procedure(
-    _record.name,
-    _record.router,
-    _record.type_,
-    params_converter,
-    _record.return_type
-  );
-}
-function returns(procedure, return_converter) {
-  let _record = procedure;
-  return new Procedure(
-    _record.name,
-    _record.router,
-    _record.type_,
-    _record.params_type,
-    return_converter
-  );
-}
-function with_client(procedure, client2) {
-  return new ProcedureCall(procedure, client2);
-}
-function call(procedure_call, params2, callback) {
-  return procedure_call.client.call(procedure_call.procedure, params2, callback);
 }
 
 // build/dev/javascript/shared/shared/answer.mjs
@@ -4620,6 +4696,16 @@ function create_answer() {
   let _pipe = mutation("create_answer", new None());
   let _pipe$1 = params(_pipe, create_answer_converter());
   return returns(_pipe$1, answer_converter());
+}
+function update_answer() {
+  let _pipe = mutation("update_answer", new None());
+  let _pipe$1 = params(_pipe, answer_converter());
+  return returns(_pipe$1, answer_converter());
+}
+function delete_answer() {
+  let _pipe = mutation("delete_answer", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, null$2());
 }
 
 // build/dev/javascript/shared/shared/question.mjs
@@ -5039,7 +5125,7 @@ function encode_dict(val, path) {
   let result_partition = (() => {
     let _pipe2 = val;
     let _pipe$12 = map_to_list(_pipe2);
-    let _pipe$2 = map(
+    let _pipe$2 = map2(
       _pipe$12,
       (kv) => {
         let $ = encode_dict_key(kv[0]);
@@ -5185,7 +5271,7 @@ function encode_value2(val) {
   } else if (val instanceof ObjectValue) {
     let v = val.value;
     return object2(
-      map(v, (f) => {
+      map2(v, (f) => {
         return [f[0], encode_value2(f[1])];
       })
     );
@@ -5228,7 +5314,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = decode_string(_pipe);
-      return map2(
+      return map3(
         _pipe$1,
         (var0) => {
           return new StringValue(var0);
@@ -5239,7 +5325,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = bool(_pipe);
-      return map2(_pipe$1, (var0) => {
+      return map3(_pipe$1, (var0) => {
         return new BoolValue(var0);
       });
     };
@@ -5247,7 +5333,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = float(_pipe);
-      return map2(_pipe$1, (var0) => {
+      return map3(_pipe$1, (var0) => {
         return new FloatValue(var0);
       });
     };
@@ -5255,7 +5341,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = int(_pipe);
-      return map2(_pipe$1, (var0) => {
+      return map3(_pipe$1, (var0) => {
         return new IntValue(var0);
       });
     };
@@ -5264,7 +5350,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = list(dynamic)(_pipe);
-      let _pipe$2 = then$(
+      let _pipe$2 = then$2(
         _pipe$1,
         (val_list) => {
           return fold(
@@ -5294,8 +5380,8 @@ function decode_value(of) {
           );
         }
       );
-      let _pipe$3 = map2(_pipe$2, reverse);
-      return map2(_pipe$3, (var0) => {
+      let _pipe$3 = map3(_pipe$2, reverse);
+      return map3(_pipe$3, (var0) => {
         return new ListValue(var0);
       });
     };
@@ -5307,7 +5393,7 @@ function decode_value(of) {
       let _pipe$1 = list(
         list(any(toList([decode_value(k), decode_value(v)])))
       )(_pipe);
-      let _pipe$2 = then$(
+      let _pipe$2 = then$2(
         _pipe$1,
         (_capture) => {
           return fold(
@@ -5341,8 +5427,8 @@ function decode_value(of) {
           );
         }
       );
-      let _pipe$3 = map2(_pipe$2, from_list);
-      return map2(_pipe$3, (var0) => {
+      let _pipe$3 = map3(_pipe$2, from_list);
+      return map3(_pipe$3, (var0) => {
         return new DictValue(var0);
       });
     };
@@ -5374,8 +5460,8 @@ function decode_value(of) {
           }
         }
       );
-      let _pipe$1 = map2(_pipe, reverse);
-      return map2(
+      let _pipe$1 = map3(_pipe, reverse);
+      return map3(
         _pipe$1,
         (var0) => {
           return new ObjectValue(var0);
@@ -5387,7 +5473,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = optional(decode_value(of$1))(_pipe);
-      return map2(
+      return map3(
         _pipe$1,
         (var0) => {
           return new OptionalValue(var0);
@@ -5407,13 +5493,13 @@ function decode_value(of) {
           if (type_val === "ok") {
             let _pipe = val;
             let _pipe$1 = field("value", decode_value(res))(_pipe);
-            let _pipe$2 = map2(
+            let _pipe$2 = map3(
               _pipe$1,
               (var0) => {
                 return new Ok(var0);
               }
             );
-            return map2(
+            return map3(
               _pipe$2,
               (var0) => {
                 return new ResultValue(var0);
@@ -5422,13 +5508,13 @@ function decode_value(of) {
           } else if (type_val === "error") {
             let _pipe = val;
             let _pipe$1 = field("value", decode_value(err))(_pipe);
-            let _pipe$2 = map2(
+            let _pipe$2 = map3(
               _pipe$1,
               (var0) => {
                 return new Error(var0);
               }
             );
-            return map2(
+            return map3(
               _pipe$2,
               (var0) => {
                 return new ResultValue(var0);
@@ -5467,7 +5553,7 @@ function decode_value(of) {
                   new DecodeError(
                     "One of: " + (() => {
                       let _pipe$1 = variants;
-                      let _pipe$2 = map(_pipe$1, (v) => {
+                      let _pipe$2 = map2(_pipe$1, (v) => {
                         return v[0];
                       });
                       return join(_pipe$2, "/");
@@ -5483,7 +5569,7 @@ function decode_value(of) {
                 (() => {
                   let _pipe = val;
                   let _pipe$1 = field("value", dynamic)(_pipe);
-                  return then$(_pipe$1, decode_value(variant_def));
+                  return then$2(_pipe$1, decode_value(variant_def));
                 })(),
                 (variant_value) => {
                   return new Ok(new EnumValue(variant_name, variant_value));
@@ -5498,7 +5584,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = decode_string(_pipe);
-      let _pipe$2 = then$(
+      let _pipe$2 = then$2(
         _pipe$1,
         (v) => {
           let _pipe$22 = base64_url_decode(v);
@@ -5508,7 +5594,7 @@ function decode_value(of) {
           );
         }
       );
-      return map2(
+      return map3(
         _pipe$2,
         (var0) => {
           return new BitArrayValue(var0);
@@ -5525,7 +5611,7 @@ function json_decode(converter) {
   return (value3) => {
     let _pipe = value3;
     let _pipe$1 = decode_value(type_def(converter))(_pipe);
-    return then$(_pipe$1, decode2(converter));
+    return then$2(_pipe$1, decode2(converter));
   };
 }
 
@@ -5620,14 +5706,14 @@ function to_uri(request) {
   );
 }
 function from_uri(uri) {
-  return then$(
+  return then$2(
     (() => {
       let _pipe = uri.scheme;
       let _pipe$1 = unwrap(_pipe, "");
       return scheme_from_string(_pipe$1);
     })(),
     (scheme) => {
-      return then$(
+      return then$2(
         (() => {
           let _pipe = uri.host;
           return to_result(_pipe, void 0);
@@ -5665,7 +5751,7 @@ function set_query(req, query2) {
   };
   let query$1 = (() => {
     let _pipe = query2;
-    let _pipe$1 = map(_pipe, pair);
+    let _pipe$1 = map2(_pipe, pair);
     let _pipe$2 = intersperse(_pipe$1, "&");
     let _pipe$3 = concat2(_pipe$2);
     return new Some(_pipe$3);
@@ -5698,7 +5784,7 @@ function set_method(req, method) {
 function to(url) {
   let _pipe = url;
   let _pipe$1 = parse(_pipe);
-  return then$(_pipe$1, from_uri);
+  return then$2(_pipe$1, from_uri);
 }
 function set_path(req, path) {
   let _record = req;
@@ -6227,6 +6313,30 @@ var AnswerCreated = class extends CustomType {
     this.answer = answer;
   }
 };
+var DeleteAnswer = class extends CustomType {
+  constructor(answer_id) {
+    super();
+    this.answer_id = answer_id;
+  }
+};
+var AnswerDeleted = class extends CustomType {
+  constructor(answer_id) {
+    super();
+    this.answer_id = answer_id;
+  }
+};
+var UpdateAnswer = class extends CustomType {
+  constructor(new_answer) {
+    super();
+    this.new_answer = new_answer;
+  }
+};
+var AnswerUpdated = class extends CustomType {
+  constructor(answer) {
+    super();
+    this.answer = answer;
+  }
+};
 var HomeRoute = class extends CustomType {
 };
 var QwizesRoute = class extends CustomType {
@@ -6249,6 +6359,12 @@ var QuestionRoute = class extends CustomType {
 };
 var CreateAnswerRoute = class extends CustomType {
 };
+var UpdateAnswerRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
 function on_url_change(uri) {
   let $ = path_segments(uri.path);
   if ($.hasLength(1) && $.head === "qwizes") {
@@ -6265,6 +6381,9 @@ function on_url_change(uri) {
     return new QuestionRoute(new Uuid(id2));
   } else if ($.hasLength(2) && $.head === "answers" && $.tail.head === "create") {
     return new CreateAnswerRoute();
+  } else if ($.hasLength(3) && $.head === "answers" && $.tail.head === "update") {
+    let id2 = $.tail.tail.head;
+    return new UpdateAnswerRoute(new Uuid(id2));
   } else {
     return new HomeRoute();
   }
@@ -6284,8 +6403,11 @@ function route_to_url(route) {
   } else if (route instanceof QuestionRoute) {
     let id2 = route.id;
     return "/question/" + id2.data;
-  } else {
+  } else if (route instanceof CreateAnswerRoute) {
     return "/answers/create";
+  } else {
+    let id2 = route.id;
+    return "/answers/update/" + id2.data;
   }
 }
 function route_on_load(route) {
@@ -6320,6 +6442,12 @@ function create_answer2(question_id, answer, correct, cb) {
     new CreateAnswer(question_id, answer, correct),
     cb
   );
+}
+function update_answer2(answer, cb) {
+  return rpc_effect(update_answer(), answer, cb);
+}
+function delete_answer2(id2, cb) {
+  return rpc_effect(delete_answer(), id2, cb);
 }
 
 // build/dev/javascript/client/client/services/user_service.mjs
@@ -6397,13 +6525,13 @@ function on_submit(question, v) {
   return try$(
     (() => {
       let _pipe = get_element(answer_title);
-      return then$(_pipe, get_value);
+      return then$2(_pipe, get_value);
     })(),
     (title2) => {
       return try$(
         (() => {
           let _pipe = get_element(answer_correct);
-          return map2(_pipe, get_checked);
+          return map3(_pipe, get_checked);
         })(),
         (correct) => {
           return new Ok(new CreateAnswer2(question.id, title2, correct));
@@ -6486,8 +6614,8 @@ var question_title = "question_title";
 function on_submit2(qwiz, v) {
   prevent_default(v);
   let _pipe = get_element(question_title);
-  let _pipe$1 = then$(_pipe, get_value);
-  return map2(
+  let _pipe$1 = then$2(_pipe, get_value);
+  return map3(
     _pipe$1,
     (_capture) => {
       return new CreateQuestion2(qwiz.id, _capture);
@@ -6545,8 +6673,8 @@ function on_submit3(model, v) {
   } else {
     let user = $[0];
     let _pipe = get_element(qwiz_name);
-    let _pipe$1 = then$(_pipe, get_value);
-    return map2(
+    let _pipe$1 = then$2(_pipe, get_value);
+    return map3(
       _pipe$1,
       (_capture) => {
         return new CreateQwiz(_capture, user.id);
@@ -6576,8 +6704,147 @@ function view3(model) {
   );
 }
 
+// build/dev/javascript/client/client/views/edit_answer.mjs
+function no_answer_view(model) {
+  let return$ = (() => {
+    let $ = model.question;
+    let $1 = model.qwiz;
+    if ($ instanceof None && $1 instanceof None) {
+      return [new QwizesRoute(), "Go back to qwizes"];
+    } else if ($ instanceof Some) {
+      let q = $[0];
+      return [new QuestionRoute(q.id), "Go back to " + q.question];
+    } else {
+      let qw = $1[0];
+      return [new QwizRoute(qw.id), "Go back to " + qw.name];
+    }
+  })();
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text2("Error: No answer selected !")])),
+      a(
+        toList([
+          href(
+            (() => {
+              let _pipe = return$[0];
+              return route_to_url(_pipe);
+            })()
+          )
+        ]),
+        toList([text2(return$[1])])
+      )
+    ])
+  );
+}
+var answer_title2 = "answer_title";
+var answer_correct2 = "answer_correct";
+function on_submit4(answer, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(answer_title2);
+      return then$2(_pipe, get_value);
+    })(),
+    (title2) => {
+      return try$(
+        (() => {
+          let _pipe = get_element(answer_correct2);
+          return map3(_pipe, get_checked);
+        })(),
+        (correct) => {
+          return new Ok(
+            new UpdateAnswer(
+              (() => {
+                let _record = answer;
+                return new Answer(
+                  _record.id,
+                  _record.question_id,
+                  title2,
+                  correct
+                );
+              })()
+            )
+          );
+        }
+      );
+    }
+  );
+}
+function update_view(answer) {
+  return div(
+    toList([]),
+    toList([
+      form(
+        toList([
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit4(answer, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(
+                toList([
+                  id(answer_title2),
+                  value(answer.answer)
+                ])
+              )
+            ])
+          ),
+          label(
+            toList([]),
+            toList([
+              text2("Correct answer ?"),
+              input(
+                toList([
+                  id(answer_correct2),
+                  type_("checkbox"),
+                  checked(answer.correct)
+                ])
+              )
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Save")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view4(model, answer_id) {
+  let answer = (() => {
+    let _pipe = model.question;
+    return then$(
+      _pipe,
+      (q) => {
+        let _pipe$1 = q.answers;
+        let _pipe$2 = find2(
+          _pipe$1,
+          (a2) => {
+            return isEqual(a2.id, answer_id);
+          }
+        );
+        return from_result(_pipe$2);
+      }
+    );
+  })();
+  if (answer instanceof None) {
+    return no_answer_view(model);
+  } else {
+    let answer$1 = answer[0];
+    return update_view(answer$1);
+  }
+}
+
 // build/dev/javascript/client/client/views/home.mjs
-function view4(model) {
+function view5(model) {
   return button(
     toList([
       on2("click", (_) => {
@@ -6589,20 +6856,68 @@ function view4(model) {
 }
 
 // build/dev/javascript/client/client/views/common.mjs
-function not_found() {
-  return h1(toList([]), toList([text2("Not found")]));
+function loading() {
+  return h1(toList([]), toList([text2("Loading")]));
 }
 
 // build/dev/javascript/client/client/views/question.mjs
+function back_button(model) {
+  let return$ = (() => {
+    let $ = model.qwiz;
+    if ($ instanceof None) {
+      return [new QwizesRoute(), "Back to qwizes"];
+    } else {
+      let qw = $[0];
+      return [new QwizRoute(qw.id), "Back to " + qw.name];
+    }
+  })();
+  return a(
+    toList([
+      href(
+        (() => {
+          let _pipe = return$[0];
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
+    toList([text2(return$[1])])
+  );
+}
+function edit_answer_button(id2) {
+  return a(
+    toList([
+      href(
+        (() => {
+          let _pipe = new UpdateAnswerRoute(id2);
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
+    toList([text2("Edit")])
+  );
+}
+function delete_answer_button(id2) {
+  return button(
+    toList([on_click(new DeleteAnswer(id2))]),
+    toList([text2("Remove")])
+  );
+}
 function answer_row(answer) {
-  return a(toList([]), toList([text2(answer.answer)]));
+  return div(
+    toList([]),
+    toList([
+      text2(answer.answer),
+      edit_answer_button(answer.id),
+      delete_answer_button(answer.id)
+    ])
+  );
 }
 function answer_list(answers) {
   return keyed(
     (_capture) => {
       return div(toList([]), _capture);
     },
-    map(answers, (a2) => {
+    map2(answers, (a2) => {
       return [a2.id.data, answer_row(a2)];
     })
   );
@@ -6626,27 +6941,29 @@ function create_answer_button() {
     toList([text2("Add answer")])
   );
 }
-function view5(question) {
-  if (question instanceof None) {
-    return not_found();
+function view6(model) {
+  let $ = model.question;
+  if ($ instanceof None) {
+    return loading();
   } else {
-    let question$1 = question[0];
+    let question = $[0];
     return div(
       toList([]),
       toList([
         div(
           toList([]),
           toList([
+            back_button(model),
             h1(
               toList([]),
               toList([
-                text2(question$1.question),
-                delete_question_button(question$1.id)
+                text2(question.question),
+                delete_question_button(question.id)
               ])
             )
           ])
         ),
-        answer_list(question$1.answers),
+        answer_list(question.answers),
         create_answer_button()
       ])
     );
@@ -6654,6 +6971,20 @@ function view5(question) {
 }
 
 // build/dev/javascript/client/client/views/qwiz.mjs
+function back_button2(model) {
+  let return$ = [new QwizesRoute(), "Back to qwizes"];
+  return a(
+    toList([
+      href(
+        (() => {
+          let _pipe = return$[0];
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
+    toList([text2(return$[1])])
+  );
+}
 function question_row(question) {
   return a(
     toList([
@@ -6672,7 +7003,7 @@ function question_list(questions) {
     (_capture) => {
       return div(toList([]), _capture);
     },
-    map(questions, (q) => {
+    map2(questions, (q) => {
       return [q.id.data, question_row(q)];
     })
   );
@@ -6696,24 +7027,24 @@ function create_question_button() {
     toList([text2("Add question")])
   );
 }
-function view6(qwiz) {
-  if (qwiz instanceof None) {
-    return not_found();
+function view7(model) {
+  let $ = model.qwiz;
+  if ($ instanceof None) {
+    return loading();
   } else {
-    let qwiz$1 = qwiz[0];
+    let qwiz = $[0];
     return div(
       toList([]),
       toList([
         div(
           toList([]),
           toList([
-            h1(
-              toList([]),
-              toList([text2(qwiz$1.name), delete_qwiz_button(qwiz$1.id)])
-            )
+            back_button2(model),
+            h1(toList([]), toList([text2(qwiz.name)])),
+            delete_qwiz_button(qwiz.id)
           ])
         ),
-        question_list(qwiz$1.questions),
+        question_list(qwiz.questions),
         create_question_button()
       ])
     );
@@ -6752,7 +7083,7 @@ function create_qwiz_button() {
     toList([text2("Create Qwiz")])
   );
 }
-function view7(model) {
+function view8(model) {
   return div(
     toList([]),
     toList([
@@ -6760,7 +7091,7 @@ function view7(model) {
         (_capture) => {
           return div(toList([]), _capture);
         },
-        map(
+        map2(
           model.qwizes,
           (qwiz) => {
             return [qwiz.id.data, qwiz_row(qwiz)];
@@ -6776,7 +7107,7 @@ function view7(model) {
 function init3(_) {
   let initial_route = (() => {
     let _pipe = do_initial_uri();
-    let _pipe$1 = map2(_pipe, on_url_change);
+    let _pipe$1 = map3(_pipe, on_url_change);
     return unwrap2(_pipe$1, new HomeRoute());
   })();
   return [
@@ -7038,7 +7369,7 @@ function update(model, msg) {
         }
       )
     ];
-  } else {
+  } else if (msg instanceof AnswerCreated) {
     return [
       model,
       (() => {
@@ -7065,34 +7396,109 @@ function update(model, msg) {
         }
       })()
     ];
+  } else if (msg instanceof DeleteAnswer) {
+    let id2 = msg.answer_id;
+    return [
+      model,
+      delete_answer2(
+        id2,
+        (_) => {
+          return new AnswerDeleted(id2);
+        }
+      )
+    ];
+  } else if (msg instanceof AnswerDeleted) {
+    let id2 = msg.answer_id;
+    return [
+      (() => {
+        let _record = model;
+        return new Model2(
+          _record.route,
+          _record.user,
+          _record.qwizes,
+          _record.qwiz,
+          (() => {
+            let _pipe = model.question;
+            return map(
+              _pipe,
+              (q) => {
+                let _record$1 = q;
+                return new QuestionWithAnswers(
+                  _record$1.id,
+                  _record$1.qwiz_id,
+                  _record$1.question,
+                  (() => {
+                    let _pipe$1 = q.answers;
+                    return filter(
+                      _pipe$1,
+                      (a2) => {
+                        return !isEqual(a2.id, id2);
+                      }
+                    );
+                  })()
+                );
+              }
+            );
+          })()
+        );
+      })(),
+      none()
+    ];
+  } else if (msg instanceof UpdateAnswer) {
+    let a2 = msg.new_answer;
+    return [
+      model,
+      update_answer2(
+        a2,
+        (a3) => {
+          return new AnswerUpdated(a3);
+        }
+      )
+    ];
+  } else {
+    let a2 = msg.answer;
+    return [
+      model,
+      push(
+        (() => {
+          let _pipe = new QuestionRoute(a2.question_id);
+          return route_to_url(_pipe);
+        })(),
+        new None(),
+        new None()
+      )
+    ];
   }
 }
-function view8(model) {
+function view9(model) {
   let $ = model.route;
   if ($ instanceof HomeRoute) {
-    return view4(model);
+    return view5(model);
   } else if ($ instanceof QwizesRoute) {
-    return view7(model);
+    return view8(model);
   } else if ($ instanceof CreateQwizRoute) {
     return view3(model);
   } else if ($ instanceof QwizRoute) {
-    return view6(model.qwiz);
+    return view7(model);
   } else if ($ instanceof CreateQuestionRoute) {
     return view2(model.qwiz);
   } else if ($ instanceof QuestionRoute) {
-    return view5(model.question);
-  } else {
+    return view6(model);
+  } else if ($ instanceof CreateAnswerRoute) {
     return view(model.question);
+  } else {
+    let id2 = $.id;
+    return view4(model, id2);
   }
 }
 function main() {
-  let app = application(init3, update, view8);
+  let app = application(init3, update, view9);
   let $ = start2(app, "#app", void 0);
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "client",
-      22,
+      25,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }

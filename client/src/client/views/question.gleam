@@ -8,14 +8,14 @@ import lustre/element/html
 import lustre/event
 import shared
 import shared/answer
-import shared/question
 
-pub fn view(question: option.Option(question.QuestionWithAnswers)) {
-  case question {
-    option.None -> common.not_found()
+pub fn view(model: model.Model) {
+  case model.question {
+    option.None -> common.loading()
     option.Some(question) -> {
       html.div([], [
         html.div([], [
+          back_button(model),
           html.h1([], [
             html.text(question.question),
             delete_question_button(question.id),
@@ -28,6 +28,15 @@ pub fn view(question: option.Option(question.QuestionWithAnswers)) {
   }
 }
 
+fn back_button(model: model.Model) {
+  let return = case model.qwiz {
+    option.None -> #(model.QwizesRoute, "Back to qwizes")
+    option.Some(qw) -> #(model.QwizRoute(qw.id), "Back to " <> qw.name)
+  }
+
+  html.a([attribute.href(return.0 |> model.route_to_url)], [html.text(return.1)])
+}
+
 fn answer_list(answers: List(answer.Answer)) {
   element.keyed(html.div([], _), {
     use a <- list.map(answers)
@@ -36,7 +45,21 @@ fn answer_list(answers: List(answer.Answer)) {
 }
 
 fn answer_row(answer: answer.Answer) {
-  html.a([], [html.text(answer.answer)])
+  html.div([], [
+    html.text(answer.answer),
+    edit_answer_button(answer.id),
+    delete_answer_button(answer.id),
+  ])
+}
+
+fn edit_answer_button(id: shared.Uuid) {
+  html.a([attribute.href(model.UpdateAnswerRoute(id) |> model.route_to_url)], [
+    html.text("Edit"),
+  ])
+}
+
+fn delete_answer_button(id: shared.Uuid) {
+  html.button([event.on_click(model.DeleteAnswer(id))], [html.text("Remove")])
 }
 
 fn delete_question_button(id: shared.Uuid) {

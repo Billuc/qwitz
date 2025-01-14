@@ -8,21 +8,28 @@ import lustre/element/html
 import lustre/event
 import shared
 import shared/question
-import shared/qwiz
 
-pub fn view(qwiz: option.Option(qwiz.QwizWithQuestions)) {
-  case qwiz {
-    option.None -> common.not_found()
+pub fn view(model: model.Model) {
+  case model.qwiz {
+    option.None -> common.loading()
     option.Some(qwiz) -> {
       html.div([], [
         html.div([], [
-          html.h1([], [html.text(qwiz.name), delete_qwiz_button(qwiz.id)]),
+          back_button(model),
+          html.h1([], [html.text(qwiz.name)]),
+          delete_qwiz_button(qwiz.id),
         ]),
         question_list(qwiz.questions),
         create_question_button(),
       ])
     }
   }
+}
+
+fn back_button(model: model.Model) {
+  let return = #(model.QwizesRoute, "Back to qwizes")
+
+  html.a([attribute.href(return.0 |> model.route_to_url)], [html.text(return.1)])
 }
 
 fn question_list(questions: List(question.Question)) {

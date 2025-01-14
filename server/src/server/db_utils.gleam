@@ -41,7 +41,10 @@ pub fn youid_to_shared(uuid: uuid.Uuid) -> shared.Uuid {
 
 pub fn get_one(res: pog.Returned(a)) -> Result(a, DatabaseError) {
   case res.rows {
-    [] -> Error(DatabaseError("Result not found"))
+    [] -> {
+      log.log_error("[database] Result not found")
+      Error(DatabaseError("Result not found"))
+    }
     [v, ..] -> Ok(v)
   }
 }
@@ -65,7 +68,7 @@ pub fn transaction(
 
 pub fn query_error_to_database_error(err: pog.QueryError) -> DatabaseError {
   let message = query_error_to_string(err)
-  log.log_error(message)
+  log.log_error("[database] " <> message)
   DatabaseError(message)
 }
 
@@ -102,7 +105,7 @@ fn transaction_error_to_database_error(
     pog.TransactionRolledBack(reason) -> reason
   }
 
-  log.log_error(message)
+  log.log_error("[database] " <> message)
   DatabaseError(message)
 }
 

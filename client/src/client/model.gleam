@@ -36,6 +36,10 @@ pub type Msg {
   SetQuestion(question: question.QuestionWithAnswers)
   CreateAnswer(question_id: shared.Uuid, answer: String, correct: Bool)
   AnswerCreated(answer: answer.Answer)
+  DeleteAnswer(answer_id: shared.Uuid)
+  AnswerDeleted(answer_id: shared.Uuid)
+  UpdateAnswer(new_answer: answer.Answer)
+  AnswerUpdated(answer: answer.Answer)
 }
 
 pub type Route {
@@ -46,6 +50,7 @@ pub type Route {
   CreateQuestionRoute
   QuestionRoute(id: shared.Uuid)
   CreateAnswerRoute
+  UpdateAnswerRoute(id: shared.Uuid)
 }
 
 pub fn on_url_change(uri: uri.Uri) -> Route {
@@ -56,6 +61,7 @@ pub fn on_url_change(uri: uri.Uri) -> Route {
     ["questions", "create"] -> CreateQuestionRoute
     ["question", id] -> QuestionRoute(shared.Uuid(id))
     ["answers", "create"] -> CreateAnswerRoute
+    ["answers", "update", id] -> UpdateAnswerRoute(shared.Uuid(id))
     _ -> HomeRoute
   }
 }
@@ -69,6 +75,7 @@ pub fn route_to_url(route: Route) -> String {
     QwizesRoute -> "/qwizes"
     QuestionRoute(id) -> "/question/" <> id.data
     CreateAnswerRoute -> "/answers/create"
+    UpdateAnswerRoute(id) -> "/answers/update/" <> id.data
   }
 }
 
