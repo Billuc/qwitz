@@ -22,6 +22,13 @@ pub fn create_qwiz(
   utils.rpc_effect(qwiz.create_qwiz(), qwiz.UpsertQwiz(name, owner), cb)
 }
 
+pub fn update_qwiz(
+  qwiz: qwiz.Qwiz,
+  cb: fn(qwiz.QwizWithQuestions) -> d,
+) -> effect.Effect(d) {
+  utils.rpc_effect(qwiz.update_qwiz(), qwiz, cb)
+}
+
 pub fn delete_qwiz(id: shared.Uuid, cb: fn(Nil) -> d) -> effect.Effect(d) {
   utils.rpc_effect(qwiz.delete_qwiz(), id, cb)
 }

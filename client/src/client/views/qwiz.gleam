@@ -17,6 +17,7 @@ pub fn view(model: model.Model) {
         html.div([], [
           back_button(model),
           html.h1([], [html.text(qwiz.name)]),
+          edit_qwiz_button(qwiz.id),
           delete_qwiz_button(qwiz.id),
         ]),
         question_list(qwiz.questions),
@@ -44,6 +45,12 @@ fn question_row(question: question.Question) {
     [attribute.href(model.QuestionRoute(question.id) |> model.route_to_url)],
     [html.text(question.question)],
   )
+}
+
+fn edit_qwiz_button(id: shared.Uuid) {
+  html.a([attribute.href(model.UpdateQwizRoute(id) |> model.route_to_url)], [
+    html.text("Edit"),
+  ])
 }
 
 fn delete_qwiz_button(id: shared.Uuid) {

@@ -19,6 +19,10 @@ pub fn create_question(
   )
 }
 
+pub fn update_question(question: question.Question, cb) -> effect.Effect(c) {
+  utils.rpc_effect(question.update_question(), question, cb)
+}
+
 pub fn delete_question(id: shared.Uuid, cb: fn(Nil) -> d) -> effect.Effect(d) {
   utils.rpc_effect(question.delete_question(), id, cb)
 }

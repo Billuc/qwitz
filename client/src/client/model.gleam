@@ -40,6 +40,10 @@ pub type Msg {
   AnswerDeleted(answer_id: shared.Uuid)
   UpdateAnswer(new_answer: answer.Answer)
   AnswerUpdated(answer: answer.Answer)
+  UpdateQuestion(new_question: question.Question)
+  QuestionUpdated(question: question.QuestionWithAnswers)
+  UpdateQwiz(new_qwiz: qwiz.Qwiz)
+  QwizUpdated(qwiz: qwiz.QwizWithQuestions)
 }
 
 pub type Route {
@@ -51,6 +55,8 @@ pub type Route {
   QuestionRoute(id: shared.Uuid)
   CreateAnswerRoute
   UpdateAnswerRoute(id: shared.Uuid)
+  UpdateQuestionRoute(id: shared.Uuid)
+  UpdateQwizRoute(id: shared.Uuid)
 }
 
 pub fn on_url_change(uri: uri.Uri) -> Route {
@@ -61,7 +67,9 @@ pub fn on_url_change(uri: uri.Uri) -> Route {
     ["questions", "create"] -> CreateQuestionRoute
     ["question", id] -> QuestionRoute(shared.Uuid(id))
     ["answers", "create"] -> CreateAnswerRoute
-    ["answers", "update", id] -> UpdateAnswerRoute(shared.Uuid(id))
+    ["answer", "update", id] -> UpdateAnswerRoute(shared.Uuid(id))
+    ["question", "update", id] -> UpdateQuestionRoute(shared.Uuid(id))
+    ["qwiz", "update", id] -> UpdateQwizRoute(shared.Uuid(id))
     _ -> HomeRoute
   }
 }
@@ -75,7 +83,9 @@ pub fn route_to_url(route: Route) -> String {
     QwizesRoute -> "/qwizes"
     QuestionRoute(id) -> "/question/" <> id.data
     CreateAnswerRoute -> "/answers/create"
-    UpdateAnswerRoute(id) -> "/answers/update/" <> id.data
+    UpdateAnswerRoute(id) -> "/answer/update/" <> id.data
+    UpdateQuestionRoute(id) -> "/question/update/" <> id.data
+    UpdateQwizRoute(id) -> "/qwiz/update/" <> id.data
   }
 }
 

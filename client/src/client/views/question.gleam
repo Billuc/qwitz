@@ -16,10 +16,9 @@ pub fn view(model: model.Model) {
       html.div([], [
         html.div([], [
           back_button(model),
-          html.h1([], [
-            html.text(question.question),
-            delete_question_button(question.id),
-          ]),
+          html.h1([], [html.text(question.question)]),
+          edit_question_button(question.id),
+          delete_question_button(question.id),
         ]),
         answer_list(question.answers),
         create_answer_button(),
@@ -60,6 +59,12 @@ fn edit_answer_button(id: shared.Uuid) {
 
 fn delete_answer_button(id: shared.Uuid) {
   html.button([event.on_click(model.DeleteAnswer(id))], [html.text("Remove")])
+}
+
+fn edit_question_button(id: shared.Uuid) {
+  html.a([attribute.href(model.UpdateQuestionRoute(id) |> model.route_to_url)], [
+    html.text("Edit"),
+  ])
 }
 
 fn delete_question_button(id: shared.Uuid) {

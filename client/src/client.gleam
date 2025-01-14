@@ -7,6 +7,8 @@ import client/views/create_answer
 import client/views/create_question
 import client/views/create_qwiz
 import client/views/edit_answer
+import client/views/edit_question
+import client/views/edit_qwiz
 import client/views/home
 import client/views/question as question_view
 import client/views/qwiz as qwiz_view
@@ -186,6 +188,30 @@ fn update(
         option.None,
       ),
     )
+    model.UpdateQuestion(q) -> #(model, {
+      use q <- question_service.update_question(q)
+      model.QuestionUpdated(q)
+    })
+    model.QuestionUpdated(q) -> #(
+      model,
+      modem.push(
+        model.QuestionRoute(q.id) |> model.route_to_url,
+        option.None,
+        option.None,
+      ),
+    )
+    model.UpdateQwiz(qw) -> #(model, {
+      use qw <- qwiz_service.update_qwiz(qw)
+      model.QwizUpdated(qw)
+    })
+    model.QwizUpdated(qw) -> #(
+      model,
+      modem.push(
+        model.QwizRoute(qw.id) |> model.route_to_url,
+        option.None,
+        option.None,
+      ),
+    )
   }
 }
 
@@ -199,5 +225,7 @@ fn view(model: model.Model) -> element.Element(model.Msg) {
     model.QuestionRoute(_) -> question_view.view(model)
     model.CreateAnswerRoute -> create_answer.view(model.question)
     model.UpdateAnswerRoute(id) -> edit_answer.view(model, id)
+    model.UpdateQuestionRoute(_id) -> edit_question.view(model)
+    model.UpdateQwizRoute(_id) -> edit_qwiz.view(model)
   }
 }

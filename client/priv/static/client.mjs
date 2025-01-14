@@ -196,12 +196,12 @@ function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
   }
 }
 function byteArrayToFloat(byteArray, start3, end, isBigEndian) {
-  const view10 = new DataView(byteArray.buffer);
+  const view12 = new DataView(byteArray.buffer);
   const byteSize = end - start3;
   if (byteSize === 8) {
-    return view10.getFloat64(start3, !isBigEndian);
+    return view12.getFloat64(start3, !isBigEndian);
   } else if (byteSize === 4) {
-    return view10.getFloat32(start3, !isBigEndian);
+    return view12.getFloat32(start3, !isBigEndian);
   } else {
     const msg = `Sized floats must be 32-bit or 64-bit on JavaScript, got size of ${byteSize * 8} bits`;
     throw new globalThis.Error(msg);
@@ -2742,13 +2742,13 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {Gleam.Ok<(action: Lustre.Action<Lustre.Client, Msg>>) => void>}
    */
-  static start({ init: init4, update: update2, view: view10 }, selector, flags) {
+  static start({ init: init4, update: update2, view: view12 }, selector, flags) {
     if (!is_browser())
       return new Error(new NotABrowser());
     const root = selector instanceof HTMLElement ? selector : document.querySelector(selector);
     if (!root)
       return new Error(new ElementNotFound(selector));
-    const app = new _LustreClientApplication(root, init4(flags), update2, view10);
+    const app = new _LustreClientApplication(root, init4(flags), update2, view12);
     return new Ok((action) => app.send(action));
   }
   /**
@@ -2759,11 +2759,11 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {LustreClientApplication}
    */
-  constructor(root, [init4, effects], update2, view10) {
+  constructor(root, [init4, effects], update2, view12) {
     this.root = root;
     this.#model = init4;
     this.#update = update2;
-    this.#view = view10;
+    this.#view = view12;
     this.#tickScheduled = window.requestAnimationFrame(
       () => this.#tick(effects.all.toArray(), true)
     );
@@ -2877,20 +2877,20 @@ var LustreClientApplication = class _LustreClientApplication {
 };
 var start = LustreClientApplication.start;
 var LustreServerApplication = class _LustreServerApplication {
-  static start({ init: init4, update: update2, view: view10, on_attribute_change }, flags) {
+  static start({ init: init4, update: update2, view: view12, on_attribute_change }, flags) {
     const app = new _LustreServerApplication(
       init4(flags),
       update2,
-      view10,
+      view12,
       on_attribute_change
     );
     return new Ok((action) => app.send(action));
   }
-  constructor([model, effects], update2, view10, on_attribute_change) {
+  constructor([model, effects], update2, view12, on_attribute_change) {
     this.#model = model;
     this.#update = update2;
-    this.#view = view10;
-    this.#html = view10(model);
+    this.#view = view12;
+    this.#html = view12(model);
     this.#onAttributeChange = on_attribute_change;
     this.#renderers = /* @__PURE__ */ new Map();
     this.#handlers = handlers(this.#html);
@@ -2992,11 +2992,11 @@ var prevent_default = (event2) => event2.preventDefault();
 
 // build/dev/javascript/lustre/lustre.mjs
 var App = class extends CustomType {
-  constructor(init4, update2, view10, on_attribute_change) {
+  constructor(init4, update2, view12, on_attribute_change) {
     super();
     this.init = init4;
     this.update = update2;
-    this.view = view10;
+    this.view = view12;
     this.on_attribute_change = on_attribute_change;
   }
 };
@@ -3008,8 +3008,8 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init4, update2, view10) {
-  return new App(init4, update2, view10, new None());
+function application(init4, update2, view12) {
+  return new App(init4, update2, view12, new None());
 }
 function start2(app, selector, flags) {
   return guard(
@@ -4841,6 +4841,11 @@ function create_question() {
   let _pipe$1 = params(_pipe, create_question_converter());
   return returns(_pipe$1, question_with_answers_converter());
 }
+function update_question() {
+  let _pipe = mutation("update_question", new None());
+  let _pipe$1 = params(_pipe, question_converter());
+  return returns(_pipe$1, question_with_answers_converter());
+}
 function delete_question() {
   let _pipe = mutation("delete_question", new None());
   let _pipe$1 = params(_pipe, uuid_converter());
@@ -4983,6 +4988,11 @@ function get_qwiz() {
 function create_qwiz() {
   let _pipe = mutation("create_qwiz", new None());
   let _pipe$1 = params(_pipe, upsert_qwiz_converter());
+  return returns(_pipe$1, qwiz_with_questions_converter());
+}
+function update_qwiz() {
+  let _pipe = mutation("update_qwiz", new None());
+  let _pipe$1 = params(_pipe, qwiz_converter());
   return returns(_pipe$1, qwiz_with_questions_converter());
 }
 function delete_qwiz() {
@@ -6179,6 +6189,9 @@ function create_question2(qwiz_id, question, cb) {
     cb
   );
 }
+function update_question2(question, cb) {
+  return rpc_effect(update_question(), question, cb);
+}
 function delete_question2(id2, cb) {
   return rpc_effect(delete_question(), id2, cb);
 }
@@ -6196,6 +6209,9 @@ function create_qwiz2(name, owner, cb) {
     new UpsertQwiz(name, owner),
     cb
   );
+}
+function update_qwiz2(qwiz, cb) {
+  return rpc_effect(update_qwiz(), qwiz, cb);
 }
 function delete_qwiz2(id2, cb) {
   return rpc_effect(delete_qwiz(), id2, cb);
@@ -6337,6 +6353,30 @@ var AnswerUpdated = class extends CustomType {
     this.answer = answer;
   }
 };
+var UpdateQuestion = class extends CustomType {
+  constructor(new_question) {
+    super();
+    this.new_question = new_question;
+  }
+};
+var QuestionUpdated = class extends CustomType {
+  constructor(question) {
+    super();
+    this.question = question;
+  }
+};
+var UpdateQwiz = class extends CustomType {
+  constructor(new_qwiz) {
+    super();
+    this.new_qwiz = new_qwiz;
+  }
+};
+var QwizUpdated = class extends CustomType {
+  constructor(qwiz) {
+    super();
+    this.qwiz = qwiz;
+  }
+};
 var HomeRoute = class extends CustomType {
 };
 var QwizesRoute = class extends CustomType {
@@ -6365,6 +6405,18 @@ var UpdateAnswerRoute = class extends CustomType {
     this.id = id2;
   }
 };
+var UpdateQuestionRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var UpdateQwizRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
 function on_url_change(uri) {
   let $ = path_segments(uri.path);
   if ($.hasLength(1) && $.head === "qwizes") {
@@ -6381,9 +6433,15 @@ function on_url_change(uri) {
     return new QuestionRoute(new Uuid(id2));
   } else if ($.hasLength(2) && $.head === "answers" && $.tail.head === "create") {
     return new CreateAnswerRoute();
-  } else if ($.hasLength(3) && $.head === "answers" && $.tail.head === "update") {
+  } else if ($.hasLength(3) && $.head === "answer" && $.tail.head === "update") {
     let id2 = $.tail.tail.head;
     return new UpdateAnswerRoute(new Uuid(id2));
+  } else if ($.hasLength(3) && $.head === "question" && $.tail.head === "update") {
+    let id2 = $.tail.tail.head;
+    return new UpdateQuestionRoute(new Uuid(id2));
+  } else if ($.hasLength(3) && $.head === "qwiz" && $.tail.head === "update") {
+    let id2 = $.tail.tail.head;
+    return new UpdateQwizRoute(new Uuid(id2));
   } else {
     return new HomeRoute();
   }
@@ -6405,9 +6463,15 @@ function route_to_url(route) {
     return "/question/" + id2.data;
   } else if (route instanceof CreateAnswerRoute) {
     return "/answers/create";
+  } else if (route instanceof UpdateAnswerRoute) {
+    let id2 = route.id;
+    return "/answer/update/" + id2.data;
+  } else if (route instanceof UpdateQuestionRoute) {
+    let id2 = route.id;
+    return "/question/update/" + id2.data;
   } else {
     let id2 = route.id;
-    return "/answers/update/" + id2.data;
+    return "/qwiz/update/" + id2.data;
   }
 }
 function route_on_load(route) {
@@ -6843,8 +6907,153 @@ function view4(model, answer_id) {
   }
 }
 
-// build/dev/javascript/client/client/views/home.mjs
+// build/dev/javascript/client/client/views/edit_question.mjs
+function no_question_view2() {
+  return div(
+    toList([]),
+    toList([
+      h1(
+        toList([]),
+        toList([text2("Error: No question selected !")])
+      ),
+      a(
+        toList([
+          href(
+            (() => {
+              let _pipe = new QwizesRoute();
+              return route_to_url(_pipe);
+            })()
+          )
+        ]),
+        toList([text2("Go back to qwizes")])
+      )
+    ])
+  );
+}
+var question_title2 = "question_title";
+function on_submit5(question, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(question_title2);
+      return then$2(_pipe, get_value);
+    })(),
+    (title2) => {
+      return new Ok(
+        new UpdateQuestion(
+          new Question(question.id, question.qwiz_id, title2)
+        )
+      );
+    }
+  );
+}
+function update_view2(question) {
+  return div(
+    toList([]),
+    toList([
+      form(
+        toList([
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit5(question, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(toList([id(question_title2)]))
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Save")])
+          )
+        ])
+      )
+    ])
+  );
+}
 function view5(model) {
+  let $ = model.question;
+  if ($ instanceof None) {
+    return no_question_view2();
+  } else {
+    let question = $[0];
+    return update_view2(question);
+  }
+}
+
+// build/dev/javascript/client/client/views/edit_qwiz.mjs
+function no_qwiz_view2() {
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text2("Error: No qwiz selected !")])),
+      a(
+        toList([
+          href(
+            (() => {
+              let _pipe = new QwizesRoute();
+              return route_to_url(_pipe);
+            })()
+          )
+        ]),
+        toList([text2("Go back to qwizes")])
+      )
+    ])
+  );
+}
+var qwiz_name2 = "qwiz_name";
+function on_submit6(qwiz, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(qwiz_name2);
+      return then$2(_pipe, get_value);
+    })(),
+    (name) => {
+      return new Ok(
+        new UpdateQwiz(new Qwiz(qwiz.id, name, qwiz.owner))
+      );
+    }
+  );
+}
+function update_view3(qwiz) {
+  return form(
+    toList([
+      on2("submit", (_capture) => {
+        return on_submit6(qwiz, _capture);
+      })
+    ]),
+    toList([
+      label(
+        toList([]),
+        toList([
+          text2("Name"),
+          input(toList([id(qwiz_name2)]))
+        ])
+      ),
+      input(
+        toList([type_("submit"), value("Save")])
+      )
+    ])
+  );
+}
+function view6(model) {
+  let $ = model.qwiz;
+  if ($ instanceof None) {
+    return no_qwiz_view2();
+  } else {
+    let qwiz = $[0];
+    return update_view3(qwiz);
+  }
+}
+
+// build/dev/javascript/client/client/views/home.mjs
+function view7(model) {
   return button(
     toList([
       on2("click", (_) => {
@@ -6922,6 +7131,19 @@ function answer_list(answers) {
     })
   );
 }
+function edit_question_button(id2) {
+  return a(
+    toList([
+      href(
+        (() => {
+          let _pipe = new UpdateQuestionRoute(id2);
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
+    toList([text2("Edit")])
+  );
+}
 function delete_question_button(id2) {
   return button(
     toList([on_click(new DeleteQuestion(id2))]),
@@ -6941,7 +7163,7 @@ function create_answer_button() {
     toList([text2("Add answer")])
   );
 }
-function view6(model) {
+function view8(model) {
   let $ = model.question;
   if ($ instanceof None) {
     return loading();
@@ -6954,13 +7176,9 @@ function view6(model) {
           toList([]),
           toList([
             back_button(model),
-            h1(
-              toList([]),
-              toList([
-                text2(question.question),
-                delete_question_button(question.id)
-              ])
-            )
+            h1(toList([]), toList([text2(question.question)])),
+            edit_question_button(question.id),
+            delete_question_button(question.id)
           ])
         ),
         answer_list(question.answers),
@@ -7008,6 +7226,19 @@ function question_list(questions) {
     })
   );
 }
+function edit_qwiz_button(id2) {
+  return a(
+    toList([
+      href(
+        (() => {
+          let _pipe = new UpdateQwizRoute(id2);
+          return route_to_url(_pipe);
+        })()
+      )
+    ]),
+    toList([text2("Edit")])
+  );
+}
 function delete_qwiz_button(id2) {
   return button(
     toList([on_click(new DeleteQwiz(id2))]),
@@ -7027,7 +7258,7 @@ function create_question_button() {
     toList([text2("Add question")])
   );
 }
-function view7(model) {
+function view9(model) {
   let $ = model.qwiz;
   if ($ instanceof None) {
     return loading();
@@ -7041,6 +7272,7 @@ function view7(model) {
           toList([
             back_button2(model),
             h1(toList([]), toList([text2(qwiz.name)])),
+            edit_qwiz_button(qwiz.id),
             delete_qwiz_button(qwiz.id)
           ])
         ),
@@ -7083,7 +7315,7 @@ function create_qwiz_button() {
     toList([text2("Create Qwiz")])
   );
 }
-function view8(model) {
+function view10(model) {
   return div(
     toList([]),
     toList([
@@ -7455,7 +7687,7 @@ function update(model, msg) {
         }
       )
     ];
-  } else {
+  } else if (msg instanceof AnswerUpdated) {
     let a2 = msg.answer;
     return [
       model,
@@ -7468,37 +7700,89 @@ function update(model, msg) {
         new None()
       )
     ];
+  } else if (msg instanceof UpdateQuestion) {
+    let q = msg.new_question;
+    return [
+      model,
+      update_question2(
+        q,
+        (q2) => {
+          return new QuestionUpdated(q2);
+        }
+      )
+    ];
+  } else if (msg instanceof QuestionUpdated) {
+    let q = msg.question;
+    return [
+      model,
+      push(
+        (() => {
+          let _pipe = new QuestionRoute(q.id);
+          return route_to_url(_pipe);
+        })(),
+        new None(),
+        new None()
+      )
+    ];
+  } else if (msg instanceof UpdateQwiz) {
+    let qw = msg.new_qwiz;
+    return [
+      model,
+      update_qwiz2(
+        qw,
+        (qw2) => {
+          return new QwizUpdated(qw2);
+        }
+      )
+    ];
+  } else {
+    let qw = msg.qwiz;
+    return [
+      model,
+      push(
+        (() => {
+          let _pipe = new QwizRoute(qw.id);
+          return route_to_url(_pipe);
+        })(),
+        new None(),
+        new None()
+      )
+    ];
   }
 }
-function view9(model) {
+function view11(model) {
   let $ = model.route;
   if ($ instanceof HomeRoute) {
-    return view5(model);
+    return view7(model);
   } else if ($ instanceof QwizesRoute) {
-    return view8(model);
+    return view10(model);
   } else if ($ instanceof CreateQwizRoute) {
     return view3(model);
   } else if ($ instanceof QwizRoute) {
-    return view7(model);
+    return view9(model);
   } else if ($ instanceof CreateQuestionRoute) {
     return view2(model.qwiz);
   } else if ($ instanceof QuestionRoute) {
-    return view6(model);
+    return view8(model);
   } else if ($ instanceof CreateAnswerRoute) {
     return view(model.question);
-  } else {
+  } else if ($ instanceof UpdateAnswerRoute) {
     let id2 = $.id;
     return view4(model, id2);
+  } else if ($ instanceof UpdateQuestionRoute) {
+    return view5(model);
+  } else {
+    return view6(model);
   }
 }
 function main() {
-  let app = application(init3, update, view9);
+  let app = application(init3, update, view11);
   let $ = start2(app, "#app", void 0);
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "client",
-      25,
+      27,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }
