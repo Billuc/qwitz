@@ -1,5 +1,6 @@
 import gleam/int
 import gleam/io
+import gleam/string
 import tempo/duration
 
 pub fn log(message: String) {
@@ -11,15 +12,41 @@ pub fn log_error(message: String) {
 }
 
 pub fn time_log(message: String, exec: fn() -> b) -> b {
-  io.println(message <> " START")
+  log(message <> " START")
   let start = duration.start_monotonic()
 
   let result = exec()
 
   let duration = duration.stop_monotonic(start)
-  io.println(
+  log(
     message
     <> " END in "
+    <> duration |> duration.as_milliseconds |> int.to_string
+    <> " ms",
+  )
+
+  result
+}
+
+pub fn log_in_out(message: String, params: a, exec: fn() -> b) -> b {
+  log(message <> " with " <> string.inspect(params))
+  let result = exec()
+  log(message <> " returns " <> string.inspect(params))
+  result
+}
+
+pub fn time_log_in_out(message: String, params: a, exec: fn() -> b) -> b {
+  log(message <> " with " <> string.inspect(params) <> " START")
+  let start = duration.start_monotonic()
+
+  let result = exec()
+
+  let duration = duration.stop_monotonic(start)
+  log(
+    message
+    <> " returns "
+    <> string.inspect(result)
+    <> " in "
     <> duration |> duration.as_milliseconds |> int.to_string
     <> " ms",
   )

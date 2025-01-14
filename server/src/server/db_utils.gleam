@@ -1,6 +1,5 @@
 import envoy
 import gleam/int
-import gleam/io
 import gleam/result
 import gleam/string
 import gleamrpc
@@ -66,7 +65,7 @@ pub fn transaction(
 
 pub fn query_error_to_database_error(err: pog.QueryError) -> DatabaseError {
   let message = query_error_to_string(err)
-  io.println_error(message)
+  log.log_error(message)
   DatabaseError(message)
 }
 
@@ -103,7 +102,7 @@ fn transaction_error_to_database_error(
     pog.TransactionRolledBack(reason) -> reason
   }
 
-  io.println_error(message)
+  log.log_error(message)
   DatabaseError(message)
 }
 

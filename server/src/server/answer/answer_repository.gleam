@@ -3,6 +3,7 @@ import gleam/result
 import server/answer/sql
 import server/context
 import server/db_utils
+import server/log
 import shared
 import shared/answer
 import youid/uuid
@@ -11,6 +12,8 @@ pub fn get(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(answer.Answer, db_utils.DatabaseError) {
+  use <- log.time_log("[answer] repository get")
+
   sql.get_answer(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
   |> result.then(db_utils.get_one)
@@ -28,6 +31,10 @@ pub fn get_by_question_id(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(List(answer.Answer), db_utils.DatabaseError) {
+  use <- log.time_log(
+    "[answer] repository get_by_question_id with " <> params.data,
+  )
+
   sql.get_all_answers(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
   |> result.map(fn(v) {
@@ -45,6 +52,8 @@ pub fn create(
   params: answer.CreateAnswer,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
+  use <- log.time_log("[answer] repository create")
+
   let id = uuid.v4()
 
   sql.create_answer(
@@ -63,6 +72,8 @@ pub fn update(
   params: answer.Answer,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
+  use <- log.time_log("[answer] repository update")
+
   sql.update_answer(
     context.db,
     params.answer,
@@ -78,6 +89,8 @@ pub fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, db_utils.DatabaseError) {
+  use <- log.time_log("[answer] repository delete")
+
   sql.delete_answer(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
   |> result.replace(Nil)

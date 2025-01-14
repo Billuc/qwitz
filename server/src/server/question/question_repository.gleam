@@ -2,6 +2,7 @@ import gleam/list
 import gleam/result
 import server/context
 import server/db_utils
+import server/log
 import server/question/sql
 import shared
 import shared/question
@@ -11,6 +12,8 @@ pub fn get(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(question.Question, db_utils.DatabaseError) {
+  use <- log.time_log("[question] repository get")
+
   sql.get_question(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
   |> result.then(db_utils.get_one)
@@ -27,6 +30,10 @@ pub fn get_by_qwiz_id(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(List(question.Question), db_utils.DatabaseError) {
+  use <- log.time_log(
+    "[question] repository get_by_qwiz_id with " <> params.data,
+  )
+
   sql.get_all_questions(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
   |> result.map(fn(v) {
@@ -43,6 +50,8 @@ pub fn create(
   params: question.CreateQuestion,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
+  use <- log.time_log("[question] repository create")
+
   let id = uuid.v4()
 
   sql.create_question(
@@ -59,6 +68,8 @@ pub fn update(
   params: question.Question,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
+  use <- log.time_log("[question] repository update")
+
   sql.update_question(
     context.db,
     params.question,
@@ -72,6 +83,8 @@ pub fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, db_utils.DatabaseError) {
+  use <- log.time_log("[question] repository delete")
+
   sql.delete_question(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
   |> result.replace(Nil)
