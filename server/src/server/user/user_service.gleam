@@ -22,6 +22,6 @@ fn login(
   data: user.LoginData,
   _ctx: context.Context,
 ) -> Result(user.User, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[user] login", data)
+  use <- log.time_log_in_out("[user] service 'login'", data)
   Ok(user.User(uuid, "Bob"))
 }

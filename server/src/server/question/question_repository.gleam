@@ -12,7 +12,7 @@ pub fn get(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(question.Question, db_utils.DatabaseError) {
-  use <- log.time_log("[question] repository get")
+  use <- log.time_log("[question] repository 'get'")
 
   sql.get_question(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
@@ -30,9 +30,7 @@ pub fn get_by_qwiz_id(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(List(question.Question), db_utils.DatabaseError) {
-  use <- log.time_log(
-    "[question] repository get_by_qwiz_id with " <> params.data,
-  )
+  use <- log.time_log("[question] repository 'get_by_qwiz_id'")
 
   sql.get_all_questions(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
@@ -50,7 +48,7 @@ pub fn create(
   params: question.CreateQuestion,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
-  use <- log.time_log("[question] repository create")
+  use <- log.time_log("[question] repository 'create'")
 
   let id = uuid.v4()
 
@@ -68,7 +66,7 @@ pub fn update(
   params: question.Question,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
-  use <- log.time_log("[question] repository update")
+  use <- log.time_log("[question] repository 'update'")
 
   sql.update_question(
     context.db,
@@ -83,7 +81,7 @@ pub fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, db_utils.DatabaseError) {
-  use <- log.time_log("[question] repository delete")
+  use <- log.time_log("[question] repository 'delete'")
 
   sql.delete_question(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)

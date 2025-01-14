@@ -41,7 +41,7 @@ fn get(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[qwiz] service get", params.data)
+  use <- log.time_log_in_out("[qwiz] service 'get'", params.data)
 
   get_with_questions(params, context)
   |> result.map_error(db_utils.database_to_procedure_error)
@@ -51,7 +51,7 @@ fn get_all(
   _params: Nil,
   context: context.Context,
 ) -> Result(List(qwiz.Qwiz), gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[qwiz] service get_all", Nil)
+  use <- log.time_log_in_out("[qwiz] service 'get_all'", Nil)
 
   qwiz_repository.get_all(context)
   |> result.map_error(db_utils.database_to_procedure_error)
@@ -61,7 +61,7 @@ fn create(
   params: qwiz.UpsertQwiz,
   context: context.Context,
 ) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[qwiz] service create", params)
+  use <- log.time_log_in_out("[qwiz] service 'create'", params)
 
   qwiz_repository.create(params, context)
   |> result.then(get_with_questions(_, context))
@@ -72,7 +72,7 @@ fn update(
   params: qwiz.Qwiz,
   context: context.Context,
 ) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[qwiz] service update", params)
+  use <- log.time_log_in_out("[qwiz] service 'update'", params)
 
   qwiz_repository.update(params, context)
   |> result.then(get_with_questions(_, context))
@@ -83,7 +83,7 @@ fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[qwiz] service delete", params.data)
+  use <- log.time_log_in_out("[qwiz] service 'delete'", params.data)
 
   qwiz_repository.delete(params, context)
   |> result.map_error(db_utils.database_to_procedure_error)

@@ -22,7 +22,7 @@ fn create(
   params: answer.CreateAnswer,
   context: context.Context,
 ) -> Result(answer.Answer, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[answer] create", params)
+  use <- log.time_log_in_out("[answer] service 'create'", params)
 
   answer_repository.create(params, context)
   |> result.then(answer_repository.get(_, context))
@@ -33,7 +33,7 @@ fn update(
   params: answer.Answer,
   context: context.Context,
 ) -> Result(answer.Answer, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[answer] update", params)
+  use <- log.time_log_in_out("[answer] service 'update'", params)
 
   answer_repository.update(params, context)
   |> result.then(answer_repository.get(_, context))
@@ -44,7 +44,7 @@ fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[answer] delete", params.data)
+  use <- log.time_log_in_out("[answer] service 'delete'", params.data)
 
   answer_repository.delete(params, context)
   |> result.map_error(db_utils.database_to_procedure_error)

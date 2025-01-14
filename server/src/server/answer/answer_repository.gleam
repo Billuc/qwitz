@@ -12,7 +12,7 @@ pub fn get(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(answer.Answer, db_utils.DatabaseError) {
-  use <- log.time_log("[answer] repository get")
+  use <- log.time_log("[answer] repository 'get'")
 
   sql.get_answer(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
@@ -31,9 +31,7 @@ pub fn get_by_question_id(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(List(answer.Answer), db_utils.DatabaseError) {
-  use <- log.time_log(
-    "[answer] repository get_by_question_id with " <> params.data,
-  )
+  use <- log.time_log("[answer] repository 'get_by_question_id'")
 
   sql.get_all_answers(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)
@@ -52,7 +50,7 @@ pub fn create(
   params: answer.CreateAnswer,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
-  use <- log.time_log("[answer] repository create")
+  use <- log.time_log("[answer] repository 'create'")
 
   let id = uuid.v4()
 
@@ -72,7 +70,7 @@ pub fn update(
   params: answer.Answer,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
-  use <- log.time_log("[answer] repository update")
+  use <- log.time_log("[answer] repository 'update'")
 
   sql.update_answer(
     context.db,
@@ -89,7 +87,7 @@ pub fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, db_utils.DatabaseError) {
-  use <- log.time_log("[answer] repository delete")
+  use <- log.time_log("[answer] repository 'delete'")
 
   sql.delete_answer(context.db, db_utils.shared_to_youid(params))
   |> result.map_error(db_utils.query_error_to_database_error)

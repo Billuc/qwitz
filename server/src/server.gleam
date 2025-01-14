@@ -4,6 +4,7 @@ import gleamrpc
 import gleamrpc/http/server as rpc_http
 import glisten
 import mist
+import server/answer/answer_service
 import server/context
 import server/db_utils
 import server/question/question_service
@@ -39,6 +40,7 @@ pub fn main() {
     |> user_service.register
     |> qwiz_service.register
     |> question_service.register
+    |> answer_service.register
 
   let mist_server =
     rpc_server

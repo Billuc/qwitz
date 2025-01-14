@@ -40,7 +40,7 @@ fn get(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[question] service get", params.data)
+  use <- log.time_log_in_out("[question] service 'get'", params.data)
 
   get_with_answers(params, context)
   |> result.map_error(db_utils.database_to_procedure_error)
@@ -50,7 +50,7 @@ fn create(
   params: question.CreateQuestion,
   context: context.Context,
 ) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[question] service create", params)
+  use <- log.time_log_in_out("[question] service 'create'", params)
 
   question_repository.create(params, context)
   |> result.then(get_with_answers(_, context))
@@ -61,7 +61,7 @@ fn update(
   params: question.Question,
   context: context.Context,
 ) -> Result(question.QuestionWithAnswers, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[question] service update", params)
+  use <- log.time_log_in_out("[question] service 'update'", params)
 
   question_repository.update(params, context)
   |> result.then(get_with_answers(_, context))
@@ -72,7 +72,7 @@ fn delete(
   params: shared.Uuid,
   context: context.Context,
 ) -> Result(Nil, gleamrpc.ProcedureError) {
-  use <- log.time_log_in_out("[question] service delete", params.data)
+  use <- log.time_log_in_out("[question] service 'delete'", params.data)
 
   question_repository.delete(params, context)
   |> result.map_error(db_utils.database_to_procedure_error)
