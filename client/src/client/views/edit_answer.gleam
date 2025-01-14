@@ -42,9 +42,7 @@ fn no_answer_view(model: model.Model) {
 
   html.div([], [
     html.h1([], [html.text("Error: No answer selected !")]),
-    html.a([attribute.href(return.0 |> model.route_to_url)], [
-      html.text(return.1),
-    ]),
+    html.a([model.href(return.0)], [html.text(return.1)]),
   ])
 }
 

@@ -20,9 +20,7 @@ pub fn view(qwiz: option.Option(qwiz.QwizWithQuestions)) {
 fn no_qwiz_view() {
   html.div([], [
     html.h1([], [html.text("Error: No qwiz selected !")]),
-    html.a([attribute.href(model.QwizesRoute |> model.route_to_url)], [
-      html.text("Go back to qwizes"),
-    ]),
+    html.a([model.href(model.QwizesRoute)], [html.text("Go back to qwizes")]),
   ])
 }
 

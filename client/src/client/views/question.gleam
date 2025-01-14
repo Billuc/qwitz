@@ -2,7 +2,6 @@ import client/model
 import client/views/common
 import gleam/list
 import gleam/option
-import lustre/attribute
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -33,7 +32,7 @@ fn back_button(model: model.Model) {
     option.Some(qw) -> #(model.QwizRoute(qw.id), "Back to " <> qw.name)
   }
 
-  html.a([attribute.href(return.0 |> model.route_to_url)], [html.text(return.1)])
+  html.a([model.href(return.0)], [html.text(return.1)])
 }
 
 fn answer_list(answers: List(answer.Answer)) {
@@ -52,9 +51,7 @@ fn answer_row(answer: answer.Answer) {
 }
 
 fn edit_answer_button(id: shared.Uuid) {
-  html.a([attribute.href(model.UpdateAnswerRoute(id) |> model.route_to_url)], [
-    html.text("Edit"),
-  ])
+  html.a([model.href(model.UpdateAnswerRoute(id))], [html.text("Edit")])
 }
 
 fn delete_answer_button(id: shared.Uuid) {
@@ -62,9 +59,7 @@ fn delete_answer_button(id: shared.Uuid) {
 }
 
 fn edit_question_button(id: shared.Uuid) {
-  html.a([attribute.href(model.UpdateQuestionRoute(id) |> model.route_to_url)], [
-    html.text("Edit"),
-  ])
+  html.a([model.href(model.UpdateQuestionRoute(id))], [html.text("Edit")])
 }
 
 fn delete_question_button(id: shared.Uuid) {
@@ -72,7 +67,5 @@ fn delete_question_button(id: shared.Uuid) {
 }
 
 fn create_answer_button() {
-  html.a([attribute.href(model.CreateAnswerRoute |> model.route_to_url)], [
-    html.text("Add answer"),
-  ])
+  html.a([model.href(model.CreateAnswerRoute)], [html.text("Add answer")])
 }

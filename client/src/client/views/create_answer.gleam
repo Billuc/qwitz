@@ -22,9 +22,7 @@ pub fn view(question: option.Option(question.QuestionWithAnswers)) {
 fn no_question_view() {
   html.div([], [
     html.h1([], [html.text("Error: No question selected !")]),
-    html.a([attribute.href(model.QwizesRoute |> model.route_to_url)], [
-      html.text("Go back to qwizes"),
-    ]),
+    html.a([model.href(model.QwizesRoute)], [html.text("Go back to qwizes")]),
   ])
 }
 

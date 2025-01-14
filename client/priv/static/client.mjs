@@ -6474,6 +6474,24 @@ function route_to_url(route) {
     return "/qwiz/update/" + id2.data;
   }
 }
+function go_to(route) {
+  return push(
+    (() => {
+      let _pipe = route;
+      return route_to_url(_pipe);
+    })(),
+    new None(),
+    new None()
+  );
+}
+function href2(route) {
+  return href(
+    (() => {
+      let _pipe = route;
+      return route_to_url(_pipe);
+    })()
+  );
+}
 function route_on_load(route) {
   if (route instanceof QwizesRoute) {
     return get_qwizes2(
@@ -6569,14 +6587,7 @@ function no_question_view() {
         toList([text2("Error: No question selected !")])
       ),
       a(
-        toList([
-          href(
-            (() => {
-              let _pipe = new QwizesRoute();
-              return route_to_url(_pipe);
-            })()
-          )
-        ]),
+        toList([href2(new QwizesRoute())]),
         toList([text2("Go back to qwizes")])
       )
     ])
@@ -6661,14 +6672,7 @@ function no_qwiz_view() {
     toList([
       h1(toList([]), toList([text2("Error: No qwiz selected !")])),
       a(
-        toList([
-          href(
-            (() => {
-              let _pipe = new QwizesRoute();
-              return route_to_url(_pipe);
-            })()
-          )
-        ]),
+        toList([href2(new QwizesRoute())]),
         toList([text2("Go back to qwizes")])
       )
     ])
@@ -6788,14 +6792,7 @@ function no_answer_view(model) {
     toList([
       h1(toList([]), toList([text2("Error: No answer selected !")])),
       a(
-        toList([
-          href(
-            (() => {
-              let _pipe = return$[0];
-              return route_to_url(_pipe);
-            })()
-          )
-        ]),
+        toList([href2(return$[0])]),
         toList([text2(return$[1])])
       )
     ])
@@ -6917,14 +6914,7 @@ function no_question_view2() {
         toList([text2("Error: No question selected !")])
       ),
       a(
-        toList([
-          href(
-            (() => {
-              let _pipe = new QwizesRoute();
-              return route_to_url(_pipe);
-            })()
-          )
-        ]),
+        toList([href2(new QwizesRoute())]),
         toList([text2("Go back to qwizes")])
       )
     ])
@@ -6993,14 +6983,7 @@ function no_qwiz_view2() {
     toList([
       h1(toList([]), toList([text2("Error: No qwiz selected !")])),
       a(
-        toList([
-          href(
-            (() => {
-              let _pipe = new QwizesRoute();
-              return route_to_url(_pipe);
-            })()
-          )
-        ]),
+        toList([href2(new QwizesRoute())]),
         toList([text2("Go back to qwizes")])
       )
     ])
@@ -7081,27 +7064,13 @@ function back_button(model) {
     }
   })();
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = return$[0];
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(return$[0])]),
     toList([text2(return$[1])])
   );
 }
 function edit_answer_button(id2) {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new UpdateAnswerRoute(id2);
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new UpdateAnswerRoute(id2))]),
     toList([text2("Edit")])
   );
 }
@@ -7133,14 +7102,7 @@ function answer_list(answers) {
 }
 function edit_question_button(id2) {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new UpdateQuestionRoute(id2);
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new UpdateQuestionRoute(id2))]),
     toList([text2("Edit")])
   );
 }
@@ -7152,14 +7114,7 @@ function delete_question_button(id2) {
 }
 function create_answer_button() {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new CreateAnswerRoute();
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new CreateAnswerRoute())]),
     toList([text2("Add answer")])
   );
 }
@@ -7192,27 +7147,13 @@ function view8(model) {
 function back_button2(model) {
   let return$ = [new QwizesRoute(), "Back to qwizes"];
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = return$[0];
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(return$[0])]),
     toList([text2(return$[1])])
   );
 }
 function question_row(question) {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new QuestionRoute(question.id);
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new QuestionRoute(question.id))]),
     toList([text2(question.question)])
   );
 }
@@ -7228,14 +7169,7 @@ function question_list(questions) {
 }
 function edit_qwiz_button(id2) {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new UpdateQwizRoute(id2);
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new UpdateQwizRoute(id2))]),
     toList([text2("Edit")])
   );
 }
@@ -7247,14 +7181,7 @@ function delete_qwiz_button(id2) {
 }
 function create_question_button() {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new CreateQuestionRoute();
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new CreateQuestionRoute())]),
     toList([text2("Add question")])
   );
 }
@@ -7289,14 +7216,7 @@ function qwiz_row(qwiz) {
     toList([]),
     toList([
       a(
-        toList([
-          href(
-            (() => {
-              let _pipe = new QwizRoute(qwiz.id);
-              return route_to_url(_pipe);
-            })()
-          )
-        ]),
+        toList([href2(new QwizRoute(qwiz.id))]),
         toList([text2(qwiz.name)])
       )
     ])
@@ -7304,14 +7224,7 @@ function qwiz_row(qwiz) {
 }
 function create_qwiz_button() {
   return a(
-    toList([
-      href(
-        (() => {
-          let _pipe = new CreateQwizRoute();
-          return route_to_url(_pipe);
-        })()
-      )
-    ]),
+    toList([href2(new CreateQwizRoute())]),
     toList([text2("Create Qwiz")])
   );
 }
@@ -7363,14 +7276,7 @@ function init3(_) {
           if (initial_route instanceof HomeRoute) {
             return none();
           } else {
-            return push(
-              (() => {
-                let _pipe = new HomeRoute();
-                return route_to_url(_pipe);
-              })(),
-              new None(),
-              new None()
-            );
+            return go_to(new HomeRoute());
           }
         })()
       ])
@@ -7404,14 +7310,7 @@ function update(model, msg) {
           _record.question
         );
       })(),
-      push(
-        (() => {
-          let _pipe = new QwizesRoute();
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
+      go_to(new QwizesRoute())
     ];
   } else if (msg instanceof SetQwizes) {
     let qwizes = msg.qwizes;
@@ -7443,17 +7342,7 @@ function update(model, msg) {
     ];
   } else if (msg instanceof QwizCreated) {
     let qwiz = msg.qwiz;
-    return [
-      model,
-      push(
-        (() => {
-          let _pipe = new QwizRoute(qwiz.id);
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
-    ];
+    return [model, go_to(new QwizRoute(qwiz.id))];
   } else if (msg instanceof ChangeRoute) {
     let route = msg.route;
     return [
@@ -7496,17 +7385,7 @@ function update(model, msg) {
       )
     ];
   } else if (msg instanceof QwizDeleted) {
-    return [
-      model,
-      push(
-        (() => {
-          let _pipe = new QwizesRoute();
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
-    ];
+    return [model, go_to(new QwizesRoute())];
   } else if (msg instanceof CreateQuestion2) {
     let qwiz_id = msg.qwiz_id;
     let question = msg.question;
@@ -7522,17 +7401,7 @@ function update(model, msg) {
     ];
   } else if (msg instanceof QuestionCreated) {
     let question = msg.question;
-    return [
-      model,
-      push(
-        (() => {
-          let _pipe = new QuestionRoute(question.id);
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
-    ];
+    return [model, go_to(new QuestionRoute(question.id))];
   } else if (msg instanceof DeleteQuestion) {
     let id2 = msg.id;
     return [
@@ -7550,24 +7419,10 @@ function update(model, msg) {
       (() => {
         let $ = model.qwiz;
         if ($ instanceof None) {
-          return push(
-            (() => {
-              let _pipe = new QwizesRoute();
-              return route_to_url(_pipe);
-            })(),
-            new None(),
-            new None()
-          );
+          return go_to(new QwizesRoute());
         } else {
           let qwiz = $[0];
-          return push(
-            (() => {
-              let _pipe = new QwizRoute(qwiz.id);
-              return route_to_url(_pipe);
-            })(),
-            new None(),
-            new None()
-          );
+          return go_to(new QwizRoute(qwiz.id));
         }
       })()
     ];
@@ -7607,24 +7462,10 @@ function update(model, msg) {
       (() => {
         let $ = model.question;
         if ($ instanceof None) {
-          return push(
-            (() => {
-              let _pipe = new QwizesRoute();
-              return route_to_url(_pipe);
-            })(),
-            new None(),
-            new None()
-          );
+          return go_to(new QwizesRoute());
         } else {
           let question = $[0];
-          return push(
-            (() => {
-              let _pipe = new QuestionRoute(question.id);
-              return route_to_url(_pipe);
-            })(),
-            new None(),
-            new None()
-          );
+          return go_to(new QuestionRoute(question.id));
         }
       })()
     ];
@@ -7689,17 +7530,7 @@ function update(model, msg) {
     ];
   } else if (msg instanceof AnswerUpdated) {
     let a2 = msg.answer;
-    return [
-      model,
-      push(
-        (() => {
-          let _pipe = new QuestionRoute(a2.question_id);
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
-    ];
+    return [model, go_to(new QuestionRoute(a2.question_id))];
   } else if (msg instanceof UpdateQuestion) {
     let q = msg.new_question;
     return [
@@ -7713,17 +7544,7 @@ function update(model, msg) {
     ];
   } else if (msg instanceof QuestionUpdated) {
     let q = msg.question;
-    return [
-      model,
-      push(
-        (() => {
-          let _pipe = new QuestionRoute(q.id);
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
-    ];
+    return [model, go_to(new QuestionRoute(q.id))];
   } else if (msg instanceof UpdateQwiz) {
     let qw = msg.new_qwiz;
     return [
@@ -7737,17 +7558,7 @@ function update(model, msg) {
     ];
   } else {
     let qw = msg.qwiz;
-    return [
-      model,
-      push(
-        (() => {
-          let _pipe = new QwizRoute(qw.id);
-          return route_to_url(_pipe);
-        })(),
-        new None(),
-        new None()
-      )
-    ];
+    return [model, go_to(new QwizRoute(qw.id))];
   }
 }
 function view11(model) {

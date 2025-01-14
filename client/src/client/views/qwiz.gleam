@@ -2,7 +2,6 @@ import client/model
 import client/views/common
 import gleam/list
 import gleam/option
-import lustre/attribute
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -30,7 +29,7 @@ pub fn view(model: model.Model) {
 fn back_button(model: model.Model) {
   let return = #(model.QwizesRoute, "Back to qwizes")
 
-  html.a([attribute.href(return.0 |> model.route_to_url)], [html.text(return.1)])
+  html.a([model.href(return.0)], [html.text(return.1)])
 }
 
 fn question_list(questions: List(question.Question)) {
@@ -41,16 +40,13 @@ fn question_list(questions: List(question.Question)) {
 }
 
 fn question_row(question: question.Question) {
-  html.a(
-    [attribute.href(model.QuestionRoute(question.id) |> model.route_to_url)],
-    [html.text(question.question)],
-  )
+  html.a([model.href(model.QuestionRoute(question.id))], [
+    html.text(question.question),
+  ])
 }
 
 fn edit_qwiz_button(id: shared.Uuid) {
-  html.a([attribute.href(model.UpdateQwizRoute(id) |> model.route_to_url)], [
-    html.text("Edit"),
-  ])
+  html.a([model.href(model.UpdateQwizRoute(id))], [html.text("Edit")])
 }
 
 fn delete_qwiz_button(id: shared.Uuid) {
@@ -58,7 +54,5 @@ fn delete_qwiz_button(id: shared.Uuid) {
 }
 
 fn create_question_button() {
-  html.a([attribute.href(model.CreateQuestionRoute |> model.route_to_url)], [
-    html.text("Add question"),
-  ])
+  html.a([model.href(model.CreateQuestionRoute)], [html.text("Add question")])
 }

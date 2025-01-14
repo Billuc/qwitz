@@ -2,7 +2,9 @@ import client/services/question_service
 import client/services/qwiz_service
 import gleam/option
 import gleam/uri
+import lustre/attribute
 import lustre/effect
+import modem
 import shared
 import shared/answer
 import shared/question
@@ -87,6 +89,14 @@ pub fn route_to_url(route: Route) -> String {
     UpdateQuestionRoute(id) -> "/question/update/" <> id.data
     UpdateQwizRoute(id) -> "/qwiz/update/" <> id.data
   }
+}
+
+pub fn go_to(route: Route) -> effect.Effect(Msg) {
+  modem.push(route |> route_to_url, option.None, option.None)
+}
+
+pub fn href(route: Route) -> attribute.Attribute(_) {
+  attribute.href(route |> route_to_url)
 }
 
 pub fn route_on_load(route: Route) -> effect.Effect(Msg) {

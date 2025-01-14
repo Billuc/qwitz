@@ -46,12 +46,7 @@ fn init(_) -> #(model.Model, effect.Effect(model.Msg)) {
       modem.init(fn(uri) { uri |> model.on_url_change |> model.ChangeRoute }),
       case initial_route {
         model.HomeRoute -> effect.none()
-        _ ->
-          modem.push(
-            model.HomeRoute |> model.route_to_url,
-            option.None,
-            option.None,
-          )
+        _ -> model.go_to(model.HomeRoute)
       },
     ]),
   )
@@ -68,25 +63,14 @@ fn update(
     })
     model.SetUser(user) -> #(
       model.Model(..model, user: option.Some(user)),
-      modem.push(
-        model.QwizesRoute |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
+      model.go_to(model.QwizesRoute),
     )
     model.SetQwizes(qwizes) -> #(model.Model(..model, qwizes:), effect.none())
     model.CreateQwiz(name, owner) -> #(model, {
       use new_qwiz <- qwiz_service.create_qwiz(name, owner)
       model.QwizCreated(new_qwiz)
     })
-    model.QwizCreated(qwiz) -> #(
-      model,
-      modem.push(
-        model.QwizRoute(qwiz.id) |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
-    )
+    model.QwizCreated(qwiz) -> #(model, model.go_to(model.QwizRoute(qwiz.id)))
     model.ChangeRoute(route) -> #(
       model.Model(..model, route:),
       model.route_on_load(route),
@@ -99,43 +83,22 @@ fn update(
       use _ <- qwiz_service.delete_qwiz(qwiz_id)
       model.QwizDeleted(qwiz_id)
     })
-    model.QwizDeleted(_) -> #(
-      model,
-      modem.push(
-        model.QwizesRoute |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
-    )
+    model.QwizDeleted(_) -> #(model, model.go_to(model.QwizesRoute))
     model.CreateQuestion(qwiz_id, question) -> #(model, {
       use question <- question_service.create_question(qwiz_id, question)
       model.QuestionCreated(question)
     })
     model.QuestionCreated(question) -> #(
       model,
-      modem.push(
-        model.QuestionRoute(question.id) |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
+      model.go_to(model.QuestionRoute(question.id)),
     )
     model.DeleteQuestion(id) -> #(model, {
       use _ <- question_service.delete_question(id)
       model.QuestionDeleted(id)
     })
     model.QuestionDeleted(_) -> #(model, case model.qwiz {
-      option.None ->
-        modem.push(
-          model.QwizesRoute |> model.route_to_url,
-          option.None,
-          option.None,
-        )
-      option.Some(qwiz) ->
-        modem.push(
-          model.QwizRoute(qwiz.id) |> model.route_to_url,
-          option.None,
-          option.None,
-        )
+      option.None -> model.go_to(model.QwizesRoute)
+      option.Some(qwiz) -> model.go_to(model.QwizRoute(qwiz.id))
     })
     model.SetQuestion(question) -> #(
       model.Model(..model, question: option.Some(question)),
@@ -146,18 +109,8 @@ fn update(
       model.AnswerCreated(a)
     })
     model.AnswerCreated(_) -> #(model, case model.question {
-      option.None ->
-        modem.push(
-          model.QwizesRoute |> model.route_to_url,
-          option.None,
-          option.None,
-        )
-      option.Some(question) ->
-        modem.push(
-          model.QuestionRoute(question.id) |> model.route_to_url,
-          option.None,
-          option.None,
-        )
+      option.None -> model.go_to(model.QwizesRoute)
+      option.Some(question) -> model.go_to(model.QuestionRoute(question.id))
     })
     model.DeleteAnswer(id) -> #(model, {
       use _ <- answer_service.delete_answer(id)
@@ -182,36 +135,18 @@ fn update(
     })
     model.AnswerUpdated(a) -> #(
       model,
-      modem.push(
-        model.QuestionRoute(a.question_id) |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
+      model.go_to(model.QuestionRoute(a.question_id)),
     )
     model.UpdateQuestion(q) -> #(model, {
       use q <- question_service.update_question(q)
       model.QuestionUpdated(q)
     })
-    model.QuestionUpdated(q) -> #(
-      model,
-      modem.push(
-        model.QuestionRoute(q.id) |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
-    )
+    model.QuestionUpdated(q) -> #(model, model.go_to(model.QuestionRoute(q.id)))
     model.UpdateQwiz(qw) -> #(model, {
       use qw <- qwiz_service.update_qwiz(qw)
       model.QwizUpdated(qw)
     })
-    model.QwizUpdated(qw) -> #(
-      model,
-      modem.push(
-        model.QwizRoute(qw.id) |> model.route_to_url,
-        option.None,
-        option.None,
-      ),
-    )
+    model.QwizUpdated(qw) -> #(model, model.go_to(model.QwizRoute(qw.id)))
   }
 }
 
