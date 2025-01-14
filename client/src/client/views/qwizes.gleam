@@ -1,4 +1,5 @@
-import client/model
+import client/model/model
+import client/model/route
 import gleam/list
 import lustre/element
 import lustre/element/html
@@ -16,10 +17,10 @@ pub fn view(model: model.Model) {
 
 fn qwiz_row(qwiz: qwiz.Qwiz) {
   html.div([], [
-    html.a([model.href(model.QwizRoute(qwiz.id))], [html.text(qwiz.name)]),
+    html.a([route.href(route.QwizRoute(qwiz.id))], [html.text(qwiz.name)]),
   ])
 }
 
 pub fn create_qwiz_button() {
-  html.a([model.href(model.CreateQwizRoute)], [html.text("Create Qwiz")])
+  html.a([route.href(route.CreateQwizRoute)], [html.text("Create Qwiz")])
 }

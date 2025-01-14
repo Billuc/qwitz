@@ -1,4 +1,5 @@
-import client/model
+import client/model/model
+import client/model/route
 import client/utils
 import gleam/dynamic
 import gleam/option
@@ -20,7 +21,7 @@ pub fn view(qwiz: option.Option(qwiz.QwizWithQuestions)) {
 fn no_qwiz_view() {
   html.div([], [
     html.h1([], [html.text("Error: No qwiz selected !")]),
-    html.a([model.href(model.QwizesRoute)], [html.text("Go back to qwizes")]),
+    html.a([route.href(route.QwizesRoute)], [html.text("Go back to qwizes")]),
   ])
 }
 
@@ -39,7 +40,10 @@ fn create_view(qwiz: qwiz.QwizWithQuestions) {
 fn on_submit(qwiz: qwiz.QwizWithQuestions, v: dynamic.Dynamic) {
   event.prevent_default(v)
 
-  utils.get_element(question_title)
-  |> result.then(utils.get_value)
-  |> result.map(model.CreateQuestion(qwiz.id, _))
+  use title <- result.try(
+    utils.get_element(question_title)
+    |> result.then(utils.get_value),
+  )
+
+  Ok(model.CreateQuestion(qwiz.id, title))
 }

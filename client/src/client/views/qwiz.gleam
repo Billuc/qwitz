@@ -1,4 +1,5 @@
-import client/model
+import client/model/model
+import client/model/route
 import client/views/common
 import gleam/list
 import gleam/option
@@ -14,7 +15,7 @@ pub fn view(model: model.Model) {
     option.Some(qwiz) -> {
       html.div([], [
         html.div([], [
-          back_button(model),
+          back_button(),
           html.h1([], [html.text(qwiz.name)]),
           edit_qwiz_button(qwiz.id),
           delete_qwiz_button(qwiz.id),
@@ -26,10 +27,10 @@ pub fn view(model: model.Model) {
   }
 }
 
-fn back_button(model: model.Model) {
-  let return = #(model.QwizesRoute, "Back to qwizes")
+fn back_button() {
+  let return = #(route.QwizesRoute, "Back to qwizes")
 
-  html.a([model.href(return.0)], [html.text(return.1)])
+  html.a([route.href(return.0)], [html.text(return.1)])
 }
 
 fn question_list(questions: List(question.Question)) {
@@ -40,13 +41,13 @@ fn question_list(questions: List(question.Question)) {
 }
 
 fn question_row(question: question.Question) {
-  html.a([model.href(model.QuestionRoute(question.id))], [
+  html.a([route.href(route.QuestionRoute(question.id))], [
     html.text(question.question),
   ])
 }
 
 fn edit_qwiz_button(id: shared.Uuid) {
-  html.a([model.href(model.UpdateQwizRoute(id))], [html.text("Edit")])
+  html.a([route.href(route.UpdateQwizRoute(id))], [html.text("Edit")])
 }
 
 fn delete_qwiz_button(id: shared.Uuid) {
@@ -54,5 +55,5 @@ fn delete_qwiz_button(id: shared.Uuid) {
 }
 
 fn create_question_button() {
-  html.a([model.href(model.CreateQuestionRoute)], [html.text("Add question")])
+  html.a([route.href(route.CreateQuestionRoute)], [html.text("Add question")])
 }

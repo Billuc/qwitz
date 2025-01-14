@@ -1,4 +1,4 @@
-import client/model
+import client/model/model
 import lustre/element
 import lustre/element/html
 import lustre/event

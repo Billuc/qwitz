@@ -1,4 +1,5 @@
-import client/model
+import client/model/model
+import client/model/route
 import client/views/common
 import gleam/list
 import gleam/option
@@ -28,11 +29,11 @@ pub fn view(model: model.Model) {
 
 fn back_button(model: model.Model) {
   let return = case model.qwiz {
-    option.None -> #(model.QwizesRoute, "Back to qwizes")
-    option.Some(qw) -> #(model.QwizRoute(qw.id), "Back to " <> qw.name)
+    option.None -> #(route.QwizesRoute, "Back to qwizes")
+    option.Some(qw) -> #(route.QwizRoute(qw.id), "Back to " <> qw.name)
   }
 
-  html.a([model.href(return.0)], [html.text(return.1)])
+  html.a([route.href(return.0)], [html.text(return.1)])
 }
 
 fn answer_list(answers: List(answer.Answer)) {
@@ -51,7 +52,7 @@ fn answer_row(answer: answer.Answer) {
 }
 
 fn edit_answer_button(id: shared.Uuid) {
-  html.a([model.href(model.UpdateAnswerRoute(id))], [html.text("Edit")])
+  html.a([route.href(route.UpdateAnswerRoute(id))], [html.text("Edit")])
 }
 
 fn delete_answer_button(id: shared.Uuid) {
@@ -59,7 +60,7 @@ fn delete_answer_button(id: shared.Uuid) {
 }
 
 fn edit_question_button(id: shared.Uuid) {
-  html.a([model.href(model.UpdateQuestionRoute(id))], [html.text("Edit")])
+  html.a([route.href(route.UpdateQuestionRoute(id))], [html.text("Edit")])
 }
 
 fn delete_question_button(id: shared.Uuid) {
@@ -67,5 +68,5 @@ fn delete_question_button(id: shared.Uuid) {
 }
 
 fn create_answer_button() {
-  html.a([model.href(model.CreateAnswerRoute)], [html.text("Add answer")])
+  html.a([route.href(route.CreateAnswerRoute)], [html.text("Add answer")])
 }

@@ -1,4 +1,5 @@
-import client/model
+import client/model/model
+import client/model/route
 import client/utils
 import gleam/dynamic
 import gleam/option
@@ -21,7 +22,7 @@ pub fn view(model: model.Model) -> le.Element(model.Msg) {
 fn no_qwiz_view() {
   html.div([], [
     html.h1([], [html.text("Error: No qwiz selected !")]),
-    html.a([model.href(model.QwizesRoute)], [html.text("Go back to qwizes")]),
+    html.a([route.href(route.QwizesRoute)], [html.text("Go back to qwizes")]),
   ])
 }
 

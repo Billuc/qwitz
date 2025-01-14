@@ -1,10 +1,10 @@
-import client/model
+import client/model/route
 import lustre/element/html
 
 pub type LinkProps {
-  LinkProps(to: model.Route, text: String)
+  LinkProps(to: route.Route, text: String)
 }
 
 pub fn view(props: LinkProps) {
-  html.a([model.href(props.to)], [html.text(props.text)])
+  html.a([route.href(props.to)], [html.text(props.text)])
 }

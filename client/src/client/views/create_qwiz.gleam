@@ -1,4 +1,4 @@
-import client/model
+import client/model/model
 import client/utils
 import gleam/dynamic
 import gleam/io
