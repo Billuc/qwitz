@@ -58,7 +58,7 @@ fn get_all(
 }
 
 fn create(
-  params: qwiz.UpsertQwiz,
+  params: qwiz.CreateQwiz,
   context: context.Context,
 ) -> Result(qwiz.QwizWithQuestions, gleamrpc.ProcedureError) {
   use <- log.time_log_in_out("[qwiz] service 'create'", params)

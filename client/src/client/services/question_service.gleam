@@ -1,28 +1,19 @@
 import client/utils
-import lustre/effect
 import shared
 import shared/question
 
-pub fn get_question(question_id: shared.Uuid, cb) -> effect.Effect(c) {
-  utils.rpc_effect(question.get_question(), question_id, cb)
+pub fn get_question(question_id: shared.Uuid, cb) -> Nil {
+  utils.exec_procedure(question.get_question(), question_id, cb)
 }
 
-pub fn create_question(
-  qwiz_id: shared.Uuid,
-  question: String,
-  cb,
-) -> effect.Effect(c) {
-  utils.rpc_effect(
-    question.create_question(),
-    question.CreateQuestion(qwiz_id:, question:),
-    cb,
-  )
+pub fn create_question(data: question.CreateQuestion, cb) -> Nil {
+  utils.exec_procedure(question.create_question(), data, cb)
 }
 
-pub fn update_question(question: question.Question, cb) -> effect.Effect(c) {
-  utils.rpc_effect(question.update_question(), question, cb)
+pub fn update_question(question: question.Question, cb) -> Nil {
+  utils.exec_procedure(question.update_question(), question, cb)
 }
 
-pub fn delete_question(id: shared.Uuid, cb: fn(Nil) -> d) -> effect.Effect(d) {
-  utils.rpc_effect(question.delete_question(), id, cb)
+pub fn delete_question(id: shared.Uuid, cb) -> Nil {
+  utils.exec_procedure(question.delete_question(), id, cb)
 }

@@ -17,8 +17,8 @@ pub type QwizWithQuestions {
   )
 }
 
-pub type UpsertQwiz {
-  UpsertQwiz(name: String, owner: shared.Uuid)
+pub type CreateQwiz {
+  CreateQwiz(name: String, owner: shared.Uuid)
 }
 
 pub fn qwiz_converter() -> convert.Converter(Qwiz) {
@@ -70,20 +70,20 @@ pub fn qwiz_with_questions_converter() -> convert.Converter(QwizWithQuestions) {
   })
 }
 
-pub fn upsert_qwiz_converter() -> convert.Converter(UpsertQwiz) {
+pub fn upsert_qwiz_converter() -> convert.Converter(CreateQwiz) {
   convert.object({
     use name <- convert.field(
       "name",
-      fn(v: UpsertQwiz) { Ok(v.name) },
+      fn(v: CreateQwiz) { Ok(v.name) },
       convert.string(),
     )
     use owner <- convert.field(
       "owner",
-      fn(v: UpsertQwiz) { Ok(v.owner) },
+      fn(v: CreateQwiz) { Ok(v.owner) },
       shared.uuid_converter(),
     )
 
-    convert.success(UpsertQwiz(name:, owner:))
+    convert.success(CreateQwiz(name:, owner:))
   })
 }
 
@@ -99,7 +99,7 @@ pub fn get_qwiz() -> gleamrpc.Procedure(shared.Uuid, QwizWithQuestions) {
   |> gleamrpc.returns(qwiz_with_questions_converter())
 }
 
-pub fn create_qwiz() -> gleamrpc.Procedure(UpsertQwiz, QwizWithQuestions) {
+pub fn create_qwiz() -> gleamrpc.Procedure(CreateQwiz, QwizWithQuestions) {
   gleamrpc.mutation("create_qwiz", option.None)
   |> gleamrpc.params(upsert_qwiz_converter())
   |> gleamrpc.returns(qwiz_with_questions_converter())

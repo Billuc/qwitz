@@ -1,3 +1,4 @@
+import client/handlers/answer_handler
 import client/model/model
 import client/model/route
 import client/utils
@@ -5,6 +6,7 @@ import gleam/dynamic
 import gleam/option
 import gleam/result
 import lustre/attribute
+import lustre/element
 import lustre/element/html
 import lustre/event
 import shared/question
@@ -13,7 +15,9 @@ const answer_title = "answer_title"
 
 const answer_correct = "answer_correct"
 
-pub fn view(question: option.Option(question.QuestionWithAnswers)) {
+pub fn view(
+  question: option.Option(question.QuestionWithAnswers),
+) -> element.Element(model.Msg) {
   case question {
     option.None -> no_question_view()
     option.Some(question) -> create_view(question)
@@ -54,5 +58,6 @@ fn on_submit(question: question.QuestionWithAnswers, v: dynamic.Dynamic) {
     utils.get_element(answer_correct) |> result.map(utils.get_checked),
   )
 
-  Ok(model.CreateAnswer(question.id, title, correct))
+  answer_handler.create(question.id, title, correct)
+  |> Ok
 }

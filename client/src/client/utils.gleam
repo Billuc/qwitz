@@ -2,7 +2,6 @@ import gleam/dynamic
 import gleam/result
 import gleamrpc
 import gleamrpc/http/client
-import lustre/effect
 import plinth/browser/document
 import plinth/browser/element
 import plinth/javascript/console
@@ -15,20 +14,18 @@ pub fn client() -> gleamrpc.ProcedureClient(
   client.http_client("http://localhost:8080")
 }
 
-pub fn rpc_effect(
+pub fn exec_procedure(
   procedure: gleamrpc.Procedure(a, b),
   data: a,
-  to_msg: fn(b) -> m,
-) -> effect.Effect(m) {
-  effect.from(fn(dispatch) {
-    let procedure_call = procedure |> gleamrpc.with_client(client())
-    use result <- gleamrpc.call(procedure_call, data)
+  on_success: fn(b) -> Nil,
+) {
+  let procedure_call = procedure |> gleamrpc.with_client(client())
+  use result <- gleamrpc.call(procedure_call, data)
 
-    case result {
-      Error(err) -> console.error(err)
-      Ok(return) -> dispatch(to_msg(return))
-    }
-  })
+  case result {
+    Error(err) -> console.error(err)
+    Ok(return) -> on_success(return)
+  }
 }
 
 pub fn get_element(

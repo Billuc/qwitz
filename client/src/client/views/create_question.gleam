@@ -1,4 +1,4 @@
-import client/model/model
+import client/handlers/question_handler
 import client/model/route
 import client/utils
 import gleam/dynamic
@@ -45,5 +45,6 @@ fn on_submit(qwiz: qwiz.QwizWithQuestions, v: dynamic.Dynamic) {
     |> result.then(utils.get_value),
   )
 
-  Ok(model.CreateQuestion(qwiz.id, title))
+  question_handler.create(qwiz.id, title)
+  |> Ok
 }

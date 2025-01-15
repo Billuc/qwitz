@@ -1,3 +1,4 @@
+import client/handlers/answer_handler
 import client/model/model
 import client/model/route
 import client/utils
@@ -6,6 +7,7 @@ import gleam/list
 import gleam/option
 import gleam/result
 import lustre/attribute
+import lustre/element
 import lustre/element/html
 import lustre/event
 import shared
@@ -15,7 +17,10 @@ const answer_title = "answer_title"
 
 const answer_correct = "answer_correct"
 
-pub fn view(model: model.Model, answer_id: shared.Uuid) {
+pub fn view(
+  model: model.Model,
+  answer_id: shared.Uuid,
+) -> element.Element(model.Msg) {
   let answer =
     model.question
     |> option.then(fn(q) {
@@ -28,7 +33,7 @@ pub fn view(model: model.Model, answer_id: shared.Uuid) {
   }
 }
 
-fn no_answer_view(model: model.Model) {
+fn no_answer_view(model: model.Model) -> element.Element(model.Msg) {
   let return = case model.question, model.qwiz {
     option.None, option.None -> #(route.QwizesRoute, "Go back to qwizes")
     option.Some(q), _ -> #(
@@ -47,7 +52,7 @@ fn no_answer_view(model: model.Model) {
   ])
 }
 
-fn update_view(answer: answer.Answer) {
+fn update_view(answer: answer.Answer) -> element.Element(model.Msg) {
   html.div([], [
     html.form([event.on("submit", on_submit(answer, _))], [
       html.label([], [
@@ -78,5 +83,5 @@ fn on_submit(answer: answer.Answer, v: dynamic.Dynamic) {
     utils.get_element(answer_correct) |> result.map(utils.get_checked),
   )
 
-  Ok(model.UpdateAnswer(answer.Answer(..answer, answer: title, correct:)))
+  answer_handler.update(answer.Answer(..answer, answer: title, correct:)) |> Ok
 }

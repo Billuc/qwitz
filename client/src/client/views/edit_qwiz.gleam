@@ -1,3 +1,4 @@
+import client/handlers/qwiz_handler
 import client/model/model
 import client/model/route
 import client/utils
@@ -44,5 +45,6 @@ fn on_submit(
     |> result.then(utils.get_value),
   )
 
-  Ok(model.UpdateQwiz(qwiz.Qwiz(qwiz.id, name, qwiz.owner)))
+  qwiz_handler.update(qwiz.Qwiz(qwiz.id, name, qwiz.owner))
+  |> Ok
 }

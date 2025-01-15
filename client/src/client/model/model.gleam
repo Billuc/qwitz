@@ -1,4 +1,3 @@
-import client/model/model_msg
 import client/model/route
 import client/services/question_service
 import client/services/qwiz_service
@@ -21,33 +20,44 @@ pub type Model {
 }
 
 pub type Msg {
-  Login(username: String, password: String)
-  SetUser(user: user.User)
   ChangeRoute(route: route.Route)
 
   // Model Change Messages
+  SetUser(user: user.User)
   SetQwizes(qwizes: List(qwiz.Qwiz))
   SetQwiz(qwiz: qwiz.QwizWithQuestions)
   SetQuestion(question: question.QuestionWithAnswers)
 
-  // Qwiz Messages
-  CreateQwiz(name: String, owner: shared.Uuid)
+  UserMsg(msg: UserMsg)
+  QwizMsg(msg: QwizMsg)
+  QuestionMsg(msg: QuestionMsg)
+  AnswerMsg(msg: AnswerMsg)
+}
+
+pub type UserMsg {
+  Login(username: String, password: String)
+}
+
+pub type QwizMsg {
+  CreateQwiz(data: qwiz.CreateQwiz)
   QwizCreated(qwiz: qwiz.QwizWithQuestions)
   DeleteQwiz(id: shared.Uuid)
   QwizDeleted(id: shared.Uuid)
   UpdateQwiz(new_qwiz: qwiz.Qwiz)
   QwizUpdated(qwiz: qwiz.QwizWithQuestions)
+}
 
-  // Question Messages
-  CreateQuestion(qwiz_id: shared.Uuid, question: String)
+pub type QuestionMsg {
+  CreateQuestion(data: question.CreateQuestion)
   QuestionCreated(question: question.QuestionWithAnswers)
   DeleteQuestion(id: shared.Uuid)
   QuestionDeleted(id: shared.Uuid)
   UpdateQuestion(new_question: question.Question)
   QuestionUpdated(question: question.QuestionWithAnswers)
+}
 
-  // Answer Messages
-  CreateAnswer(question_id: shared.Uuid, answer: String, correct: Bool)
+pub type AnswerMsg {
+  CreateAnswer(data: answer.CreateAnswer)
   AnswerCreated(answer: answer.Answer)
   DeleteAnswer(answer_id: shared.Uuid)
   AnswerDeleted(answer_id: shared.Uuid)
@@ -55,20 +65,23 @@ pub type Msg {
   AnswerUpdated(answer: answer.Answer)
 }
 
-pub fn on_load(route: route.Route) -> effect.Effect(model_msg.ModelMsg) {
+pub fn on_load(route: route.Route) -> effect.Effect(Msg) {
   case route {
-    route.QwizesRoute -> {
-      use qwizes <- qwiz_service.get_qwizes()
-      model_msg.SetQwizes(qwizes)
-    }
-    route.QwizRoute(id) -> {
-      use qw <- qwiz_service.get_qwiz(id)
-      model_msg.SetQwiz(qw)
-    }
-    route.QuestionRoute(id) -> {
-      use qu <- question_service.get_question(id)
-      model_msg.SetQuestion(qu)
-    }
+    route.QwizesRoute ->
+      effect.from(fn(dispatch) {
+        use qwizes <- qwiz_service.get_qwizes()
+        SetQwizes(qwizes) |> dispatch
+      })
+    route.QwizRoute(id) ->
+      effect.from(fn(dispatch) {
+        use qw <- qwiz_service.get_qwiz(id)
+        SetQwiz(qw) |> dispatch
+      })
+    route.QuestionRoute(id) ->
+      effect.from(fn(dispatch) {
+        use qu <- question_service.get_question(id)
+        SetQuestion(qu) |> dispatch
+      })
     _ -> effect.none()
   }
 }

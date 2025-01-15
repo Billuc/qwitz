@@ -467,79 +467,6 @@ function base64_url_decode(encoded) {
   return base64_decode(_pipe$2);
 }
 
-// build/dev/javascript/gleam_stdlib/gleam/result.mjs
-function map3(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(fun(x));
-  } else {
-    let e = result[0];
-    return new Error(e);
-  }
-}
-function map_error(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(x);
-  } else {
-    let error2 = result[0];
-    return new Error(fun(error2));
-  }
-}
-function try$(result, fun) {
-  if (result.isOk()) {
-    let x = result[0];
-    return fun(x);
-  } else {
-    let e = result[0];
-    return new Error(e);
-  }
-}
-function then$2(result, fun) {
-  return try$(result, fun);
-}
-function unwrap2(result, default$) {
-  if (result.isOk()) {
-    let v = result[0];
-    return v;
-  } else {
-    return default$;
-  }
-}
-function partition_loop(loop$results, loop$oks, loop$errors) {
-  while (true) {
-    let results = loop$results;
-    let oks = loop$oks;
-    let errors = loop$errors;
-    if (results.hasLength(0)) {
-      return [oks, errors];
-    } else if (results.atLeastLength(1) && results.head.isOk()) {
-      let a2 = results.head[0];
-      let rest = results.tail;
-      loop$results = rest;
-      loop$oks = prepend(a2, oks);
-      loop$errors = errors;
-    } else {
-      let e = results.head[0];
-      let rest = results.tail;
-      loop$results = rest;
-      loop$oks = oks;
-      loop$errors = prepend(e, errors);
-    }
-  }
-}
-function partition(results) {
-  return partition_loop(results, toList([]), toList([]));
-}
-function replace_error(result, error2) {
-  if (result.isOk()) {
-    let x = result[0];
-    return new Ok(x);
-  } else {
-    return new Error(error2);
-  }
-}
-
 // build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
 var DecodeError = class extends CustomType {
   constructor(expected, found, path) {
@@ -2017,6 +1944,79 @@ function key_find(keyword_list, desired_key) {
   );
 }
 
+// build/dev/javascript/gleam_stdlib/gleam/result.mjs
+function map3(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(fun(x));
+  } else {
+    let e = result[0];
+    return new Error(e);
+  }
+}
+function map_error(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(x);
+  } else {
+    let error2 = result[0];
+    return new Error(fun(error2));
+  }
+}
+function try$(result, fun) {
+  if (result.isOk()) {
+    let x = result[0];
+    return fun(x);
+  } else {
+    let e = result[0];
+    return new Error(e);
+  }
+}
+function then$2(result, fun) {
+  return try$(result, fun);
+}
+function unwrap2(result, default$) {
+  if (result.isOk()) {
+    let v = result[0];
+    return v;
+  } else {
+    return default$;
+  }
+}
+function partition_loop(loop$results, loop$oks, loop$errors) {
+  while (true) {
+    let results = loop$results;
+    let oks = loop$oks;
+    let errors = loop$errors;
+    if (results.hasLength(0)) {
+      return [oks, errors];
+    } else if (results.atLeastLength(1) && results.head.isOk()) {
+      let a2 = results.head[0];
+      let rest = results.tail;
+      loop$results = rest;
+      loop$oks = prepend(a2, oks);
+      loop$errors = errors;
+    } else {
+      let e = results.head[0];
+      let rest = results.tail;
+      loop$results = rest;
+      loop$oks = oks;
+      loop$errors = prepend(e, errors);
+    }
+  }
+}
+function partition(results) {
+  return partition_loop(results, toList([]), toList([]));
+}
+function replace_error(result, error2) {
+  if (result.isOk()) {
+    let x = result[0];
+    return new Ok(x);
+  } else {
+    return new Error(error2);
+  }
+}
+
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
 function to_string2(bool4) {
   if (!bool4) {
@@ -2742,13 +2742,13 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {Gleam.Ok<(action: Lustre.Action<Lustre.Client, Msg>>) => void>}
    */
-  static start({ init: init4, update: update2, view: view12 }, selector, flags) {
+  static start({ init: init4, update: update5, view: view12 }, selector, flags) {
     if (!is_browser())
       return new Error(new NotABrowser());
     const root = selector instanceof HTMLElement ? selector : document.querySelector(selector);
     if (!root)
       return new Error(new ElementNotFound(selector));
-    const app = new _LustreClientApplication(root, init4(flags), update2, view12);
+    const app = new _LustreClientApplication(root, init4(flags), update5, view12);
     return new Ok((action) => app.send(action));
   }
   /**
@@ -2759,10 +2759,10 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {LustreClientApplication}
    */
-  constructor(root, [init4, effects], update2, view12) {
+  constructor(root, [init4, effects], update5, view12) {
     this.root = root;
     this.#model = init4;
-    this.#update = update2;
+    this.#update = update5;
     this.#view = view12;
     this.#tickScheduled = window.requestAnimationFrame(
       () => this.#tick(effects.all.toArray(), true)
@@ -2877,18 +2877,18 @@ var LustreClientApplication = class _LustreClientApplication {
 };
 var start = LustreClientApplication.start;
 var LustreServerApplication = class _LustreServerApplication {
-  static start({ init: init4, update: update2, view: view12, on_attribute_change }, flags) {
+  static start({ init: init4, update: update5, view: view12, on_attribute_change }, flags) {
     const app = new _LustreServerApplication(
       init4(flags),
-      update2,
+      update5,
       view12,
       on_attribute_change
     );
     return new Ok((action) => app.send(action));
   }
-  constructor([model, effects], update2, view12, on_attribute_change) {
+  constructor([model, effects], update5, view12, on_attribute_change) {
     this.#model = model;
-    this.#update = update2;
+    this.#update = update5;
     this.#view = view12;
     this.#html = view12(model);
     this.#onAttributeChange = on_attribute_change;
@@ -2992,10 +2992,10 @@ var prevent_default = (event2) => event2.preventDefault();
 
 // build/dev/javascript/lustre/lustre.mjs
 var App = class extends CustomType {
-  constructor(init4, update2, view12, on_attribute_change) {
+  constructor(init4, update5, view12, on_attribute_change) {
     super();
     this.init = init4;
-    this.update = update2;
+    this.update = update5;
     this.view = view12;
     this.on_attribute_change = on_attribute_change;
   }
@@ -3008,8 +3008,8 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init4, update2, view12) {
-  return new App(init4, update2, view12, new None());
+function application(init4, update5, view12) {
+  return new App(init4, update5, view12, new None());
 }
 function start2(app, selector, flags) {
   return guard(
@@ -4429,85 +4429,6 @@ function type_def(converter) {
   return converter.type_def;
 }
 
-// build/dev/javascript/gleamrpc/gleamrpc.mjs
-var Query = class extends CustomType {
-};
-var Mutation = class extends CustomType {
-};
-var Procedure = class extends CustomType {
-  constructor(name, router, type_2, params_type, return_type) {
-    super();
-    this.name = name;
-    this.router = router;
-    this.type_ = type_2;
-    this.params_type = params_type;
-    this.return_type = return_type;
-  }
-};
-var GleamRPCError = class extends CustomType {
-  constructor(error2) {
-    super();
-    this.error = error2;
-  }
-};
-var ProcedureClient = class extends CustomType {
-  constructor(call3) {
-    super();
-    this.call = call3;
-  }
-};
-var ProcedureCall = class extends CustomType {
-  constructor(procedure, client2) {
-    super();
-    this.procedure = procedure;
-    this.client = client2;
-  }
-};
-function query(name, router) {
-  return new Procedure(
-    name,
-    router,
-    new Query(),
-    null$2(),
-    null$2()
-  );
-}
-function mutation(name, router) {
-  return new Procedure(
-    name,
-    router,
-    new Mutation(),
-    null$2(),
-    null$2()
-  );
-}
-function params(procedure, params_converter) {
-  let _record = procedure;
-  return new Procedure(
-    _record.name,
-    _record.router,
-    _record.type_,
-    params_converter,
-    _record.return_type
-  );
-}
-function returns(procedure, return_converter) {
-  let _record = procedure;
-  return new Procedure(
-    _record.name,
-    _record.router,
-    _record.type_,
-    _record.params_type,
-    return_converter
-  );
-}
-function with_client(procedure, client2) {
-  return new ProcedureCall(procedure, client2);
-}
-function call(procedure_call, params2, callback) {
-  return procedure_call.client.call(procedure_call.procedure, params2, callback);
-}
-
 // build/dev/javascript/gleam_regexp/gleam_regexp_ffi.mjs
 function check(regex, string3) {
   regex.lastIndex = 0;
@@ -4595,6 +4516,85 @@ function uuid_converter() {
     },
     new Uuid("00000000-0000-0000-0000-000000000000")
   );
+}
+
+// build/dev/javascript/gleamrpc/gleamrpc.mjs
+var Query = class extends CustomType {
+};
+var Mutation = class extends CustomType {
+};
+var Procedure = class extends CustomType {
+  constructor(name, router, type_2, params_type, return_type) {
+    super();
+    this.name = name;
+    this.router = router;
+    this.type_ = type_2;
+    this.params_type = params_type;
+    this.return_type = return_type;
+  }
+};
+var GleamRPCError = class extends CustomType {
+  constructor(error2) {
+    super();
+    this.error = error2;
+  }
+};
+var ProcedureClient = class extends CustomType {
+  constructor(call3) {
+    super();
+    this.call = call3;
+  }
+};
+var ProcedureCall = class extends CustomType {
+  constructor(procedure, client2) {
+    super();
+    this.procedure = procedure;
+    this.client = client2;
+  }
+};
+function query(name, router) {
+  return new Procedure(
+    name,
+    router,
+    new Query(),
+    null$2(),
+    null$2()
+  );
+}
+function mutation(name, router) {
+  return new Procedure(
+    name,
+    router,
+    new Mutation(),
+    null$2(),
+    null$2()
+  );
+}
+function params(procedure, params_converter) {
+  let _record = procedure;
+  return new Procedure(
+    _record.name,
+    _record.router,
+    _record.type_,
+    params_converter,
+    _record.return_type
+  );
+}
+function returns(procedure, return_converter) {
+  let _record = procedure;
+  return new Procedure(
+    _record.name,
+    _record.router,
+    _record.type_,
+    _record.params_type,
+    return_converter
+  );
+}
+function with_client(procedure, client2) {
+  return new ProcedureCall(procedure, client2);
+}
+function call(procedure_call, params2, callback) {
+  return procedure_call.client.call(procedure_call.procedure, params2, callback);
 }
 
 // build/dev/javascript/shared/shared/answer.mjs
@@ -4870,7 +4870,7 @@ var QwizWithQuestions = class extends CustomType {
     this.questions = questions;
   }
 };
-var UpsertQwiz = class extends CustomType {
+var CreateQwiz = class extends CustomType {
   constructor(name, owner) {
     super();
     this.name = name;
@@ -4968,7 +4968,7 @@ function upsert_qwiz_converter() {
           },
           uuid_converter(),
           (owner) => {
-            return success(new UpsertQwiz(name, owner));
+            return success(new CreateQwiz(name, owner));
           }
         );
       }
@@ -5066,6 +5066,123 @@ function login() {
   let _pipe = query("login", new None());
   let _pipe$1 = params(_pipe, login_data_converter());
   return returns(_pipe$1, user_converter());
+}
+
+// build/dev/javascript/client/client/model/route.mjs
+var HomeRoute = class extends CustomType {
+};
+var QwizesRoute = class extends CustomType {
+};
+var CreateQwizRoute = class extends CustomType {
+};
+var QwizRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var CreateQuestionRoute = class extends CustomType {
+};
+var QuestionRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var CreateAnswerRoute = class extends CustomType {
+};
+var UpdateAnswerRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var UpdateQuestionRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var UpdateQwizRoute = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+function on_url_change(uri) {
+  let $ = path_segments(uri.path);
+  if ($.hasLength(1) && $.head === "qwizes") {
+    return new QwizesRoute();
+  } else if ($.hasLength(2) && $.head === "qwizes" && $.tail.head === "create") {
+    return new CreateQwizRoute();
+  } else if ($.hasLength(2) && $.head === "qwiz") {
+    let id2 = $.tail.head;
+    return new QwizRoute(new Uuid(id2));
+  } else if ($.hasLength(2) && $.head === "questions" && $.tail.head === "create") {
+    return new CreateQuestionRoute();
+  } else if ($.hasLength(2) && $.head === "question") {
+    let id2 = $.tail.head;
+    return new QuestionRoute(new Uuid(id2));
+  } else if ($.hasLength(2) && $.head === "answers" && $.tail.head === "create") {
+    return new CreateAnswerRoute();
+  } else if ($.hasLength(3) && $.head === "answer" && $.tail.head === "update") {
+    let id2 = $.tail.tail.head;
+    return new UpdateAnswerRoute(new Uuid(id2));
+  } else if ($.hasLength(3) && $.head === "question" && $.tail.head === "update") {
+    let id2 = $.tail.tail.head;
+    return new UpdateQuestionRoute(new Uuid(id2));
+  } else if ($.hasLength(3) && $.head === "qwiz" && $.tail.head === "update") {
+    let id2 = $.tail.tail.head;
+    return new UpdateQwizRoute(new Uuid(id2));
+  } else {
+    return new HomeRoute();
+  }
+}
+function to_url(route) {
+  if (route instanceof CreateQuestionRoute) {
+    return "/questions/create";
+  } else if (route instanceof CreateQwizRoute) {
+    return "/qwizes/create";
+  } else if (route instanceof HomeRoute) {
+    return "/";
+  } else if (route instanceof QwizRoute) {
+    let id2 = route.id;
+    return "/qwiz/" + id2.data;
+  } else if (route instanceof QwizesRoute) {
+    return "/qwizes";
+  } else if (route instanceof QuestionRoute) {
+    let id2 = route.id;
+    return "/question/" + id2.data;
+  } else if (route instanceof CreateAnswerRoute) {
+    return "/answers/create";
+  } else if (route instanceof UpdateAnswerRoute) {
+    let id2 = route.id;
+    return "/answer/update/" + id2.data;
+  } else if (route instanceof UpdateQuestionRoute) {
+    let id2 = route.id;
+    return "/question/update/" + id2.data;
+  } else {
+    let id2 = route.id;
+    return "/qwiz/update/" + id2.data;
+  }
+}
+function go_to(route) {
+  return push(
+    (() => {
+      let _pipe = route;
+      return to_url(_pipe);
+    })(),
+    new None(),
+    new None()
+  );
+}
+function href2(route) {
+  return href(
+    (() => {
+      let _pipe = route;
+      return to_url(_pipe);
+    })()
+  );
 }
 
 // build/dev/javascript/convert_http_query/convert/http/query.mjs
@@ -6121,26 +6238,22 @@ function error(value3) {
 function client() {
   return http_client("http://localhost:8080");
 }
-function rpc_effect(procedure, data, to_msg) {
-  return from(
-    (dispatch) => {
-      let procedure_call = (() => {
-        let _pipe = procedure;
-        return with_client(_pipe, client());
-      })();
-      return call(
-        procedure_call,
-        data,
-        (result) => {
-          if (!result.isOk()) {
-            let err = result[0];
-            return error(err);
-          } else {
-            let return$ = result[0];
-            return dispatch(to_msg(return$));
-          }
-        }
-      );
+function exec_procedure(procedure, data, on_success) {
+  let procedure_call = (() => {
+    let _pipe = procedure;
+    return with_client(_pipe, client());
+  })();
+  return call(
+    procedure_call,
+    data,
+    (result) => {
+      if (!result.isOk()) {
+        let err = result[0];
+        return error(err);
+      } else {
+        let return$ = result[0];
+        return on_success(return$);
+      }
     }
   );
 }
@@ -6180,44 +6293,36 @@ function get_checked(element2) {
 
 // build/dev/javascript/client/client/services/question_service.mjs
 function get_question2(question_id, cb) {
-  return rpc_effect(get_question(), question_id, cb);
+  return exec_procedure(get_question(), question_id, cb);
 }
-function create_question2(qwiz_id, question, cb) {
-  return rpc_effect(
-    create_question(),
-    new CreateQuestion(qwiz_id, question),
-    cb
-  );
+function create_question2(data, cb) {
+  return exec_procedure(create_question(), data, cb);
 }
 function update_question2(question, cb) {
-  return rpc_effect(update_question(), question, cb);
+  return exec_procedure(update_question(), question, cb);
 }
 function delete_question2(id2, cb) {
-  return rpc_effect(delete_question(), id2, cb);
+  return exec_procedure(delete_question(), id2, cb);
 }
 
 // build/dev/javascript/client/client/services/qwiz_service.mjs
 function get_qwizes2(cb) {
-  return rpc_effect(get_qwizes(), void 0, cb);
+  return exec_procedure(get_qwizes(), void 0, cb);
 }
 function get_qwiz2(id2, cb) {
-  return rpc_effect(get_qwiz(), id2, cb);
+  return exec_procedure(get_qwiz(), id2, cb);
 }
-function create_qwiz2(name, owner, cb) {
-  return rpc_effect(
-    create_qwiz(),
-    new UpsertQwiz(name, owner),
-    cb
-  );
+function create_qwiz2(data, cb) {
+  return exec_procedure(create_qwiz(), data, cb);
 }
 function update_qwiz2(qwiz, cb) {
-  return rpc_effect(update_qwiz(), qwiz, cb);
+  return exec_procedure(update_qwiz(), qwiz, cb);
 }
 function delete_qwiz2(id2, cb) {
-  return rpc_effect(delete_qwiz(), id2, cb);
+  return exec_procedure(delete_qwiz(), id2, cb);
 }
 
-// build/dev/javascript/client/client/model.mjs
+// build/dev/javascript/client/client/model/model.mjs
 var Model2 = class extends CustomType {
   constructor(route, user, qwizes, qwiz, question) {
     super();
@@ -6228,11 +6333,10 @@ var Model2 = class extends CustomType {
     this.question = question;
   }
 };
-var Login = class extends CustomType {
-  constructor(username, password) {
+var ChangeRoute = class extends CustomType {
+  constructor(route) {
     super();
-    this.username = username;
-    this.password = password;
+    this.route = route;
   }
 };
 var SetUser = class extends CustomType {
@@ -6241,32 +6345,62 @@ var SetUser = class extends CustomType {
     this.user = user;
   }
 };
-var ChangeRoute = class extends CustomType {
-  constructor(route) {
-    super();
-    this.route = route;
-  }
-};
 var SetQwizes = class extends CustomType {
   constructor(qwizes) {
     super();
     this.qwizes = qwizes;
   }
 };
-var CreateQwiz = class extends CustomType {
-  constructor(name, owner) {
-    super();
-    this.name = name;
-    this.owner = owner;
-  }
-};
-var QwizCreated = class extends CustomType {
+var SetQwiz = class extends CustomType {
   constructor(qwiz) {
     super();
     this.qwiz = qwiz;
   }
 };
-var SetQwiz = class extends CustomType {
+var SetQuestion = class extends CustomType {
+  constructor(question) {
+    super();
+    this.question = question;
+  }
+};
+var UserMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var QwizMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var QuestionMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var AnswerMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var Login = class extends CustomType {
+  constructor(username, password) {
+    super();
+    this.username = username;
+    this.password = password;
+  }
+};
+var CreateQwiz2 = class extends CustomType {
+  constructor(data) {
+    super();
+    this.data = data;
+  }
+};
+var QwizCreated = class extends CustomType {
   constructor(qwiz) {
     super();
     this.qwiz = qwiz;
@@ -6284,11 +6418,22 @@ var QwizDeleted = class extends CustomType {
     this.id = id2;
   }
 };
-var CreateQuestion2 = class extends CustomType {
-  constructor(qwiz_id, question) {
+var UpdateQwiz = class extends CustomType {
+  constructor(new_qwiz) {
     super();
-    this.qwiz_id = qwiz_id;
-    this.question = question;
+    this.new_qwiz = new_qwiz;
+  }
+};
+var QwizUpdated = class extends CustomType {
+  constructor(qwiz) {
+    super();
+    this.qwiz = qwiz;
+  }
+};
+var CreateQuestion2 = class extends CustomType {
+  constructor(data) {
+    super();
+    this.data = data;
   }
 };
 var QuestionCreated = class extends CustomType {
@@ -6309,18 +6454,22 @@ var QuestionDeleted = class extends CustomType {
     this.id = id2;
   }
 };
-var SetQuestion = class extends CustomType {
+var UpdateQuestion = class extends CustomType {
+  constructor(new_question) {
+    super();
+    this.new_question = new_question;
+  }
+};
+var QuestionUpdated = class extends CustomType {
   constructor(question) {
     super();
     this.question = question;
   }
 };
 var CreateAnswer2 = class extends CustomType {
-  constructor(question_id, answer, correct) {
+  constructor(data) {
     super();
-    this.question_id = question_id;
-    this.answer = answer;
-    this.correct = correct;
+    this.data = data;
   }
 };
 var AnswerCreated = class extends CustomType {
@@ -6353,163 +6502,42 @@ var AnswerUpdated = class extends CustomType {
     this.answer = answer;
   }
 };
-var UpdateQuestion = class extends CustomType {
-  constructor(new_question) {
-    super();
-    this.new_question = new_question;
-  }
-};
-var QuestionUpdated = class extends CustomType {
-  constructor(question) {
-    super();
-    this.question = question;
-  }
-};
-var UpdateQwiz = class extends CustomType {
-  constructor(new_qwiz) {
-    super();
-    this.new_qwiz = new_qwiz;
-  }
-};
-var QwizUpdated = class extends CustomType {
-  constructor(qwiz) {
-    super();
-    this.qwiz = qwiz;
-  }
-};
-var HomeRoute = class extends CustomType {
-};
-var QwizesRoute = class extends CustomType {
-};
-var CreateQwizRoute = class extends CustomType {
-};
-var QwizRoute = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var CreateQuestionRoute = class extends CustomType {
-};
-var QuestionRoute = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var CreateAnswerRoute = class extends CustomType {
-};
-var UpdateAnswerRoute = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var UpdateQuestionRoute = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var UpdateQwizRoute = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-function on_url_change(uri) {
-  let $ = path_segments(uri.path);
-  if ($.hasLength(1) && $.head === "qwizes") {
-    return new QwizesRoute();
-  } else if ($.hasLength(2) && $.head === "qwizes" && $.tail.head === "create") {
-    return new CreateQwizRoute();
-  } else if ($.hasLength(2) && $.head === "qwiz") {
-    let id2 = $.tail.head;
-    return new QwizRoute(new Uuid(id2));
-  } else if ($.hasLength(2) && $.head === "questions" && $.tail.head === "create") {
-    return new CreateQuestionRoute();
-  } else if ($.hasLength(2) && $.head === "question") {
-    let id2 = $.tail.head;
-    return new QuestionRoute(new Uuid(id2));
-  } else if ($.hasLength(2) && $.head === "answers" && $.tail.head === "create") {
-    return new CreateAnswerRoute();
-  } else if ($.hasLength(3) && $.head === "answer" && $.tail.head === "update") {
-    let id2 = $.tail.tail.head;
-    return new UpdateAnswerRoute(new Uuid(id2));
-  } else if ($.hasLength(3) && $.head === "question" && $.tail.head === "update") {
-    let id2 = $.tail.tail.head;
-    return new UpdateQuestionRoute(new Uuid(id2));
-  } else if ($.hasLength(3) && $.head === "qwiz" && $.tail.head === "update") {
-    let id2 = $.tail.tail.head;
-    return new UpdateQwizRoute(new Uuid(id2));
-  } else {
-    return new HomeRoute();
-  }
-}
-function route_to_url(route) {
-  if (route instanceof CreateQuestionRoute) {
-    return "/questions/create";
-  } else if (route instanceof CreateQwizRoute) {
-    return "/qwizes/create";
-  } else if (route instanceof HomeRoute) {
-    return "/";
-  } else if (route instanceof QwizRoute) {
-    let id2 = route.id;
-    return "/qwiz/" + id2.data;
-  } else if (route instanceof QwizesRoute) {
-    return "/qwizes";
-  } else if (route instanceof QuestionRoute) {
-    let id2 = route.id;
-    return "/question/" + id2.data;
-  } else if (route instanceof CreateAnswerRoute) {
-    return "/answers/create";
-  } else if (route instanceof UpdateAnswerRoute) {
-    let id2 = route.id;
-    return "/answer/update/" + id2.data;
-  } else if (route instanceof UpdateQuestionRoute) {
-    let id2 = route.id;
-    return "/question/update/" + id2.data;
-  } else {
-    let id2 = route.id;
-    return "/qwiz/update/" + id2.data;
-  }
-}
-function go_to(route) {
-  return push(
-    (() => {
-      let _pipe = route;
-      return route_to_url(_pipe);
-    })(),
-    new None(),
-    new None()
-  );
-}
-function href2(route) {
-  return href(
-    (() => {
-      let _pipe = route;
-      return route_to_url(_pipe);
-    })()
-  );
-}
-function route_on_load(route) {
+function on_load(route) {
   if (route instanceof QwizesRoute) {
-    return get_qwizes2(
-      (qwizes) => {
-        return new SetQwizes(qwizes);
+    return from(
+      (dispatch) => {
+        return get_qwizes2(
+          (qwizes) => {
+            let _pipe = new SetQwizes(qwizes);
+            return dispatch(_pipe);
+          }
+        );
       }
     );
   } else if (route instanceof QwizRoute) {
     let id2 = route.id;
-    return get_qwiz2(id2, (qw) => {
-      return new SetQwiz(qw);
-    });
+    return from(
+      (dispatch) => {
+        return get_qwiz2(
+          id2,
+          (qw) => {
+            let _pipe = new SetQwiz(qw);
+            return dispatch(_pipe);
+          }
+        );
+      }
+    );
   } else if (route instanceof QuestionRoute) {
     let id2 = route.id;
-    return get_question2(
-      id2,
-      (qu) => {
-        return new SetQuestion(qu);
+    return from(
+      (dispatch) => {
+        return get_question2(
+          id2,
+          (qu) => {
+            let _pipe = new SetQuestion(qu);
+            return dispatch(_pipe);
+          }
+        );
       }
     );
   } else {
@@ -6518,27 +6546,337 @@ function route_on_load(route) {
 }
 
 // build/dev/javascript/client/client/services/answer_service.mjs
-function create_answer2(question_id, answer, correct, cb) {
-  return rpc_effect(
-    create_answer(),
-    new CreateAnswer(question_id, answer, correct),
-    cb
-  );
+function create_answer2(data, cb) {
+  return exec_procedure(create_answer(), data, cb);
 }
 function update_answer2(answer, cb) {
-  return rpc_effect(update_answer(), answer, cb);
+  return exec_procedure(update_answer(), answer, cb);
 }
 function delete_answer2(id2, cb) {
-  return rpc_effect(delete_answer(), id2, cb);
+  return exec_procedure(delete_answer(), id2, cb);
+}
+
+// build/dev/javascript/client/client/handlers/answer_handler.mjs
+function remove_answer(model, id2) {
+  let _record = model;
+  return new Model2(
+    _record.route,
+    _record.user,
+    _record.qwizes,
+    _record.qwiz,
+    (() => {
+      let _pipe = model.question;
+      return map(
+        _pipe,
+        (q) => {
+          let _record$1 = q;
+          return new QuestionWithAnswers(
+            _record$1.id,
+            _record$1.qwiz_id,
+            _record$1.question,
+            (() => {
+              let _pipe$1 = q.answers;
+              return filter(
+                _pipe$1,
+                (a2) => {
+                  return !isEqual(a2.id, id2);
+                }
+              );
+            })()
+          );
+        }
+      );
+    })()
+  );
+}
+function handle_message(model, msg) {
+  if (msg instanceof CreateAnswer2) {
+    let data = msg.data;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return create_answer2(
+            data,
+            (a2) => {
+              let _pipe = new AnswerCreated(a2);
+              let _pipe$1 = new AnswerMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof UpdateAnswer) {
+    let data = msg.new_answer;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return update_answer2(
+            data,
+            (a2) => {
+              let _pipe = new AnswerUpdated(a2);
+              let _pipe$1 = new AnswerMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof DeleteAnswer) {
+    let id2 = msg.answer_id;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return delete_answer2(
+            id2,
+            (_) => {
+              let _pipe = new AnswerDeleted(id2);
+              let _pipe$1 = new AnswerMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof AnswerCreated) {
+    let answer = msg.answer;
+    return [model, go_to(new QuestionRoute(answer.question_id))];
+  } else if (msg instanceof AnswerUpdated) {
+    let a2 = msg.answer;
+    return [model, go_to(new QuestionRoute(a2.question_id))];
+  } else {
+    let id2 = msg.answer_id;
+    return [
+      (() => {
+        let _pipe = model;
+        return remove_answer(_pipe, id2);
+      })(),
+      none()
+    ];
+  }
+}
+function create(question_id, answer, correct) {
+  let _pipe = new CreateAnswer(question_id, answer, correct);
+  let _pipe$1 = new CreateAnswer2(_pipe);
+  return new AnswerMsg(_pipe$1);
+}
+function update(answer) {
+  let _pipe = answer;
+  let _pipe$1 = new UpdateAnswer(_pipe);
+  return new AnswerMsg(_pipe$1);
+}
+function delete$2(id2) {
+  let _pipe = id2;
+  let _pipe$1 = new DeleteAnswer(_pipe);
+  return new AnswerMsg(_pipe$1);
+}
+
+// build/dev/javascript/client/client/handlers/question_handler.mjs
+function handle_message2(model, msg) {
+  if (msg instanceof CreateQuestion2) {
+    let data = msg.data;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return create_question2(
+            data,
+            (question) => {
+              let _pipe = new QuestionCreated(question);
+              let _pipe$1 = new QuestionMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof UpdateQuestion) {
+    let q = msg.new_question;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return update_question2(
+            q,
+            (q2) => {
+              let _pipe = new QuestionUpdated(q2);
+              let _pipe$1 = new QuestionMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof DeleteQuestion) {
+    let id2 = msg.id;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return delete_question2(
+            id2,
+            (_) => {
+              let _pipe = new QuestionDeleted(id2);
+              let _pipe$1 = new QuestionMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof QuestionCreated) {
+    let question = msg.question;
+    return [model, go_to(new QuestionRoute(question.id))];
+  } else if (msg instanceof QuestionUpdated) {
+    let q = msg.question;
+    return [model, go_to(new QuestionRoute(q.id))];
+  } else {
+    return [
+      model,
+      (() => {
+        let $ = model.qwiz;
+        if ($ instanceof None) {
+          return go_to(new QwizesRoute());
+        } else {
+          let qwiz = $[0];
+          return go_to(new QwizRoute(qwiz.id));
+        }
+      })()
+    ];
+  }
+}
+function create2(qwiz_id, question) {
+  let _pipe = new CreateQuestion(qwiz_id, question);
+  let _pipe$1 = new CreateQuestion2(_pipe);
+  return new QuestionMsg(_pipe$1);
+}
+function update2(data) {
+  let _pipe = data;
+  let _pipe$1 = new UpdateQuestion(_pipe);
+  return new QuestionMsg(_pipe$1);
+}
+function delete$3(id2) {
+  let _pipe = id2;
+  let _pipe$1 = new DeleteQuestion(_pipe);
+  return new QuestionMsg(_pipe$1);
+}
+
+// build/dev/javascript/client/client/handlers/qwiz_handler.mjs
+function handle_message3(model, msg) {
+  if (msg instanceof CreateQwiz2) {
+    let data = msg.data;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return create_qwiz2(
+            data,
+            (new_qwiz) => {
+              let _pipe = new QwizCreated(new_qwiz);
+              let _pipe$1 = new QwizMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof UpdateQwiz) {
+    let data = msg.new_qwiz;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return update_qwiz2(
+            data,
+            (qw) => {
+              let _pipe = new QwizUpdated(qw);
+              let _pipe$1 = new QwizMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof DeleteQwiz) {
+    let id2 = msg.id;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return delete_qwiz2(
+            id2,
+            (_) => {
+              let _pipe = new QwizDeleted(id2);
+              let _pipe$1 = new QwizMsg(_pipe);
+              return dispatch(_pipe$1);
+            }
+          );
+        }
+      )
+    ];
+  } else if (msg instanceof QwizCreated) {
+    let qwiz = msg.qwiz;
+    return [model, go_to(new QwizRoute(qwiz.id))];
+  } else if (msg instanceof QwizUpdated) {
+    let qwiz = msg.qwiz;
+    return [model, go_to(new QwizRoute(qwiz.id))];
+  } else {
+    return [model, go_to(new QwizesRoute())];
+  }
+}
+function create3(name, owner) {
+  let _pipe = new CreateQwiz(name, owner);
+  let _pipe$1 = new CreateQwiz2(_pipe);
+  return new QwizMsg(_pipe$1);
+}
+function update3(data) {
+  let _pipe = data;
+  let _pipe$1 = new UpdateQwiz(_pipe);
+  return new QwizMsg(_pipe$1);
+}
+function delete$4(id2) {
+  let _pipe = id2;
+  let _pipe$1 = new DeleteQwiz(_pipe);
+  return new QwizMsg(_pipe$1);
 }
 
 // build/dev/javascript/client/client/services/user_service.mjs
 function login2(pseudo, password, cb) {
-  return rpc_effect(
+  return exec_procedure(
     login(),
     new LoginData(pseudo, password),
     cb
   );
+}
+
+// build/dev/javascript/client/client/handlers/user_handler.mjs
+function handle_message4(model, msg) {
+  {
+    let username = msg.username;
+    let password = msg.password;
+    return [
+      model,
+      from(
+        (dispatch) => {
+          return login2(
+            username,
+            password,
+            (user) => {
+              let _pipe = new SetUser(user);
+              return dispatch(_pipe);
+            }
+          );
+        }
+      )
+    ];
+  }
+}
+function login3(user, password) {
+  let _pipe = new Login(user, password);
+  return new UserMsg(_pipe);
 }
 
 // build/dev/javascript/lustre/lustre/element/html.mjs
@@ -6609,7 +6947,8 @@ function on_submit(question, v) {
           return map3(_pipe, get_checked);
         })(),
         (correct) => {
-          return new Ok(new CreateAnswer2(question.id, title2, correct));
+          let _pipe = create(question.id, title2, correct);
+          return new Ok(_pipe);
         }
       );
     }
@@ -6681,12 +7020,14 @@ function no_qwiz_view() {
 var question_title = "question_title";
 function on_submit2(qwiz, v) {
   prevent_default(v);
-  let _pipe = get_element(question_title);
-  let _pipe$1 = then$2(_pipe, get_value);
-  return map3(
-    _pipe$1,
-    (_capture) => {
-      return new CreateQuestion2(qwiz.id, _capture);
+  return try$(
+    (() => {
+      let _pipe = get_element(question_title);
+      return then$2(_pipe, get_value);
+    })(),
+    (title2) => {
+      let _pipe = create2(qwiz.id, title2);
+      return new Ok(_pipe);
     }
   );
 }
@@ -6740,12 +7081,14 @@ function on_submit3(model, v) {
     );
   } else {
     let user = $[0];
-    let _pipe = get_element(qwiz_name);
-    let _pipe$1 = then$2(_pipe, get_value);
-    return map3(
-      _pipe$1,
-      (_capture) => {
-        return new CreateQwiz(_capture, user.id);
+    return try$(
+      (() => {
+        let _pipe = get_element(qwiz_name);
+        return then$2(_pipe, get_value);
+      })(),
+      (name) => {
+        let _pipe = create3(name, user.id);
+        return new Ok(_pipe);
       }
     );
   }
@@ -6814,19 +7157,18 @@ function on_submit4(answer, v) {
           return map3(_pipe, get_checked);
         })(),
         (correct) => {
-          return new Ok(
-            new UpdateAnswer(
-              (() => {
-                let _record = answer;
-                return new Answer(
-                  _record.id,
-                  _record.question_id,
-                  title2,
-                  correct
-                );
-              })()
-            )
+          let _pipe = update(
+            (() => {
+              let _record = answer;
+              return new Answer(
+                _record.id,
+                _record.question_id,
+                title2,
+                correct
+              );
+            })()
           );
+          return new Ok(_pipe);
         }
       );
     }
@@ -6929,11 +7271,10 @@ function on_submit5(question, v) {
       return then$2(_pipe, get_value);
     })(),
     (title2) => {
-      return new Ok(
-        new UpdateQuestion(
-          new Question(question.id, question.qwiz_id, title2)
-        )
+      let _pipe = update2(
+        new Question(question.id, question.qwiz_id, title2)
       );
+      return new Ok(_pipe);
     }
   );
 }
@@ -6998,9 +7339,10 @@ function on_submit6(qwiz, v) {
       return then$2(_pipe, get_value);
     })(),
     (name) => {
-      return new Ok(
-        new UpdateQwiz(new Qwiz(qwiz.id, name, qwiz.owner))
+      let _pipe = update3(
+        new Qwiz(qwiz.id, name, qwiz.owner)
       );
+      return new Ok(_pipe);
     }
   );
 }
@@ -7039,9 +7381,13 @@ function view6(model) {
 function view7(model) {
   return button(
     toList([
-      on2("click", (_) => {
-        return new Ok(new Login("", ""));
-      })
+      on2(
+        "click",
+        (_) => {
+          let _pipe = login3("", "");
+          return new Ok(_pipe);
+        }
+      )
     ]),
     toList([text2("Login")])
   );
@@ -7076,7 +7422,7 @@ function edit_answer_button(id2) {
 }
 function delete_answer_button(id2) {
   return button(
-    toList([on_click(new DeleteAnswer(id2))]),
+    toList([on_click(delete$2(id2))]),
     toList([text2("Remove")])
   );
 }
@@ -7108,7 +7454,7 @@ function edit_question_button(id2) {
 }
 function delete_question_button(id2) {
   return button(
-    toList([on_click(new DeleteQuestion(id2))]),
+    toList([on_click(delete$3(id2))]),
     toList([text2("Delete")])
   );
 }
@@ -7144,7 +7490,7 @@ function view8(model) {
 }
 
 // build/dev/javascript/client/client/views/qwiz.mjs
-function back_button2(model) {
+function back_button2() {
   let return$ = [new QwizesRoute(), "Back to qwizes"];
   return a(
     toList([href2(return$[0])]),
@@ -7175,7 +7521,7 @@ function edit_qwiz_button(id2) {
 }
 function delete_qwiz_button(id2) {
   return button(
-    toList([on_click(new DeleteQwiz(id2))]),
+    toList([on_click(delete$4(id2))]),
     toList([text2("Delete")])
   );
 }
@@ -7197,7 +7543,7 @@ function view9(model) {
         div(
           toList([]),
           toList([
-            back_button2(model),
+            back_button2(),
             h1(toList([]), toList([text2(qwiz.name)])),
             edit_qwiz_button(qwiz.id),
             delete_qwiz_button(qwiz.id)
@@ -7283,19 +7629,21 @@ function init3(_) {
     )
   ];
 }
-function update(model, msg) {
-  if (msg instanceof Login) {
-    let pseudo = msg.username;
-    let password = msg.password;
+function update4(model, msg) {
+  if (msg instanceof ChangeRoute) {
+    let route = msg.route;
     return [
-      model,
-      login2(
-        pseudo,
-        password,
-        (user) => {
-          return new SetUser(user);
-        }
-      )
+      (() => {
+        let _record = model;
+        return new Model2(
+          route,
+          _record.user,
+          _record.qwizes,
+          _record.qwiz,
+          _record.question
+        );
+      })(),
+      on_load(route)
     ];
   } else if (msg instanceof SetUser) {
     let user = msg.user;
@@ -7327,37 +7675,6 @@ function update(model, msg) {
       })(),
       none()
     ];
-  } else if (msg instanceof CreateQwiz) {
-    let name = msg.name;
-    let owner = msg.owner;
-    return [
-      model,
-      create_qwiz2(
-        name,
-        owner,
-        (new_qwiz) => {
-          return new QwizCreated(new_qwiz);
-        }
-      )
-    ];
-  } else if (msg instanceof QwizCreated) {
-    let qwiz = msg.qwiz;
-    return [model, go_to(new QwizRoute(qwiz.id))];
-  } else if (msg instanceof ChangeRoute) {
-    let route = msg.route;
-    return [
-      (() => {
-        let _record = model;
-        return new Model2(
-          route,
-          _record.user,
-          _record.qwizes,
-          _record.qwiz,
-          _record.question
-        );
-      })(),
-      route_on_load(route)
-    ];
   } else if (msg instanceof SetQwiz) {
     let qwiz = msg.qwiz;
     return [
@@ -7372,59 +7689,6 @@ function update(model, msg) {
         );
       })(),
       none()
-    ];
-  } else if (msg instanceof DeleteQwiz) {
-    let qwiz_id = msg.id;
-    return [
-      model,
-      delete_qwiz2(
-        qwiz_id,
-        (_) => {
-          return new QwizDeleted(qwiz_id);
-        }
-      )
-    ];
-  } else if (msg instanceof QwizDeleted) {
-    return [model, go_to(new QwizesRoute())];
-  } else if (msg instanceof CreateQuestion2) {
-    let qwiz_id = msg.qwiz_id;
-    let question = msg.question;
-    return [
-      model,
-      create_question2(
-        qwiz_id,
-        question,
-        (question2) => {
-          return new QuestionCreated(question2);
-        }
-      )
-    ];
-  } else if (msg instanceof QuestionCreated) {
-    let question = msg.question;
-    return [model, go_to(new QuestionRoute(question.id))];
-  } else if (msg instanceof DeleteQuestion) {
-    let id2 = msg.id;
-    return [
-      model,
-      delete_question2(
-        id2,
-        (_) => {
-          return new QuestionDeleted(id2);
-        }
-      )
-    ];
-  } else if (msg instanceof QuestionDeleted) {
-    return [
-      model,
-      (() => {
-        let $ = model.qwiz;
-        if ($ instanceof None) {
-          return go_to(new QwizesRoute());
-        } else {
-          let qwiz = $[0];
-          return go_to(new QwizRoute(qwiz.id));
-        }
-      })()
     ];
   } else if (msg instanceof SetQuestion) {
     let question = msg.question;
@@ -7441,124 +7705,18 @@ function update(model, msg) {
       })(),
       none()
     ];
-  } else if (msg instanceof CreateAnswer2) {
-    let question_id = msg.question_id;
-    let answer = msg.answer;
-    let correct = msg.correct;
-    return [
-      model,
-      create_answer2(
-        question_id,
-        answer,
-        correct,
-        (a2) => {
-          return new AnswerCreated(a2);
-        }
-      )
-    ];
-  } else if (msg instanceof AnswerCreated) {
-    return [
-      model,
-      (() => {
-        let $ = model.question;
-        if ($ instanceof None) {
-          return go_to(new QwizesRoute());
-        } else {
-          let question = $[0];
-          return go_to(new QuestionRoute(question.id));
-        }
-      })()
-    ];
-  } else if (msg instanceof DeleteAnswer) {
-    let id2 = msg.answer_id;
-    return [
-      model,
-      delete_answer2(
-        id2,
-        (_) => {
-          return new AnswerDeleted(id2);
-        }
-      )
-    ];
-  } else if (msg instanceof AnswerDeleted) {
-    let id2 = msg.answer_id;
-    return [
-      (() => {
-        let _record = model;
-        return new Model2(
-          _record.route,
-          _record.user,
-          _record.qwizes,
-          _record.qwiz,
-          (() => {
-            let _pipe = model.question;
-            return map(
-              _pipe,
-              (q) => {
-                let _record$1 = q;
-                return new QuestionWithAnswers(
-                  _record$1.id,
-                  _record$1.qwiz_id,
-                  _record$1.question,
-                  (() => {
-                    let _pipe$1 = q.answers;
-                    return filter(
-                      _pipe$1,
-                      (a2) => {
-                        return !isEqual(a2.id, id2);
-                      }
-                    );
-                  })()
-                );
-              }
-            );
-          })()
-        );
-      })(),
-      none()
-    ];
-  } else if (msg instanceof UpdateAnswer) {
-    let a2 = msg.new_answer;
-    return [
-      model,
-      update_answer2(
-        a2,
-        (a3) => {
-          return new AnswerUpdated(a3);
-        }
-      )
-    ];
-  } else if (msg instanceof AnswerUpdated) {
-    let a2 = msg.answer;
-    return [model, go_to(new QuestionRoute(a2.question_id))];
-  } else if (msg instanceof UpdateQuestion) {
-    let q = msg.new_question;
-    return [
-      model,
-      update_question2(
-        q,
-        (q2) => {
-          return new QuestionUpdated(q2);
-        }
-      )
-    ];
-  } else if (msg instanceof QuestionUpdated) {
-    let q = msg.question;
-    return [model, go_to(new QuestionRoute(q.id))];
-  } else if (msg instanceof UpdateQwiz) {
-    let qw = msg.new_qwiz;
-    return [
-      model,
-      update_qwiz2(
-        qw,
-        (qw2) => {
-          return new QwizUpdated(qw2);
-        }
-      )
-    ];
+  } else if (msg instanceof UserMsg) {
+    let msg$1 = msg.msg;
+    return handle_message4(model, msg$1);
+  } else if (msg instanceof QwizMsg) {
+    let msg$1 = msg.msg;
+    return handle_message3(model, msg$1);
+  } else if (msg instanceof QuestionMsg) {
+    let msg$1 = msg.msg;
+    return handle_message2(model, msg$1);
   } else {
-    let qw = msg.qwiz;
-    return [model, go_to(new QwizRoute(qw.id))];
+    let msg$1 = msg.msg;
+    return handle_message(model, msg$1);
   }
 }
 function view11(model) {
@@ -7587,13 +7745,13 @@ function view11(model) {
   }
 }
 function main() {
-  let app = application(init3, update, view11);
+  let app = application(init3, update4, view11);
   let $ = start2(app, "#app", void 0);
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "client",
-      27,
+      26,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }

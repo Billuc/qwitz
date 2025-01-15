@@ -44,7 +44,7 @@ pub fn get_all(
 }
 
 pub fn create(
-  params: qwiz.UpsertQwiz,
+  params: qwiz.CreateQwiz,
   context: context.Context,
 ) -> Result(shared.Uuid, db_utils.DatabaseError) {
   use <- log.time_log("[qwiz] repository 'create'")

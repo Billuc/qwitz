@@ -1,3 +1,4 @@
+import client/handlers/qwiz_handler
 import client/model/model
 import client/utils
 import gleam/dynamic
@@ -30,9 +31,12 @@ fn on_submit(
       Error([dynamic.DecodeError("", "No user", [])])
     }
     option.Some(user) -> {
-      utils.get_element(qwiz_name)
-      |> result.then(utils.get_value)
-      |> result.map(model.CreateQwiz(_, user.id))
+      use name <- result.try(
+        utils.get_element(qwiz_name)
+        |> result.then(utils.get_value),
+      )
+
+      qwiz_handler.create(name, user.id) |> Ok
     }
   }
 }
