@@ -7,13 +7,23 @@ import gleam/dynamic
 import gleam/option
 import gleam/result
 import lustre/attribute
+import lustre/effect
 import lustre/element/html
 import lustre/event
 import shared/qwiz
 
 const question_title = "question_title"
 
-pub fn view(model: model.Model) {
+pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
+  router.RouteDef(
+    route_id: route.CreateQuestionRoute,
+    path: ["question", "create"],
+    on_load: fn(_, _) { effect.none() },
+    view_fn: view,
+  )
+}
+
+pub fn view(model: model.Model, _query) {
   case model.qwiz {
     option.None -> no_qwiz_view(model)
     option.Some(qwiz) -> create_view(qwiz)

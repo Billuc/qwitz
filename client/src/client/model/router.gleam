@@ -10,12 +10,13 @@ import lustre/element
 import modem
 
 // This is experimental
+// It would be good to have some type safety on the query
 pub type RouteDef(route, model, msg) {
   RouteDef(
     route_id: route,
     path: List(String),
     on_load: fn(model, List(#(String, String))) -> effect.Effect(msg),
-    view_fn: fn(model) -> element.Element(msg),
+    view_fn: fn(model, List(#(String, String))) -> element.Element(msg),
   )
 }
 
@@ -130,10 +131,11 @@ pub fn view(
   router: Router(route, model, msg),
   route: route,
   model: model,
+  params: List(#(String, String)),
 ) -> element.Element(msg) {
   find_route_by_route(router.routes, route)
   |> result.unwrap(router.default_route)
-  |> fn(route_def) { route_def.view_fn(model) }
+  |> fn(route_def) { route_def.view_fn(model, params) }
 }
 
 pub fn initial_route(

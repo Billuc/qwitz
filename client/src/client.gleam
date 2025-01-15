@@ -44,6 +44,7 @@ fn init(
       qwiz: option.None,
       question: option.None,
       router:,
+      params: [],
     ),
     effect.batch([
       router |> router.init_effect(),
@@ -86,7 +87,7 @@ fn update(
 }
 
 fn view(model: model.Model) -> element.Element(model.Msg) {
-  model.router |> router.view(model.route, model)
+  model.router |> router.view(model.route, model, model.params)
   // case model.route {
   //   route.HomeRoute -> home.view(model)
   //   route.QwizesRoute -> qwizes_view.view(model)

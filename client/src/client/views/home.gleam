@@ -16,7 +16,7 @@ pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
   )
 }
 
-pub fn view(model: model.Model) -> element.Element(model.Msg) {
+pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
   html.button([event.on("click", fn(_) { user_handler.login("", "") |> Ok })], [
     html.text("Login"),
   ])

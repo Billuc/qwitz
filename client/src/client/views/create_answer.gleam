@@ -7,6 +7,7 @@ import gleam/dynamic
 import gleam/option
 import gleam/result
 import lustre/attribute
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -16,7 +17,16 @@ const answer_title = "answer_title"
 
 const answer_correct = "answer_correct"
 
-pub fn view(model: model.Model) -> element.Element(model.Msg) {
+pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
+  router.RouteDef(
+    route_id: route.CreateAnswerRoute,
+    path: ["answer", "create"],
+    on_load: fn(_, _) { effect.none() },
+    view_fn: view,
+  )
+}
+
+pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
   case model.question {
     option.None -> no_question_view(model)
     option.Some(question) -> create_view(question)

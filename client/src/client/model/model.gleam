@@ -13,6 +13,7 @@ import shared/user
 pub type Model {
   Model(
     route: route.Route,
+    params: List(#(String, String)),
     router: router.Router(route.Route, Model, Msg),
     user: option.Option(user.User),
     qwizes: List(qwiz.Qwiz),

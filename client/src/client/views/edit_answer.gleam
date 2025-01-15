@@ -8,6 +8,7 @@ import gleam/list
 import gleam/option
 import gleam/result
 import lustre/attribute
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -18,10 +19,21 @@ const answer_title = "answer_title"
 
 const answer_correct = "answer_correct"
 
+pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
+  router.RouteDef(
+    route_id: route.UpdateAnswerRoute,
+    path: ["answer", "update"],
+    on_load: fn(_, _) { effect.none() },
+    view_fn: view,
+  )
+}
+
 pub fn view(
   model: model.Model,
-  answer_id: shared.Uuid,
+  query: List(#(String, String)),
 ) -> element.Element(model.Msg) {
+  let answer_id =
+    query |> list.key_find("id") |> result.unwrap("") |> shared.Uuid
   let answer =
     model.question
     |> option.then(fn(q) {

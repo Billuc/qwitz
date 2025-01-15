@@ -36,7 +36,7 @@ pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
   )
 }
 
-pub fn view(model: model.Model) -> element.Element(model.Msg) {
+pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
   case model.question {
     option.None -> common.loading()
     option.Some(question) -> {

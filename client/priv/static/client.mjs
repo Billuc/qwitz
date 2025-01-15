@@ -5261,11 +5261,11 @@ function go_to(router, route, query2) {
     );
   }
 }
-function view(router, route, model) {
+function view(router, route, model, params2) {
   let _pipe = find_route_by_route(router.routes, route);
   let _pipe$1 = unwrap2(_pipe, router.default_route);
   return ((route_def2) => {
-    return route_def2.view_fn(model);
+    return route_def2.view_fn(model, params2);
   })(_pipe$1);
 }
 function initial_route(router) {
@@ -6347,9 +6347,10 @@ function delete_qwiz2(id2, cb) {
 
 // build/dev/javascript/client/client/model/model.mjs
 var Model2 = class extends CustomType {
-  constructor(route, router, user, qwizes, qwiz, question) {
+  constructor(route, params2, router, user, qwizes, qwiz, question) {
     super();
     this.route = route;
+    this.params = params2;
     this.router = router;
     this.user = user;
     this.qwizes = qwizes;
@@ -6544,6 +6545,7 @@ function remove_answer(model, id2) {
   let _record = model;
   return new Model2(
     _record.route,
+    _record.params,
     _record.router,
     _record.user,
     _record.qwizes,
@@ -6904,12 +6906,12 @@ function on2(name, handler) {
 }
 
 // build/dev/javascript/client/client/views/home.mjs
-function view2(model) {
+function view2(model, _) {
   return button(
     toList([
       on2(
         "click",
-        (_) => {
+        (_2) => {
           let _pipe = login3("", "");
           return new Ok(_pipe);
         }
@@ -6934,6 +6936,7 @@ function init4(router) {
   return [
     new Model2(
       new HomeRoute(),
+      toList([]),
       router,
       new None(),
       toList([]),
@@ -6972,6 +6975,7 @@ function update4(model, msg) {
         let _record = model;
         return new Model2(
           route,
+          _record.params,
           _record.router,
           _record.user,
           _record.qwizes,
@@ -6991,6 +6995,7 @@ function update4(model, msg) {
         let _record = model;
         return new Model2(
           _record.route,
+          _record.params,
           _record.router,
           new Some(user),
           _record.qwizes,
@@ -7010,6 +7015,7 @@ function update4(model, msg) {
         let _record = model;
         return new Model2(
           _record.route,
+          _record.params,
           _record.router,
           _record.user,
           qwizes,
@@ -7026,6 +7032,7 @@ function update4(model, msg) {
         let _record = model;
         return new Model2(
           _record.route,
+          _record.params,
           _record.router,
           _record.user,
           _record.qwizes,
@@ -7042,6 +7049,7 @@ function update4(model, msg) {
         let _record = model;
         return new Model2(
           _record.route,
+          _record.params,
           _record.router,
           _record.user,
           _record.qwizes,
@@ -7067,7 +7075,7 @@ function update4(model, msg) {
 }
 function view3(model) {
   let _pipe = model.router;
-  return view(_pipe, model.route, model);
+  return view(_pipe, model.route, model, model.params);
 }
 function main() {
   let router = init3(
