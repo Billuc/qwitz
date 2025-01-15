@@ -1,5 +1,6 @@
 import client/model/model
 import client/model/route
+import client/model/router
 import client/services/question_service
 import gleam/option
 import lustre/effect
@@ -35,12 +36,17 @@ pub fn handle_message(
 
     model.QuestionCreated(question) -> #(
       model,
-      route.go_to(route.QuestionRoute(question.id)),
+      model.router
+        |> router.go_to(route.QuestionRoute, [#("id", question.id.data)]),
     )
-    model.QuestionUpdated(q) -> #(model, route.go_to(route.QuestionRoute(q.id)))
+    model.QuestionUpdated(q) -> #(
+      model,
+      model.router |> router.go_to(route.QuestionRoute, [#("id", q.id.data)]),
+    )
     model.QuestionDeleted(_) -> #(model, case model.qwiz {
-      option.None -> route.go_to(route.QwizesRoute)
-      option.Some(qwiz) -> route.go_to(route.QwizRoute(qwiz.id))
+      option.None -> model.router |> router.go_to(route.QwizesRoute, [])
+      option.Some(qwiz) ->
+        model.router |> router.go_to(route.QwizRoute, [#("id", qwiz.id.data)])
     })
   }
 }

@@ -1,6 +1,7 @@
 import client/handlers/answer_handler
 import client/model/model
 import client/model/route
+import client/model/router
 import client/utils
 import gleam/dynamic
 import gleam/option
@@ -15,19 +16,19 @@ const answer_title = "answer_title"
 
 const answer_correct = "answer_correct"
 
-pub fn view(
-  question: option.Option(question.QuestionWithAnswers),
-) -> element.Element(model.Msg) {
-  case question {
-    option.None -> no_question_view()
+pub fn view(model: model.Model) -> element.Element(model.Msg) {
+  case model.question {
+    option.None -> no_question_view(model)
     option.Some(question) -> create_view(question)
   }
 }
 
-fn no_question_view() {
+fn no_question_view(model: model.Model) {
   html.div([], [
     html.h1([], [html.text("Error: No question selected !")]),
-    html.a([route.href(route.QwizesRoute)], [html.text("Go back to qwizes")]),
+    html.a([model.router |> router.href(route.QwizesRoute, [])], [
+      html.text("Go back to qwizes"),
+    ]),
   ])
 }
 

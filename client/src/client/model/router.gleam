@@ -14,7 +14,7 @@ pub type RouteDef(route, model, msg) {
   RouteDef(
     route_id: route,
     path: List(String),
-    on_load: fn(List(#(String, String))) -> effect.Effect(msg),
+    on_load: fn(model, List(#(String, String))) -> effect.Effect(msg),
     view_fn: fn(model) -> element.Element(msg),
   )
 }
@@ -68,13 +68,14 @@ fn test_route(route_path: List(String), uri_path: List(String)) -> Bool {
 }
 
 pub fn on_change(
+  router: Router(route, model, msg),
   route: route,
   params: List(#(String, String)),
-  router: Router(route, model, msg),
+  model: model,
 ) -> effect.Effect(msg) {
   case find_route_by_route(router.routes, route) {
     Error(_) -> effect.none()
-    Ok(route_def) -> route_def.on_load(params)
+    Ok(route_def) -> route_def.on_load(model, params)
   }
 }
 
@@ -123,4 +124,21 @@ pub fn href(
         <> query |> uri.query_to_string,
       )
   }
+}
+
+pub fn view(
+  router: Router(route, model, msg),
+  route: route,
+  model: model,
+) -> element.Element(msg) {
+  find_route_by_route(router.routes, route)
+  |> result.unwrap(router.default_route)
+  |> fn(route_def) { route_def.view_fn(model) }
+}
+
+pub fn initial_route(
+  router: Router(route, model, msg),
+) -> Result(RouteDef(route, model, msg), Nil) {
+  use uri <- result.try(modem.initial_uri())
+  router.routes |> find_route_by_uri(uri)
 }

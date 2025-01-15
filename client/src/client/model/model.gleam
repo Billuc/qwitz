@@ -1,4 +1,5 @@
 import client/model/route
+import client/model/router
 import client/services/question_service
 import client/services/qwiz_service
 import gleam/option
@@ -12,6 +13,7 @@ import shared/user
 pub type Model {
   Model(
     route: route.Route,
+    router: router.Router(route.Route, Model, Msg),
     user: option.Option(user.User),
     qwizes: List(qwiz.Qwiz),
     qwiz: option.Option(qwiz.QwizWithQuestions),
@@ -20,7 +22,7 @@ pub type Model {
 }
 
 pub type Msg {
-  ChangeRoute(route: route.Route)
+  ChangeRoute(route: route.Route, query: List(#(String, String)))
 
   // Model Change Messages
   SetUser(user: user.User)
@@ -64,24 +66,23 @@ pub type AnswerMsg {
   UpdateAnswer(new_answer: answer.Answer)
   AnswerUpdated(answer: answer.Answer)
 }
-
-pub fn on_load(route: route.Route) -> effect.Effect(Msg) {
-  case route {
-    route.QwizesRoute ->
-      effect.from(fn(dispatch) {
-        use qwizes <- qwiz_service.get_qwizes()
-        SetQwizes(qwizes) |> dispatch
-      })
-    route.QwizRoute(id) ->
-      effect.from(fn(dispatch) {
-        use qw <- qwiz_service.get_qwiz(id)
-        SetQwiz(qw) |> dispatch
-      })
-    route.QuestionRoute(id) ->
-      effect.from(fn(dispatch) {
-        use qu <- question_service.get_question(id)
-        SetQuestion(qu) |> dispatch
-      })
-    _ -> effect.none()
-  }
-}
+// pub fn on_load(route: route.Route) -> effect.Effect(Msg) {
+//   case route {
+//     route.QwizesRoute ->
+//       effect.from(fn(dispatch) {
+//         use qwizes <- qwiz_service.get_qwizes()
+//         SetQwizes(qwizes) |> dispatch
+//       })
+//     route.QwizRoute(id) ->
+//       effect.from(fn(dispatch) {
+//         use qw <- qwiz_service.get_qwiz(id)
+//         SetQwiz(qw) |> dispatch
+//       })
+//     route.QuestionRoute(id) ->
+//       effect.from(fn(dispatch) {
+//         use qu <- question_service.get_question(id)
+//         SetQuestion(qu) |> dispatch
+//       })
+//     _ -> effect.none()
+//   }
+// }

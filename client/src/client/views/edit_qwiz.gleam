@@ -1,6 +1,7 @@
 import client/handlers/qwiz_handler
 import client/model/model
 import client/model/route
+import client/model/router
 import client/utils
 import gleam/dynamic
 import gleam/option
@@ -15,15 +16,17 @@ const qwiz_name = "qwiz_name"
 
 pub fn view(model: model.Model) -> le.Element(model.Msg) {
   case model.qwiz {
-    option.None -> no_qwiz_view()
+    option.None -> no_qwiz_view(model)
     option.Some(qwiz) -> update_view(qwiz)
   }
 }
 
-fn no_qwiz_view() {
+fn no_qwiz_view(model: model.Model) {
   html.div([], [
     html.h1([], [html.text("Error: No qwiz selected !")]),
-    html.a([route.href(route.QwizesRoute)], [html.text("Go back to qwizes")]),
+    html.a([model.router |> router.href(route.QwizesRoute, [])], [
+      html.text("Go back to qwizes"),
+    ]),
   ])
 }
 

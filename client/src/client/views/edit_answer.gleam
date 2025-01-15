@@ -1,6 +1,7 @@
 import client/handlers/answer_handler
 import client/model/model
 import client/model/route
+import client/model/router
 import client/utils
 import gleam/dynamic
 import gleam/list
@@ -35,20 +36,24 @@ pub fn view(
 
 fn no_answer_view(model: model.Model) -> element.Element(model.Msg) {
   let return = case model.question, model.qwiz {
-    option.None, option.None -> #(route.QwizesRoute, "Go back to qwizes")
+    option.None, option.None -> #(route.QwizesRoute, [], "Go back to qwizes")
     option.Some(q), _ -> #(
-      route.QuestionRoute(q.id),
+      route.QuestionRoute,
+      [#("id", q.id.data)],
       "Go back to " <> q.question,
     )
     option.None, option.Some(qw) -> #(
-      route.QwizRoute(qw.id),
+      route.QwizRoute,
+      [#("id", qw.id.data)],
       "Go back to " <> qw.name,
     )
   }
 
   html.div([], [
     html.h1([], [html.text("Error: No answer selected !")]),
-    html.a([route.href(return.0)], [html.text(return.1)]),
+    html.a([model.router |> router.href(return.0, return.1)], [
+      html.text(return.2),
+    ]),
   ])
 }
 

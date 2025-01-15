@@ -1,5 +1,6 @@
 import client/model/model
 import client/model/route
+import client/model/router
 import client/services/answer_service
 import gleam/list
 import gleam/option
@@ -37,11 +38,13 @@ pub fn handle_message(
 
     model.AnswerCreated(answer) -> #(
       model,
-      route.go_to(route.QuestionRoute(answer.question_id)),
+      model.router
+        |> router.go_to(route.QuestionRoute, [#("id", answer.question_id.data)]),
     )
     model.AnswerUpdated(a) -> #(
       model,
-      route.go_to(route.QuestionRoute(a.question_id)),
+      model.router
+        |> router.go_to(route.QuestionRoute, [#("id", a.question_id.data)]),
     )
     model.AnswerDeleted(id) -> #(model |> remove_answer(id), effect.none())
   }

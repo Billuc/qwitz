@@ -1,5 +1,6 @@
 import client/model/model
 import client/model/route
+import client/model/router
 import client/services/qwiz_service
 import lustre/effect
 import shared
@@ -32,9 +33,18 @@ pub fn handle_message(
       }),
     )
 
-    model.QwizCreated(qwiz) -> #(model, route.go_to(route.QwizRoute(qwiz.id)))
-    model.QwizUpdated(qwiz) -> #(model, route.go_to(route.QwizRoute(qwiz.id)))
-    model.QwizDeleted(_) -> #(model, route.go_to(route.QwizesRoute))
+    model.QwizCreated(qwiz) -> #(
+      model,
+      model.router |> router.go_to(route.QwizRoute, [#("id", qwiz.id.data)]),
+    )
+    model.QwizUpdated(qwiz) -> #(
+      model,
+      model.router |> router.go_to(route.QwizRoute, [#("id", qwiz.id.data)]),
+    )
+    model.QwizDeleted(_) -> #(
+      model,
+      model.router |> router.go_to(route.QwizesRoute, []),
+    )
   }
 }
 

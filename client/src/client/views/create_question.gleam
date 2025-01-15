@@ -1,5 +1,7 @@
 import client/handlers/question_handler
+import client/model/model
 import client/model/route
+import client/model/router
 import client/utils
 import gleam/dynamic
 import gleam/option
@@ -11,17 +13,19 @@ import shared/qwiz
 
 const question_title = "question_title"
 
-pub fn view(qwiz: option.Option(qwiz.QwizWithQuestions)) {
-  case qwiz {
-    option.None -> no_qwiz_view()
+pub fn view(model: model.Model) {
+  case model.qwiz {
+    option.None -> no_qwiz_view(model)
     option.Some(qwiz) -> create_view(qwiz)
   }
 }
 
-fn no_qwiz_view() {
+fn no_qwiz_view(model: model.Model) {
   html.div([], [
     html.h1([], [html.text("Error: No qwiz selected !")]),
-    html.a([route.href(route.QwizesRoute)], [html.text("Go back to qwizes")]),
+    html.a([model.router |> router.href(route.QwizesRoute, [])], [
+      html.text("Go back to qwizes"),
+    ]),
   ])
 }
 
