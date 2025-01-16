@@ -64,3 +64,16 @@ pub type AnswerMsg {
   UpdateAnswer(new_answer: answer.Answer)
   AnswerUpdated(answer: answer.Answer)
 }
+
+pub type Route {
+  HomeRoute
+  QwizesRoute
+  CreateQwizRoute
+  QwizRoute
+  CreateQuestionRoute
+  QuestionRoute
+  CreateAnswerRoute
+  UpdateAnswerRoute
+  UpdateQuestionRoute
+  UpdateQwizRoute
+}

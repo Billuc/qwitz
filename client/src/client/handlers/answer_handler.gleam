@@ -2,6 +2,7 @@ import client/model/model
 import client/model/route
 import client/model/router
 import client/services/answer_service
+import client/views/question as question_view
 import gleam/list
 import gleam/option
 import lustre/effect
@@ -39,7 +40,7 @@ pub fn handle_message(
     model.AnswerCreated(answer) -> #(
       model,
       model.router
-        |> router.go_to(route.QuestionRoute, [#("id", answer.question_id.data)]),
+        |> router.go_to(question, [#("id", answer.question_id.data)]),
     )
     model.AnswerUpdated(a) -> #(
       model,

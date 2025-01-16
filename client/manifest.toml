@@ -53,6 +53,8 @@ packages = [
 ]
 
 [requirements]
+convert = { version = ">= 1.0.1 and < 2.0.0" }
+convert_http_query = { version = ">= 1.0.0 and < 2.0.0" }
 gleam_stdlib = { version = ">= 0.44.0 and < 2.0.0" }
 gleamrpc = { version = ">= 2.1.4 and < 3.0.0" }
 gleamrpc_http_client = { version = ">= 1.0.1 and < 2.0.0" }

@@ -1,8 +1,6 @@
-import client/handlers/answer_handler
-import client/handlers/question_handler
 import client/model/model
-import client/model/route
 import client/model/router
+import client/model/routes
 import client/services/question_service
 import client/views/common
 import gleam/io
@@ -14,27 +12,6 @@ import lustre/element/html
 import lustre/event
 import shared
 import shared/answer
-
-pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
-  router.RouteDef(
-    route_id: route.QuestionRoute,
-    path: ["question"],
-    on_load: fn(model: model.Model, query) {
-      case query |> list.key_find("id") {
-        Error(_) -> {
-          io.println_error("Question ID missing ! Redirecting to home...")
-          model.router |> router.go_to(route.HomeRoute, [])
-        }
-        Ok(id) ->
-          effect.from(fn(dispatch) {
-            use qu <- question_service.get_question(shared.Uuid(id))
-            model.SetQuestion(qu) |> dispatch
-          })
-      }
-    },
-    view_fn: view,
-  )
-}
 
 pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
   case model.question {
@@ -56,7 +33,7 @@ pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
 
 fn back_button(model: model.Model) -> element.Element(model.Msg) {
   let return = case model.qwiz {
-    option.None -> #(route.QwizesRoute, [], "Back to qwizes")
+    option.None -> #(routes.QwizesRoute, [], "Back to qwizes")
     option.Some(qw) -> #(
       route.QwizRoute,
       [#("id", qw.id.data)],
@@ -64,9 +41,7 @@ fn back_button(model: model.Model) -> element.Element(model.Msg) {
     )
   }
 
-  html.a([model.router |> router.href(return.0, return.1)], [
-    html.text(return.2),
-  ])
+  html.a([router.href(return.0, return.1)], [html.text(return.2)])
 }
 
 fn answer_list(
