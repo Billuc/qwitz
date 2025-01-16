@@ -1,9 +1,9 @@
-import gleam/option
-import gleam/uri
-import lustre/attribute
-import lustre/effect
-import modem
-import shared
+// import gleam/option
+// import gleam/uri
+// import lustre/attribute
+// import lustre/effect
+// import modem
+// import shared
 
 pub type Route {
   HomeRoute

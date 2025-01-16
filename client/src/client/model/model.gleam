@@ -1,9 +1,6 @@
 import client/model/route
 import client/model/router
-import client/services/question_service
-import client/services/qwiz_service
 import gleam/option
-import lustre/effect
 import shared
 import shared/answer
 import shared/question
@@ -67,23 +64,3 @@ pub type AnswerMsg {
   UpdateAnswer(new_answer: answer.Answer)
   AnswerUpdated(answer: answer.Answer)
 }
-// pub fn on_load(route: route.Route) -> effect.Effect(Msg) {
-//   case route {
-//     route.QwizesRoute ->
-//       effect.from(fn(dispatch) {
-//         use qwizes <- qwiz_service.get_qwizes()
-//         SetQwizes(qwizes) |> dispatch
-//       })
-//     route.QwizRoute(id) ->
-//       effect.from(fn(dispatch) {
-//         use qw <- qwiz_service.get_qwiz(id)
-//         SetQwiz(qw) |> dispatch
-//       })
-//     route.QuestionRoute(id) ->
-//       effect.from(fn(dispatch) {
-//         use qu <- question_service.get_question(id)
-//         SetQuestion(qu) |> dispatch
-//       })
-//     _ -> effect.none()
-//   }
-// }

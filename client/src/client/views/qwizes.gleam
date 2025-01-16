@@ -1,12 +1,28 @@
 import client/model/model
 import client/model/route
 import client/model/router
+import client/services/qwiz_service
 import gleam/list
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import shared/qwiz
 
-pub fn view(model: model.Model) {
+pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
+  router.RouteDef(
+    route_id: route.QwizesRoute,
+    path: ["qwizes"],
+    on_load: fn(_, _) {
+      effect.from(fn(dispatch) {
+        use qwizes <- qwiz_service.get_qwizes()
+        model.SetQwizes(qwizes) |> dispatch
+      })
+    },
+    view_fn: view,
+  )
+}
+
+pub fn view(model: model.Model, _query) {
   html.div([], [
     element.keyed(html.div([], _), {
       use qwiz <- list.map(model.qwizes)

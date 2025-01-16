@@ -16,17 +16,28 @@ import client/views/question as question_view
 import client/views/qwiz as qwiz_view
 import client/views/qwizes as qwizes_view
 import gleam/option
-import gleam/result
 import lustre
 import lustre/effect
 import lustre/element
-import modem
 
 pub fn main() {
   let router =
-    router.init([home.route_def()], home.route_def(), fn(route_data) {
-      model.ChangeRoute(route_data.0, route_data.1)
-    })
+    router.init(
+      [
+        home.route_def(),
+        create_answer.route_def(),
+        create_question.route_def(),
+        create_qwiz.route_def(),
+        edit_answer.route_def(),
+        edit_question.route_def(),
+        edit_qwiz.route_def(),
+        question_view.route_def(),
+        qwiz_view.route_def(),
+        qwizes_view.route_def(),
+      ],
+      home.route_def(),
+      fn(route_data) { model.ChangeRoute(route_data.0, route_data.1) },
+    )
 
   let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", router)
@@ -88,16 +99,4 @@ fn update(
 
 fn view(model: model.Model) -> element.Element(model.Msg) {
   model.router |> router.view(model.route, model, model.params)
-  // case model.route {
-  //   route.HomeRoute -> home.view(model)
-  //   route.QwizesRoute -> qwizes_view.view(model)
-  //   route.CreateQwizRoute -> create_qwiz.view(model)
-  //   route.QwizRoute(_) -> qwiz_view.view(model)
-  //   route.CreateQuestionRoute -> create_question.view(model.qwiz)
-  //   route.QuestionRoute(_) -> question_view.view(model)
-  //   route.CreateAnswerRoute -> create_answer.view(model.question)
-  //   route.UpdateAnswerRoute(id) -> edit_answer.view(model, id)
-  //   route.UpdateQuestionRoute(_id) -> edit_question.view(model)
-  //   route.UpdateQwizRoute(_id) -> edit_qwiz.view(model)
-  // }
 }

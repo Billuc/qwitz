@@ -7,6 +7,7 @@ import gleam/dynamic
 import gleam/option
 import gleam/result
 import lustre/attribute
+import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -14,7 +15,16 @@ import shared/question
 
 const question_title = "question_title"
 
-pub fn view(model: model.Model) -> element.Element(model.Msg) {
+pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
+  router.RouteDef(
+    route_id: route.UpdateQuestionRoute,
+    path: ["question", "update"],
+    on_load: fn(_, _) { effect.none() },
+    view_fn: view,
+  )
+}
+
+pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
   case model.question {
     option.None -> no_question_view(model)
     option.Some(question) -> update_view(question)
