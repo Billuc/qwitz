@@ -1,30 +1,18 @@
 import client/handlers/qwiz_handler
 import client/model/model
-import client/model/route
-import client/model/router
 import client/utils
 import gleam/dynamic
 import gleam/io
 import gleam/option
 import gleam/result
 import lustre/attribute
-import lustre/effect
 import lustre/element as le
 import lustre/element/html
 import lustre/event
 
 const qwiz_name = "qwiz_name"
 
-pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
-  router.RouteDef(
-    route_id: route.CreateQwizRoute,
-    path: ["qwiz", "create"],
-    on_load: fn(_, _) { effect.none() },
-    view_fn: view,
-  )
-}
-
-pub fn view(model: model.Model, _query) -> le.Element(model.Msg) {
+pub fn view(model: model.Model, _param) -> le.Element(model.Msg) {
   html.form([event.on("submit", on_submit(model, _))], [
     html.label([], [html.text("Name"), html.input([attribute.id(qwiz_name)])]),
     html.input([attribute.type_("submit"), attribute.value("Create")]),

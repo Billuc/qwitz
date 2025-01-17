@@ -1,9 +1,10 @@
+import client/handlers/answer_handler
+import client/handlers/question_handler
 import client/model/model
+import client/model/route
 import client/model/router
-import client/model/routes
 import client/services/question_service
 import client/views/common
-import gleam/io
 import gleam/list
 import gleam/option
 import lustre/effect
@@ -13,7 +14,13 @@ import lustre/event
 import shared
 import shared/answer
 
-pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
+pub fn on_load(model: model.Model, id: shared.Uuid) {
+  use dispatch <- effect.from
+  use qu <- question_service.get_question(id)
+  model.SetQuestion(qu) |> dispatch
+}
+
+pub fn view(model: model.Model, _param) -> element.Element(model.Msg) {
   case model.question {
     option.None -> common.loading()
     option.Some(question) -> {
@@ -21,72 +28,53 @@ pub fn view(model: model.Model, _query) -> element.Element(model.Msg) {
         html.div([], [
           back_button(model),
           html.h1([], [html.text(question.question)]),
-          edit_question_button(model, question.id),
+          edit_question_button(question.id),
           delete_question_button(question.id),
         ]),
-        answer_list(model, question.answers),
-        create_answer_button(model),
+        answer_list(question.answers),
+        create_answer_button(),
       ])
     }
   }
 }
 
 fn back_button(model: model.Model) -> element.Element(model.Msg) {
-  let return = case model.qwiz {
-    option.None -> #(routes.QwizesRoute, [], "Back to qwizes")
+  let link_data = case model.qwiz {
+    option.None -> #(router.href(route.qwizes(), Nil), "Back to qwizes")
     option.Some(qw) -> #(
-      route.QwizRoute,
-      [#("id", qw.id.data)],
+      router.href(route.qwiz(), qw.id),
       "Back to " <> qw.name,
     )
   }
 
-  html.a([router.href(return.0, return.1)], [html.text(return.2)])
+  html.a([link_data.0], [html.text(link_data.1)])
 }
 
-fn answer_list(
-  model: model.Model,
-  answers: List(answer.Answer),
-) -> element.Element(model.Msg) {
+fn answer_list(answers: List(answer.Answer)) -> element.Element(model.Msg) {
   element.keyed(html.div([], _), {
     use a <- list.map(answers)
-    #(a.id.data, answer_row(model, a))
+    #(a.id.data, answer_row(a))
   })
 }
 
-fn answer_row(
-  model: model.Model,
-  answer: answer.Answer,
-) -> element.Element(model.Msg) {
+fn answer_row(answer: answer.Answer) -> element.Element(model.Msg) {
   html.div([], [
     html.text(answer.answer),
-    edit_answer_button(model, answer.id),
+    edit_answer_button(answer.id),
     delete_answer_button(answer.id),
   ])
 }
 
-fn edit_answer_button(
-  model: model.Model,
-  id: shared.Uuid,
-) -> element.Element(model.Msg) {
-  html.a(
-    [model.router |> router.href(route.UpdateAnswerRoute, [#("id", id.data)])],
-    [html.text("Edit")],
-  )
+fn edit_answer_button(id: shared.Uuid) -> element.Element(model.Msg) {
+  html.a([router.href(route.update_answer(), id)], [html.text("Edit")])
 }
 
 fn delete_answer_button(id: shared.Uuid) -> element.Element(model.Msg) {
   html.button([event.on_click(answer_handler.delete(id))], [html.text("Remove")])
 }
 
-fn edit_question_button(
-  model: model.Model,
-  id: shared.Uuid,
-) -> element.Element(model.Msg) {
-  html.a(
-    [model.router |> router.href(route.UpdateQuestionRoute, [#("id", id.data)])],
-    [html.text("Edit")],
-  )
+fn edit_question_button(id: shared.Uuid) -> element.Element(model.Msg) {
+  html.a([router.href(route.update_question(), id)], [html.text("Edit")])
 }
 
 fn delete_question_button(id: shared.Uuid) -> element.Element(model.Msg) {
@@ -95,8 +83,6 @@ fn delete_question_button(id: shared.Uuid) -> element.Element(model.Msg) {
   ])
 }
 
-fn create_answer_button(model: model.Model) -> element.Element(model.Msg) {
-  html.a([model.router |> router.href(route.CreateAnswerRoute, [])], [
-    html.text("Add answer"),
-  ])
+fn create_answer_button() -> element.Element(model.Msg) {
+  html.a([router.href(route.create_answer(), Nil)], [html.text("Add answer")])
 }

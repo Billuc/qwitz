@@ -4,8 +4,12 @@
 // import lustre/effect
 // import modem
 // import shared
+import client/model/router
+import convert
+import shared
 
 pub type Route {
+  ErrorRoute
   HomeRoute
   QwizesRoute
   CreateQwizRoute
@@ -17,40 +21,63 @@ pub type Route {
   UpdateQuestionRoute
   UpdateQwizRoute
 }
-// pub fn on_url_change(uri: uri.Uri) -> Route {
-//   case uri.path_segments(uri.path) {
-//     ["qwizes"] -> QwizesRoute
-//     ["qwizes", "create"] -> CreateQwizRoute
-//     ["qwiz", id] -> QwizRoute(shared.Uuid(id))
-//     ["questions", "create"] -> CreateQuestionRoute
-//     ["question", id] -> QuestionRoute(shared.Uuid(id))
-//     ["answers", "create"] -> CreateAnswerRoute
-//     ["answer", "update", id] -> UpdateAnswerRoute(shared.Uuid(id))
-//     ["question", "update", id] -> UpdateQuestionRoute(shared.Uuid(id))
-//     ["qwiz", "update", id] -> UpdateQwizRoute(shared.Uuid(id))
-//     _ -> HomeRoute
-//   }
-// }
 
-// pub fn to_url(route: Route) -> String {
-//   case route {
-//     CreateQuestionRoute -> "/questions/create"
-//     CreateQwizRoute -> "/qwizes/create"
-//     HomeRoute -> "/"
-//     QwizRoute(id) -> "/qwiz/" <> id.data
-//     QwizesRoute -> "/qwizes"
-//     QuestionRoute(id) -> "/question/" <> id.data
-//     CreateAnswerRoute -> "/answers/create"
-//     UpdateAnswerRoute(id) -> "/answer/update/" <> id.data
-//     UpdateQuestionRoute(id) -> "/question/update/" <> id.data
-//     UpdateQwizRoute(id) -> "/qwiz/update/" <> id.data
-//   }
-// }
+pub fn home() {
+  router.RouteIdentifier(HomeRoute, [], convert.null())
+}
 
-// pub fn go_to(route: Route) -> effect.Effect(msg) {
-//   modem.push(route |> to_url, option.None, option.None)
-// }
+pub fn qwiz() {
+  router.RouteIdentifier(QwizRoute, ["qwiz"], shared.uuid_converter())
+}
 
-// pub fn href(route: Route) -> attribute.Attribute(_) {
-//   attribute.href(route |> to_url)
-// }
+pub fn qwizes() {
+  router.RouteIdentifier(QwizesRoute, ["qwizes"], convert.null())
+}
+
+pub fn question() {
+  router.RouteIdentifier(QuestionRoute, ["question"], shared.uuid_converter())
+}
+
+pub fn create_answer() {
+  router.RouteIdentifier(
+    CreateAnswerRoute,
+    ["answer", "create"],
+    convert.null(),
+  )
+}
+
+pub fn create_question() {
+  router.RouteIdentifier(
+    CreateQuestionRoute,
+    ["question", "create"],
+    convert.null(),
+  )
+}
+
+pub fn create_qwiz() {
+  router.RouteIdentifier(CreateQwizRoute, ["qwiz", "create"], convert.null())
+}
+
+pub fn update_answer() {
+  router.RouteIdentifier(
+    UpdateAnswerRoute,
+    ["answer", "update"],
+    shared.uuid_converter(),
+  )
+}
+
+pub fn update_question() {
+  router.RouteIdentifier(
+    UpdateQuestionRoute,
+    ["question", "update"],
+    shared.uuid_converter(),
+  )
+}
+
+pub fn update_qwiz() {
+  router.RouteIdentifier(
+    UpdateQwizRoute,
+    ["qwiz", "update"],
+    shared.uuid_converter(),
+  )
+}

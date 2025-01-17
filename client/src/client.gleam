@@ -23,21 +23,36 @@ import lustre/element
 pub fn main() {
   let router =
     router.init(
-      [
-        home.route_def(),
-        create_answer.route_def(),
-        create_question.route_def(),
-        create_qwiz.route_def(),
-        edit_answer.route_def(),
-        edit_question.route_def(),
-        edit_qwiz.route_def(),
-        question_view.route_def(),
-        qwiz_view.route_def(),
-        qwizes_view.route_def(),
-      ],
-      home.route_def(),
       fn(route_data) { model.ChangeRoute(route_data.0, route_data.1) },
+      router.std_error_page(),
+      route.ErrorRoute,
     )
+    |> router.register(route.home(), router.no_load, home.view)
+    |> router.register(route.qwizes(), qwizes_view.on_load, qwizes_view.view)
+    |> router.register(route.qwiz(), qwiz_view.on_load, qwiz_view.view)
+    |> router.register(
+      route.question(),
+      question_view.on_load,
+      question_view.view,
+    )
+    |> router.register(route.create_qwiz(), router.no_load, create_qwiz.view)
+    |> router.register(
+      route.create_question(),
+      router.no_load,
+      create_question.view,
+    )
+    |> router.register(
+      route.create_answer(),
+      router.no_load,
+      create_answer.view,
+    )
+    |> router.register(route.update_qwiz(), router.no_load, edit_qwiz.view)
+    |> router.register(
+      route.update_question(),
+      router.no_load,
+      edit_question.view,
+    )
+    |> router.register(route.update_answer(), router.no_load, edit_answer.view)
 
   let app = lustre.application(init, update, view)
   let assert Ok(_) = lustre.start(app, "#app", router)
@@ -57,13 +72,7 @@ fn init(
       router:,
       params: [],
     ),
-    effect.batch([
-      router |> router.init_effect(),
-      case router |> router.initial_route() {
-        Ok(def) -> effect.none()
-        Error(_) -> router |> router.go_to(route.HomeRoute, [])
-      },
-    ]),
+    router |> router.init_effect(),
   )
 }
 
@@ -78,7 +87,7 @@ fn update(
     )
     model.SetUser(user) -> #(
       model.Model(..model, user: option.Some(user)),
-      model.router |> router.go_to(route.QwizesRoute, []),
+      router.go_to(route.qwizes(), Nil),
     )
     model.SetQwizes(qwizes) -> #(model.Model(..model, qwizes:), effect.none())
     model.SetQwiz(qwiz) -> #(

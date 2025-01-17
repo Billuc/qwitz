@@ -33,18 +33,9 @@ pub fn handle_message(
       }),
     )
 
-    model.QwizCreated(qwiz) -> #(
-      model,
-      model.router |> router.go_to(route.QwizRoute, [#("id", qwiz.id.data)]),
-    )
-    model.QwizUpdated(qwiz) -> #(
-      model,
-      model.router |> router.go_to(route.QwizRoute, [#("id", qwiz.id.data)]),
-    )
-    model.QwizDeleted(_) -> #(
-      model,
-      model.router |> router.go_to(route.QwizesRoute, []),
-    )
+    model.QwizCreated(qwiz) -> #(model, router.go_to(route.qwiz(), qwiz.id))
+    model.QwizUpdated(qwiz) -> #(model, router.go_to(route.qwiz(), qwiz.id))
+    model.QwizDeleted(_) -> #(model, router.go_to(route.qwizes(), Nil))
   }
 }
 

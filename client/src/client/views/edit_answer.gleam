@@ -8,7 +8,6 @@ import gleam/list
 import gleam/option
 import gleam/result
 import lustre/attribute
-import lustre/effect
 import lustre/element
 import lustre/element/html
 import lustre/event
@@ -19,25 +18,14 @@ const answer_title = "answer_title"
 
 const answer_correct = "answer_correct"
 
-pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
-  router.RouteDef(
-    route_id: route.UpdateAnswerRoute,
-    path: ["answer", "update"],
-    on_load: fn(_, _) { effect.none() },
-    view_fn: view,
-  )
-}
-
 pub fn view(
   model: model.Model,
-  query: List(#(String, String)),
+  param: shared.Uuid,
 ) -> element.Element(model.Msg) {
-  let answer_id =
-    query |> list.key_find("id") |> result.unwrap("") |> shared.Uuid
   let answer =
     model.question
     |> option.then(fn(q) {
-      q.answers |> list.find(fn(a) { a.id == answer_id }) |> option.from_result
+      q.answers |> list.find(fn(a) { a.id == param }) |> option.from_result
     })
 
   case answer {
@@ -48,24 +36,23 @@ pub fn view(
 
 fn no_answer_view(model: model.Model) -> element.Element(model.Msg) {
   let return = case model.question, model.qwiz {
-    option.None, option.None -> #(route.QwizesRoute, [], "Go back to qwizes")
+    option.None, option.None -> #(
+      router.href(route.qwizes(), Nil),
+      "Go back to qwizes",
+    )
     option.Some(q), _ -> #(
-      route.QuestionRoute,
-      [#("id", q.id.data)],
+      router.href(route.question(), q.id),
       "Go back to " <> q.question,
     )
     option.None, option.Some(qw) -> #(
-      route.QwizRoute,
-      [#("id", qw.id.data)],
+      router.href(route.qwiz(), qw.id),
       "Go back to " <> qw.name,
     )
   }
 
   html.div([], [
     html.h1([], [html.text("Error: No answer selected !")]),
-    html.a([model.router |> router.href(return.0, return.1)], [
-      html.text(return.2),
-    ]),
+    html.a([return.0], [html.text(return.1)]),
   ])
 }
 

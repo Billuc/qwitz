@@ -7,7 +7,6 @@ import gleam/dynamic
 import gleam/option
 import gleam/result
 import lustre/attribute
-import lustre/effect
 import lustre/element as le
 import lustre/element/html
 import lustre/event
@@ -15,28 +14,17 @@ import shared/qwiz
 
 const qwiz_name = "qwiz_name"
 
-pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
-  router.RouteDef(
-    route_id: route.UpdateQwizRoute,
-    path: ["qwiz", "update"],
-    on_load: fn(_, _) { effect.none() },
-    view_fn: view,
-  )
-}
-
-pub fn view(model: model.Model, _query) -> le.Element(model.Msg) {
+pub fn view(model: model.Model, _param) -> le.Element(model.Msg) {
   case model.qwiz {
-    option.None -> no_qwiz_view(model)
+    option.None -> no_qwiz_view()
     option.Some(qwiz) -> update_view(qwiz)
   }
 }
 
-fn no_qwiz_view(model: model.Model) {
+fn no_qwiz_view() {
   html.div([], [
     html.h1([], [html.text("Error: No qwiz selected !")]),
-    html.a([model.router |> router.href(route.QwizesRoute, [])], [
-      html.text("Go back to qwizes"),
-    ]),
+    html.a([router.href(route.qwizes(), Nil)], [html.text("Go back to qwizes")]),
   ])
 }
 

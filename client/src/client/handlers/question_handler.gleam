@@ -36,17 +36,12 @@ pub fn handle_message(
 
     model.QuestionCreated(question) -> #(
       model,
-      model.router
-        |> router.go_to(route.QuestionRoute, [#("id", question.id.data)]),
+      router.go_to(route.question(), question.id),
     )
-    model.QuestionUpdated(q) -> #(
-      model,
-      model.router |> router.go_to(route.QuestionRoute, [#("id", q.id.data)]),
-    )
+    model.QuestionUpdated(q) -> #(model, router.go_to(route.question(), q.id))
     model.QuestionDeleted(_) -> #(model, case model.qwiz {
-      option.None -> model.router |> router.go_to(route.QwizesRoute, [])
-      option.Some(qwiz) ->
-        model.router |> router.go_to(route.QwizRoute, [#("id", qwiz.id.data)])
+      option.None -> router.go_to(route.qwizes(), Nil)
+      option.Some(qwiz) -> router.go_to(route.qwiz(), qwiz.id)
     })
   }
 }

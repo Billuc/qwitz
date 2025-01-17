@@ -13,127 +13,136 @@ import lustre/element/html
 import modem
 
 // This is experimental
-pub type RouteIdentifier(route) {
-  RouteIdentifier(route_id: route, path: List(String))
-}
-
-pub type RouteDef(route, model, msg, param) {
-  RouteDef(
+pub type RouteIdentifier(route, param) {
+  RouteIdentifier(
     route_id: route,
     path: List(String),
     param_converter: convert.Converter(param),
-    on_load: fn(model, param) -> effect.Effect(msg),
-    view_fn: fn(model, param) -> element.Element(msg),
   )
 }
 
 type RouteInRouter(route, model, msg) {
   RouteInRouter(
-    identifier: RouteIdentifier(route),
+    route_id: route,
+    path: List(String),
     on_load: fn(model, List(#(String, String))) -> effect.Effect(msg),
     view_fn: fn(model, List(#(String, String))) -> element.Element(msg),
   )
 }
 
+pub type ErrorPageFn(route, msg) =
+  fn(option.Option(route), List(String), List(#(String, String))) ->
+    element.Element(msg)
+
 pub opaque type Router(route, model, msg) {
   Router(
     routes: List(RouteInRouter(route, model, msg)),
-    default_route: RouteInRouter(route, model, msg),
     to_msg: fn(#(route, List(#(String, String)))) -> msg,
-    error_page: fn(RouteIdentifier(route), List(#(String, String))) ->
-      element.Element(msg),
+    error_page: ErrorPageFn(route, msg),
+    error_route: route,
   )
 }
 
 pub fn init(
-  default_route: RouteDef(route, model, msg, param),
   to_msg: fn(#(route, List(#(String, String)))) -> msg,
-  error_page: fn(RouteIdentifier(route), List(#(String, String))) ->
-    element.Element(msg),
+  error_page: ErrorPageFn(route, msg),
+  error_route: route,
 ) {
-  let default = route_def_to_router_route(default_route, error_page)
-  Router([default], default, to_msg, error_page)
+  Router(routes: [], to_msg:, error_page:, error_route:)
 }
 
-pub fn add_route(
+pub fn register(
   router: Router(route, model, msg),
-  route: RouteDef(route, model, msg, param),
+  route: RouteIdentifier(route, param),
+  on_load: fn(model, param) -> effect.Effect(msg),
+  view_fn: fn(model, param) -> element.Element(msg),
 ) {
-  let new_route = route_def_to_router_route(route, router.error_page)
+  let new_route =
+    route_data_to_router_route(route, on_load, view_fn, router.error_page)
   Router(..router, routes: [new_route, ..router.routes])
 }
 
-pub fn std_error_page(
-  identifier: RouteIdentifier(route),
-  query: List(#(String, String)),
-) -> element.Element(msg) {
-  html.div([], [
-    html.h1([], [html.text("An error happened with this page")]),
-    html.br([]),
-    html.p([], [
-      html.text("Route found: "),
-      html.text(string.inspect(identifier.route_id)),
-    ]),
-    html.br([]),
-    html.p([], [
-      html.text("Query provided: "),
-      html.text(uri.query_to_string(query)),
-    ]),
-  ])
+pub fn std_error_page() -> ErrorPageFn(route, msg) {
+  fn(
+    route_id: option.Option(route),
+    path: List(String),
+    query: List(#(String, String)),
+  ) {
+    html.div([], [
+      html.h1([], [html.text("An error happened with this page")]),
+      html.br([]),
+      case route_id {
+        option.None ->
+          html.p([], [
+            html.text("No route found at path /"),
+            html.text(path |> string.join("/")),
+          ])
+        option.Some(route_id) ->
+          html.p([], [
+            html.text("Route found: "),
+            html.text(string.inspect(route_id)),
+          ])
+      },
+      html.br([]),
+      html.p([], [
+        html.text("Query provided: "),
+        html.text(uri.query_to_string(query)),
+      ]),
+    ])
+  }
 }
 
-fn route_def_to_router_route(
-  route_def: RouteDef(route, model, msg, param),
-  error_page: fn(RouteIdentifier(route), List(#(String, String))) ->
-    element.Element(msg),
+fn route_data_to_router_route(
+  identifier: RouteIdentifier(route, param),
+  on_load: fn(model, param) -> effect.Effect(msg),
+  view_fn: fn(model, param) -> element.Element(msg),
+  error_page: ErrorPageFn(route, msg),
 ) -> RouteInRouter(route, model, msg) {
-  let identifier = RouteIdentifier(route_def.route_id, route_def.path)
-
   RouteInRouter(
-    identifier: identifier,
+    route_id: identifier.route_id,
+    path: identifier.path,
     on_load: fn(model: model, query: List(#(String, String))) {
-      let param = query |> query.decode(route_def.param_converter)
+      let param = query |> query.decode(identifier.param_converter)
 
       case param {
         Error(_) ->
           effect.from(fn(_) {
             io.println_error(
               "Wrong query for route "
-              <> string.inspect(route_def.route_id)
+              <> string.inspect(identifier.route_id)
               <> " : "
               <> uri.query_to_string(query),
             )
           })
-        Ok(param) -> route_def.on_load(model, param)
+        Ok(param) -> on_load(model, param)
       }
     },
     view_fn: fn(model: model, query: List(#(String, String))) {
-      let param = query |> query.decode(route_def.param_converter)
+      let param = query |> query.decode(identifier.param_converter)
 
       case param {
-        Error(_) -> error_page(identifier, query)
-        Ok(param) -> route_def.view_fn(model, param)
+        Error(_) ->
+          error_page(option.Some(identifier.route_id), identifier.path, query)
+        Ok(param) -> view_fn(model, param)
       }
     },
   )
 }
 
-pub fn init_effect(router: Router(route, model, msg)) {
+pub fn init_effect(router: Router(route, model, msg)) -> effect.Effect(msg) {
   modem.init(fn(uri) {
-    get_route_and_query(router.routes, uri)
-    |> result.unwrap(#(router.default_route, []))
-    |> fn(def) { #({ def.0 }.identifier.route_id, def.1) }
-    |> router.to_msg
+    let query = get_query_from_uri(uri) |> result.unwrap([])
+    let route_id =
+      find_route_by_uri(router.routes, uri)
+      |> result.map(fn(route) { route.route_id })
+      |> result.unwrap(router.error_route)
+
+    router.to_msg(#(route_id, query))
   })
 }
 
-fn get_route_and_query(
-  routes: List(RouteInRouter(route, model, msg)),
-  uri: uri.Uri,
-) {
-  use query <- result.try(uri.query |> option.unwrap("") |> uri.parse_query)
-  use route <- result.try(find_route_by_uri(routes, uri))
-  Ok(#(route, query))
+fn get_query_from_uri(uri: uri.Uri) -> Result(List(#(String, String)), Nil) {
+  uri.query |> option.unwrap("") |> uri.parse_query
 }
 
 fn find_route_by_uri(
@@ -141,7 +150,7 @@ fn find_route_by_uri(
   uri: uri.Uri,
 ) -> Result(RouteInRouter(route, model, msg), Nil) {
   use route <- list.find(routes)
-  test_route(route.identifier.path, uri.path |> uri.path_segments)
+  test_route(route.path, uri.path |> uri.path_segments)
 }
 
 fn test_route(route_path: List(String), uri_path: List(String)) -> Bool {
@@ -170,11 +179,11 @@ fn find_route_by_route(
   route_id: route,
 ) -> Result(RouteInRouter(route, model, msg), Nil) {
   use route <- list.find(routes)
-  route.identifier.route_id == route_id
+  route.route_id == route_id
 }
 
 pub fn go_to(
-  route: RouteDef(route, model, msg, param),
+  route: RouteIdentifier(route, param),
   param: param,
 ) -> effect.Effect(msg) {
   let path = "/" <> route.path |> string.join("/")
@@ -187,7 +196,7 @@ pub fn go_to(
 }
 
 pub fn href(
-  route: RouteDef(route, model, msg, param),
+  route: RouteIdentifier(route, param),
   param: param,
 ) -> attribute.Attribute(msg) {
   let path = "/" <> route.path |> string.join("/")
@@ -206,15 +215,20 @@ pub fn view(
   query: List(#(String, String)),
 ) -> element.Element(msg) {
   find_route_by_route(router.routes, route)
-  |> result.unwrap(router.default_route)
-  |> fn(route_def) { route_def.view_fn(model, query) }
+  |> result.map(fn(route_def) { route_def.view_fn(model, query) })
+  |> result.unwrap(router.error_page(option.Some(route), [], query))
 }
 
 pub fn initial_route(
   router: Router(route, model, msg),
-) -> Result(#(RouteIdentifier(route), List(#(String, String))), Nil) {
+) -> Result(#(route, List(String), List(#(String, String))), Nil) {
   use uri <- result.try(modem.initial_uri())
-  router.routes
-  |> get_route_and_query(uri)
-  |> result.map(fn(data) { #({ data.0 }.identifier, data.1) })
+  use query <- result.try(get_query_from_uri(uri))
+  use route <- result.try(find_route_by_uri(router.routes, uri))
+
+  Ok(#(route.route_id, route.path, query))
+}
+
+pub fn no_load(_model, _param) -> effect.Effect(msg) {
+  effect.none()
 }

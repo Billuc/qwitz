@@ -8,41 +8,28 @@ import lustre/element
 import lustre/element/html
 import shared/qwiz
 
-pub fn route_def() -> router.RouteDef(route.Route, model.Model, model.Msg) {
-  router.RouteDef(
-    route_id: route.QwizesRoute,
-    path: ["qwizes"],
-    on_load: fn(_, _) {
-      effect.from(fn(dispatch) {
-        use qwizes <- qwiz_service.get_qwizes()
-        model.SetQwizes(qwizes) |> dispatch
-      })
-    },
-    view_fn: view,
-  )
+pub fn on_load(model: model.Model, _param) {
+  use dispatch <- effect.from
+  use qwizes <- qwiz_service.get_qwizes()
+  model.SetQwizes(qwizes) |> dispatch
 }
 
 pub fn view(model: model.Model, _query) {
   html.div([], [
     element.keyed(html.div([], _), {
       use qwiz <- list.map(model.qwizes)
-      #(qwiz.id.data, qwiz_row(model, qwiz))
+      #(qwiz.id.data, qwiz_row(qwiz))
     }),
-    create_qwiz_button(model),
+    create_qwiz_button(),
   ])
 }
 
-fn qwiz_row(model: model.Model, qwiz: qwiz.Qwiz) {
+fn qwiz_row(qwiz: qwiz.Qwiz) {
   html.div([], [
-    html.a(
-      [model.router |> router.href(route.QwizRoute, [#("id", qwiz.id.data)])],
-      [html.text(qwiz.name)],
-    ),
+    html.a([router.href(route.qwiz(), qwiz.id)], [html.text(qwiz.name)]),
   ])
 }
 
-pub fn create_qwiz_button(model: model.Model) {
-  html.a([model.router |> router.href(route.CreateQwizRoute, [])], [
-    html.text("Create Qwiz"),
-  ])
+pub fn create_qwiz_button() {
+  html.a([router.href(route.create_qwiz(), Nil)], [html.text("Create Qwiz")])
 }
