@@ -201,19 +201,19 @@ function byteArrayToInt(byteArray, start3, end, isBigEndian, isSigned) {
   }
 }
 function byteArrayToFloat(byteArray, start3, end, isBigEndian) {
-  const view4 = new DataView(byteArray.buffer);
+  const view12 = new DataView(byteArray.buffer);
   const byteSize = end - start3;
   if (byteSize === 8) {
-    return view4.getFloat64(start3, !isBigEndian);
+    return view12.getFloat64(start3, !isBigEndian);
   } else if (byteSize === 4) {
-    return view4.getFloat32(start3, !isBigEndian);
+    return view12.getFloat32(start3, !isBigEndian);
   } else {
     const msg = `Sized floats must be 32-bit or 64-bit on JavaScript, got size of ${byteSize * 8} bits`;
     throw new globalThis.Error(msg);
   }
 }
-function stringBits(string3) {
-  return new TextEncoder().encode(string3);
+function stringBits(string4) {
+  return new TextEncoder().encode(string4);
 }
 var Result = class _Result extends CustomType {
   // @internal
@@ -343,6 +343,14 @@ function to_result(option, e) {
     return new Error(e);
   }
 }
+function from_result(result) {
+  if (result.isOk()) {
+    let a2 = result[0];
+    return new Some(a2);
+  } else {
+    return new None();
+  }
+}
 function unwrap(option, default$) {
   if (option instanceof Some) {
     let x = option[0];
@@ -359,223 +367,13 @@ function map(option, fun) {
     return new None();
   }
 }
-
-// build/dev/javascript/gleam_stdlib/gleam/string_tree.mjs
-function append(tree, second) {
-  return add(tree, identity(second));
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/string.mjs
-function replace(string3, pattern, substitute) {
-  let _pipe = string3;
-  let _pipe$1 = identity(_pipe);
-  let _pipe$2 = string_replace(_pipe$1, pattern, substitute);
-  return identity(_pipe$2);
-}
-function append2(first2, second) {
-  let _pipe = first2;
-  let _pipe$1 = identity(_pipe);
-  let _pipe$2 = append(_pipe$1, second);
-  return identity(_pipe$2);
-}
-function concat2(strings) {
-  let _pipe = strings;
-  let _pipe$1 = concat(_pipe);
-  return identity(_pipe$1);
-}
-function repeat_loop(loop$string, loop$times, loop$acc) {
-  while (true) {
-    let string3 = loop$string;
-    let times = loop$times;
-    let acc = loop$acc;
-    let $ = times <= 0;
-    if ($) {
-      return acc;
-    } else {
-      loop$string = string3;
-      loop$times = times - 1;
-      loop$acc = acc + string3;
-    }
-  }
-}
-function repeat(string3, times) {
-  return repeat_loop(string3, times, "");
-}
-function drop_start(loop$string, loop$num_graphemes) {
-  while (true) {
-    let string3 = loop$string;
-    let num_graphemes = loop$num_graphemes;
-    let $ = num_graphemes > 0;
-    if (!$) {
-      return string3;
-    } else {
-      let $1 = pop_grapheme(string3);
-      if ($1.isOk()) {
-        let string$1 = $1[0][1];
-        loop$string = string$1;
-        loop$num_graphemes = num_graphemes - 1;
-      } else {
-        return string3;
-      }
-    }
-  }
-}
-function split2(x, substring) {
-  if (substring === "") {
-    return graphemes(x);
+function then$(option, fun) {
+  if (option instanceof Some) {
+    let x = option[0];
+    return fun(x);
   } else {
-    let _pipe = x;
-    let _pipe$1 = identity(_pipe);
-    let _pipe$2 = split(_pipe$1, substring);
-    return map2(_pipe$2, identity);
+    return new None();
   }
-}
-function inspect2(term) {
-  let _pipe = inspect(term);
-  return identity(_pipe);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/bit_array.mjs
-function base64_decode(encoded) {
-  let padded = (() => {
-    let $ = remainderInt(length(bit_array_from_string(encoded)), 4);
-    if ($ === 0) {
-      return encoded;
-    } else {
-      let n = $;
-      return append2(encoded, repeat("=", 4 - n));
-    }
-  })();
-  return decode64(padded);
-}
-function base64_url_encode(input2, padding) {
-  let _pipe = encode64(input2, padding);
-  let _pipe$1 = replace(_pipe, "+", "-");
-  return replace(_pipe$1, "/", "_");
-}
-function base64_url_decode(encoded) {
-  let _pipe = encoded;
-  let _pipe$1 = replace(_pipe, "-", "+");
-  let _pipe$2 = replace(_pipe$1, "_", "/");
-  return base64_decode(_pipe$2);
-}
-
-// build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
-var DecodeError = class extends CustomType {
-  constructor(expected, found, path) {
-    super();
-    this.expected = expected;
-    this.found = found;
-    this.path = path;
-  }
-};
-function dynamic(value3) {
-  return new Ok(value3);
-}
-function int(data) {
-  return decode_int(data);
-}
-function float(data) {
-  return decode_float(data);
-}
-function bool(data) {
-  return decode_bool(data);
-}
-function shallow_list(value3) {
-  return decode_list(value3);
-}
-function optional(decode3) {
-  return (value3) => {
-    return decode_option(value3, decode3);
-  };
-}
-function any(decoders) {
-  return (data) => {
-    if (decoders.hasLength(0)) {
-      return new Error(
-        toList([new DecodeError("another type", classify_dynamic(data), toList([]))])
-      );
-    } else {
-      let decoder = decoders.head;
-      let decoders$1 = decoders.tail;
-      let $ = decoder(data);
-      if ($.isOk()) {
-        let decoded = $[0];
-        return new Ok(decoded);
-      } else {
-        return any(decoders$1)(data);
-      }
-    }
-  };
-}
-function push_path(error2, name) {
-  let name$1 = identity(name);
-  let decoder = any(
-    toList([decode_string, (x) => {
-      return map3(int(x), to_string);
-    }])
-  );
-  let name$2 = (() => {
-    let $ = decoder(name$1);
-    if ($.isOk()) {
-      let name$22 = $[0];
-      return name$22;
-    } else {
-      let _pipe = toList(["<", classify_dynamic(name$1), ">"]);
-      let _pipe$1 = concat(_pipe);
-      return identity(_pipe$1);
-    }
-  })();
-  let _record = error2;
-  return new DecodeError(
-    _record.expected,
-    _record.found,
-    prepend(name$2, error2.path)
-  );
-}
-function list(decoder_type) {
-  return (dynamic2) => {
-    return try$(
-      shallow_list(dynamic2),
-      (list4) => {
-        let _pipe = list4;
-        let _pipe$1 = try_map(_pipe, decoder_type);
-        return map_errors(
-          _pipe$1,
-          (_capture) => {
-            return push_path(_capture, "*");
-          }
-        );
-      }
-    );
-  };
-}
-function map_errors(result, f) {
-  return map_error(
-    result,
-    (_capture) => {
-      return map2(_capture, f);
-    }
-  );
-}
-function field(name, inner_type) {
-  return (value3) => {
-    let missing_field_error = new DecodeError("field", "nothing", toList([]));
-    return try$(
-      decode_field(value3, name),
-      (maybe_inner) => {
-        let _pipe = maybe_inner;
-        let _pipe$1 = to_result(_pipe, toList([missing_field_error]));
-        let _pipe$2 = try$(_pipe$1, inner_type);
-        return map_errors(
-          _pipe$2,
-          (_capture) => {
-            return push_path(_capture, name);
-          }
-        );
-      }
-    );
-  };
 }
 
 // build/dev/javascript/gleam_stdlib/dict.mjs
@@ -1290,57 +1088,86 @@ var NOT_FOUND = {};
 function identity(x) {
   return x;
 }
+function parse_int(value3) {
+  if (/^[-+]?(\d+)$/.test(value3)) {
+    return new Ok(parseInt(value3));
+  } else {
+    return new Error(Nil);
+  }
+}
+function parse_float(value3) {
+  if (/^[-+]?(\d+)\.(\d+)([eE][-+]?\d+)?$/.test(value3)) {
+    return new Ok(parseFloat(value3));
+  } else {
+    return new Error(Nil);
+  }
+}
 function to_string(term) {
   return term.toString();
 }
 function float_to_string(float3) {
-  const string3 = float3.toString().replace("+", "");
-  if (string3.indexOf(".") >= 0) {
-    return string3;
+  const string4 = float3.toString().replace("+", "");
+  if (string4.indexOf(".") >= 0) {
+    return string4;
   } else {
-    const index3 = string3.indexOf("e");
+    const index3 = string4.indexOf("e");
     if (index3 >= 0) {
-      return string3.slice(0, index3) + ".0" + string3.slice(index3);
+      return string4.slice(0, index3) + ".0" + string4.slice(index3);
     } else {
-      return string3 + ".0";
+      return string4 + ".0";
     }
   }
 }
-function string_replace(string3, target2, substitute) {
-  if (typeof string3.replaceAll !== "undefined") {
-    return string3.replaceAll(target2, substitute);
+function string_replace(string4, target2, substitute) {
+  if (typeof string4.replaceAll !== "undefined") {
+    return string4.replaceAll(target2, substitute);
   }
-  return string3.replace(
+  return string4.replace(
     // $& means the whole matched string
     new RegExp(target2.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
     substitute
   );
 }
-function graphemes(string3) {
-  const iterator = graphemes_iterator(string3);
+function string_length(string4) {
+  if (string4 === "") {
+    return 0;
+  }
+  const iterator = graphemes_iterator(string4);
+  if (iterator) {
+    let i = 0;
+    for (const _ of iterator) {
+      i++;
+    }
+    return i;
+  } else {
+    return string4.match(/./gsu).length;
+  }
+}
+function graphemes(string4) {
+  const iterator = graphemes_iterator(string4);
   if (iterator) {
     return List.fromArray(Array.from(iterator).map((item) => item.segment));
   } else {
-    return List.fromArray(string3.match(/./gsu));
+    return List.fromArray(string4.match(/./gsu));
   }
 }
 var segmenter = void 0;
-function graphemes_iterator(string3) {
+function graphemes_iterator(string4) {
   if (globalThis.Intl && Intl.Segmenter) {
     segmenter ||= new Intl.Segmenter();
-    return segmenter.segment(string3)[Symbol.iterator]();
+    return segmenter.segment(string4)[Symbol.iterator]();
   }
 }
-function pop_grapheme(string3) {
+function pop_grapheme(string4) {
   let first2;
-  const iterator = graphemes_iterator(string3);
+  const iterator = graphemes_iterator(string4);
   if (iterator) {
     first2 = iterator.next().value?.segment;
   } else {
-    first2 = string3.match(/./su)?.[0];
+    first2 = string4.match(/./su)?.[0];
   }
   if (first2) {
-    return new Ok([first2, string3.slice(first2.length)]);
+    return new Ok([first2, string4.slice(first2.length)]);
   } else {
     return new Error(Nil);
   }
@@ -1348,8 +1175,8 @@ function pop_grapheme(string3) {
 function pop_codeunit(str) {
   return [str.charCodeAt(0) | 0, str.slice(1)];
 }
-function lowercase(string3) {
-  return string3.toLowerCase();
+function lowercase(string4) {
+  return string4.toLowerCase();
 }
 function add(a2, b) {
   return a2 + b;
@@ -1405,8 +1232,8 @@ var unicode_whitespaces = [
 ].join("");
 var trim_start_regex = new RegExp(`^[${unicode_whitespaces}]*`);
 var trim_end_regex = new RegExp(`[${unicode_whitespaces}]*$`);
-function bit_array_from_string(string3) {
-  return toBitArray([stringBits(string3)]);
+function bit_array_from_string(string4) {
+  return toBitArray([stringBits(string4)]);
 }
 function console_error(term) {
   console.error(term);
@@ -1414,24 +1241,24 @@ function console_error(term) {
 function new_map() {
   return Dict.new();
 }
-function map_to_list(map7) {
-  return List.fromArray(map7.entries());
+function map_to_list(map9) {
+  return List.fromArray(map9.entries());
 }
-function map_get(map7, key2) {
-  const value3 = map7.get(key2, NOT_FOUND);
+function map_get(map9, key2) {
+  const value3 = map9.get(key2, NOT_FOUND);
   if (value3 === NOT_FOUND) {
     return new Error(Nil);
   }
   return new Ok(value3);
 }
-function map_insert(key2, value3, map7) {
-  return map7.set(key2, value3);
+function map_insert(key2, value3, map9) {
+  return map9.set(key2, value3);
 }
-function unsafe_percent_decode_query(string3) {
-  return decodeURIComponent((string3 || "").replace("+", " "));
+function unsafe_percent_decode_query(string4) {
+  return decodeURIComponent((string4 || "").replace("+", " "));
 }
-function percent_encode(string3) {
-  return encodeURIComponent(string3).replace("%2B", "+");
+function percent_encode(string4) {
+  return encodeURIComponent(string4).replace("%2B", "+");
 }
 function parse_query(query2) {
   try {
@@ -1716,10 +1543,10 @@ function inspectString(str) {
   new_str += '"';
   return new_str;
 }
-function inspectDict(map7) {
+function inspectDict(map9) {
   let body2 = "dict.from_list([";
   let first2 = true;
-  map7.forEach((value3, key2) => {
+  map9.forEach((value3, key2) => {
     if (!first2)
       body2 = body2 + ", ";
     body2 = body2 + "#(" + inspect(key2) + ", " + inspect(value3) + ")";
@@ -1912,7 +1739,7 @@ function append_loop(loop$first, loop$second) {
     }
   }
 }
-function append3(first2, second) {
+function append(first2, second) {
   return append_loop(reverse(first2), second);
 }
 function reverse_and_prepend(loop$prefix, loop$suffix) {
@@ -2068,6 +1895,146 @@ function key_find(keyword_list, desired_key) {
     }
   );
 }
+function pop_map_loop(loop$list, loop$mapper, loop$checked) {
+  while (true) {
+    let list4 = loop$list;
+    let mapper = loop$mapper;
+    let checked2 = loop$checked;
+    if (list4.hasLength(0)) {
+      return new Error(void 0);
+    } else {
+      let x = list4.head;
+      let rest$1 = list4.tail;
+      let $ = mapper(x);
+      if ($.isOk()) {
+        let y = $[0];
+        return new Ok([y, append(reverse(checked2), rest$1)]);
+      } else {
+        loop$list = rest$1;
+        loop$mapper = mapper;
+        loop$checked = prepend(x, checked2);
+      }
+    }
+  }
+}
+function pop_map(haystack, is_desired) {
+  return pop_map_loop(haystack, is_desired, toList([]));
+}
+function key_pop(list4, key2) {
+  return pop_map(
+    list4,
+    (entry) => {
+      let k = entry[0];
+      let v = entry[1];
+      if (isEqual(k, key2)) {
+        let k$1 = k;
+        return new Ok(v);
+      } else {
+        return new Error(void 0);
+      }
+    }
+  );
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string_tree.mjs
+function append2(tree, second) {
+  return add(tree, identity(second));
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/string.mjs
+function replace(string4, pattern, substitute) {
+  let _pipe = string4;
+  let _pipe$1 = identity(_pipe);
+  let _pipe$2 = string_replace(_pipe$1, pattern, substitute);
+  return identity(_pipe$2);
+}
+function append3(first2, second) {
+  let _pipe = first2;
+  let _pipe$1 = identity(_pipe);
+  let _pipe$2 = append2(_pipe$1, second);
+  return identity(_pipe$2);
+}
+function concat2(strings) {
+  let _pipe = strings;
+  let _pipe$1 = concat(_pipe);
+  return identity(_pipe$1);
+}
+function repeat_loop(loop$string, loop$times, loop$acc) {
+  while (true) {
+    let string4 = loop$string;
+    let times = loop$times;
+    let acc = loop$acc;
+    let $ = times <= 0;
+    if ($) {
+      return acc;
+    } else {
+      loop$string = string4;
+      loop$times = times - 1;
+      loop$acc = acc + string4;
+    }
+  }
+}
+function repeat(string4, times) {
+  return repeat_loop(string4, times, "");
+}
+function drop_start(loop$string, loop$num_graphemes) {
+  while (true) {
+    let string4 = loop$string;
+    let num_graphemes = loop$num_graphemes;
+    let $ = num_graphemes > 0;
+    if (!$) {
+      return string4;
+    } else {
+      let $1 = pop_grapheme(string4);
+      if ($1.isOk()) {
+        let string$1 = $1[0][1];
+        loop$string = string$1;
+        loop$num_graphemes = num_graphemes - 1;
+      } else {
+        return string4;
+      }
+    }
+  }
+}
+function split2(x, substring) {
+  if (substring === "") {
+    return graphemes(x);
+  } else {
+    let _pipe = x;
+    let _pipe$1 = identity(_pipe);
+    let _pipe$2 = split(_pipe$1, substring);
+    return map2(_pipe$2, identity);
+  }
+}
+function inspect2(term) {
+  let _pipe = inspect(term);
+  return identity(_pipe);
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/bit_array.mjs
+function base64_decode(encoded) {
+  let padded = (() => {
+    let $ = remainderInt(length(bit_array_from_string(encoded)), 4);
+    if ($ === 0) {
+      return encoded;
+    } else {
+      let n = $;
+      return append3(encoded, repeat("=", 4 - n));
+    }
+  })();
+  return decode64(padded);
+}
+function base64_url_encode(input2, padding) {
+  let _pipe = encode64(input2, padding);
+  let _pipe$1 = replace(_pipe, "+", "-");
+  return replace(_pipe$1, "/", "_");
+}
+function base64_url_decode(encoded) {
+  let _pipe = encoded;
+  let _pipe$1 = replace(_pipe, "-", "+");
+  let _pipe$2 = replace(_pipe$1, "_", "/");
+  return base64_decode(_pipe$2);
+}
 
 // build/dev/javascript/gleam_stdlib/gleam/result.mjs
 function map3(result, fun) {
@@ -2097,7 +2064,7 @@ function try$(result, fun) {
     return new Error(e);
   }
 }
-function then$(result, fun) {
+function then$2(result, fun) {
   return try$(result, fun);
 }
 function unwrap2(result, default$) {
@@ -2140,6 +2107,124 @@ function replace_error(result, error2) {
   } else {
     return new Error(error2);
   }
+}
+
+// build/dev/javascript/gleam_stdlib/gleam/dynamic.mjs
+var DecodeError = class extends CustomType {
+  constructor(expected, found, path) {
+    super();
+    this.expected = expected;
+    this.found = found;
+    this.path = path;
+  }
+};
+function dynamic(value3) {
+  return new Ok(value3);
+}
+function int(data) {
+  return decode_int(data);
+}
+function float(data) {
+  return decode_float(data);
+}
+function bool(data) {
+  return decode_bool(data);
+}
+function shallow_list(value3) {
+  return decode_list(value3);
+}
+function optional(decode4) {
+  return (value3) => {
+    return decode_option(value3, decode4);
+  };
+}
+function any(decoders) {
+  return (data) => {
+    if (decoders.hasLength(0)) {
+      return new Error(
+        toList([new DecodeError("another type", classify_dynamic(data), toList([]))])
+      );
+    } else {
+      let decoder = decoders.head;
+      let decoders$1 = decoders.tail;
+      let $ = decoder(data);
+      if ($.isOk()) {
+        let decoded = $[0];
+        return new Ok(decoded);
+      } else {
+        return any(decoders$1)(data);
+      }
+    }
+  };
+}
+function push_path(error2, name) {
+  let name$1 = identity(name);
+  let decoder = any(
+    toList([decode_string, (x) => {
+      return map3(int(x), to_string);
+    }])
+  );
+  let name$2 = (() => {
+    let $ = decoder(name$1);
+    if ($.isOk()) {
+      let name$22 = $[0];
+      return name$22;
+    } else {
+      let _pipe = toList(["<", classify_dynamic(name$1), ">"]);
+      let _pipe$1 = concat(_pipe);
+      return identity(_pipe$1);
+    }
+  })();
+  let _record = error2;
+  return new DecodeError(
+    _record.expected,
+    _record.found,
+    prepend(name$2, error2.path)
+  );
+}
+function list(decoder_type) {
+  return (dynamic2) => {
+    return try$(
+      shallow_list(dynamic2),
+      (list4) => {
+        let _pipe = list4;
+        let _pipe$1 = try_map(_pipe, decoder_type);
+        return map_errors(
+          _pipe$1,
+          (_capture) => {
+            return push_path(_capture, "*");
+          }
+        );
+      }
+    );
+  };
+}
+function map_errors(result, f) {
+  return map_error(
+    result,
+    (_capture) => {
+      return map2(_capture, f);
+    }
+  );
+}
+function field(name, inner_type) {
+  return (value3) => {
+    let missing_field_error = new DecodeError("field", "nothing", toList([]));
+    return try$(
+      decode_field(value3, name),
+      (maybe_inner) => {
+        let _pipe = maybe_inner;
+        let _pipe$1 = to_result(_pipe, toList([missing_field_error]));
+        let _pipe$2 = try$(_pipe$1, inner_type);
+        return map_errors(
+          _pipe$2,
+          (_capture) => {
+            return push_path(_capture, name);
+          }
+        );
+      }
+    );
+  };
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/bool.mjs
@@ -2185,7 +2270,7 @@ var UnexpectedFormat = class extends CustomType {
 function to_string3(json) {
   return json_to_string(json);
 }
-function string(input2) {
+function string2(input2) {
   return identity2(input2);
 }
 function bool2(input2) {
@@ -2243,18 +2328,6 @@ function from(effect) {
 }
 function none() {
   return new Effect(toList([]));
-}
-function batch(effects) {
-  return new Effect(
-    fold(
-      effects,
-      toList([]),
-      (b, _use1) => {
-        let a2 = _use1.all;
-        return append3(b, a2);
-      }
-    )
-  );
 }
 
 // build/dev/javascript/lustre/lustre/internals/vdom.mjs
@@ -2355,8 +2428,29 @@ function handlers(element2) {
 }
 
 // build/dev/javascript/lustre/lustre/attribute.mjs
+function attribute(name, value3) {
+  return new Attribute(name, identity(value3), false);
+}
+function property(name, value3) {
+  return new Attribute(name, identity(value3), true);
+}
 function on(name, handler) {
   return new Event2("on" + name, handler);
+}
+function id(name) {
+  return attribute("id", name);
+}
+function type_(name) {
+  return attribute("type", name);
+}
+function value(val) {
+  return attribute("value", val);
+}
+function checked(is_checked) {
+  return property("checked", is_checked);
+}
+function href(uri) {
+  return attribute("href", uri);
 }
 
 // build/dev/javascript/lustre/lustre/element.mjs
@@ -2392,6 +2486,44 @@ function element(tag, attrs, children2) {
   } else {
     return new Element2("", "", tag, attrs, children2, false, false);
   }
+}
+function do_keyed(el, key2) {
+  if (el instanceof Element2) {
+    let namespace = el.namespace;
+    let tag = el.tag;
+    let attrs = el.attrs;
+    let children2 = el.children;
+    let self_closing = el.self_closing;
+    let void$ = el.void;
+    return new Element2(
+      key2,
+      namespace,
+      tag,
+      attrs,
+      children2,
+      self_closing,
+      void$
+    );
+  } else if (el instanceof Map2) {
+    let subtree = el.subtree;
+    return new Map2(() => {
+      return do_keyed(subtree(), key2);
+    });
+  } else {
+    return el;
+  }
+}
+function keyed(el, children2) {
+  return el(
+    map2(
+      children2,
+      (_use0) => {
+        let key2 = _use0[0];
+        let child = _use0[1];
+        return do_keyed(child, key2);
+      }
+    )
+  );
 }
 function text(content) {
   return new Text(content);
@@ -2716,8 +2848,8 @@ function lustreServerEventHandler(event2) {
   return {
     tag,
     data: include.reduce(
-      (data2, property) => {
-        const path = property.split(".");
+      (data2, property2) => {
+        const path = property2.split(".");
         for (let i = 0, o = data2, e = event2; i < path.length; i++) {
           if (i === path.length - 1) {
             o[path[i]] = e[path[i]];
@@ -2808,13 +2940,13 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {Gleam.Ok<(action: Lustre.Action<Lustre.Client, Msg>>) => void>}
    */
-  static start({ init: init5, update: update5, view: view4 }, selector, flags) {
+  static start({ init: init5, update: update5, view: view12 }, selector, flags) {
     if (!is_browser())
       return new Error(new NotABrowser());
     const root = selector instanceof HTMLElement ? selector : document.querySelector(selector);
     if (!root)
       return new Error(new ElementNotFound(selector));
-    const app = new _LustreClientApplication(root, init5(flags), update5, view4);
+    const app = new _LustreClientApplication(root, init5(flags), update5, view12);
     return new Ok((action) => app.send(action));
   }
   /**
@@ -2825,11 +2957,11 @@ var LustreClientApplication = class _LustreClientApplication {
    *
    * @returns {LustreClientApplication}
    */
-  constructor(root, [init5, effects], update5, view4) {
+  constructor(root, [init5, effects], update5, view12) {
     this.root = root;
     this.#model = init5;
     this.#update = update5;
-    this.#view = view4;
+    this.#view = view12;
     this.#tickScheduled = window.requestAnimationFrame(
       () => this.#tick(effects.all.toArray(), true)
     );
@@ -2943,20 +3075,20 @@ var LustreClientApplication = class _LustreClientApplication {
 };
 var start = LustreClientApplication.start;
 var LustreServerApplication = class _LustreServerApplication {
-  static start({ init: init5, update: update5, view: view4, on_attribute_change }, flags) {
+  static start({ init: init5, update: update5, view: view12, on_attribute_change }, flags) {
     const app = new _LustreServerApplication(
       init5(flags),
       update5,
-      view4,
+      view12,
       on_attribute_change
     );
     return new Ok((action) => app.send(action));
   }
-  constructor([model, effects], update5, view4, on_attribute_change) {
+  constructor([model, effects], update5, view12, on_attribute_change) {
     this.#model = model;
     this.#update = update5;
-    this.#view = view4;
-    this.#html = view4(model);
+    this.#view = view12;
+    this.#html = view12(model);
     this.#onAttributeChange = on_attribute_change;
     this.#renderers = /* @__PURE__ */ new Map();
     this.#handlers = handlers(this.#html);
@@ -3054,14 +3186,15 @@ var LustreServerApplication = class _LustreServerApplication {
 };
 var start_server_application = LustreServerApplication.start;
 var is_browser = () => globalThis.window && window.document;
+var prevent_default = (event2) => event2.preventDefault();
 
 // build/dev/javascript/lustre/lustre.mjs
 var App = class extends CustomType {
-  constructor(init5, update5, view4, on_attribute_change) {
+  constructor(init5, update5, view12, on_attribute_change) {
     super();
     this.init = init5;
     this.update = update5;
-    this.view = view4;
+    this.view = view12;
     this.on_attribute_change = on_attribute_change;
   }
 };
@@ -3073,8 +3206,8 @@ var ElementNotFound = class extends CustomType {
 };
 var NotABrowser = class extends CustomType {
 };
-function application(init5, update5, view4) {
-  return new App(init5, update5, view4, new None());
+function application(init5, update5, view12) {
+  return new App(init5, update5, view12, new None());
 }
 function start2(app, selector, flags) {
   return guard(
@@ -3084,6 +3217,1743 @@ function start2(app, selector, flags) {
       return start(app, selector, flags);
     }
   );
+}
+
+// build/dev/javascript/convert/convert.mjs
+var String2 = class extends CustomType {
+};
+var Bool = class extends CustomType {
+};
+var Float = class extends CustomType {
+};
+var Int = class extends CustomType {
+};
+var Null = class extends CustomType {
+};
+var List2 = class extends CustomType {
+  constructor(of) {
+    super();
+    this.of = of;
+  }
+};
+var Dict2 = class extends CustomType {
+  constructor(key2, value3) {
+    super();
+    this.key = key2;
+    this.value = value3;
+  }
+};
+var Object2 = class extends CustomType {
+  constructor(fields) {
+    super();
+    this.fields = fields;
+  }
+};
+var Optional = class extends CustomType {
+  constructor(of) {
+    super();
+    this.of = of;
+  }
+};
+var Result2 = class extends CustomType {
+  constructor(result, error2) {
+    super();
+    this.result = result;
+    this.error = error2;
+  }
+};
+var Enum = class extends CustomType {
+  constructor(variants) {
+    super();
+    this.variants = variants;
+  }
+};
+var Dynamic = class extends CustomType {
+};
+var BitArray2 = class extends CustomType {
+};
+var StringValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var BoolValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var FloatValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var IntValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var NullValue = class extends CustomType {
+};
+var ListValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var DictValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var ObjectValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var OptionalValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var ResultValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var EnumValue = class extends CustomType {
+  constructor(variant, value3) {
+    super();
+    this.variant = variant;
+    this.value = value3;
+  }
+};
+var DynamicValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var BitArrayValue = class extends CustomType {
+  constructor(value3) {
+    super();
+    this.value = value3;
+  }
+};
+var Converter = class extends CustomType {
+  constructor(encoder, decoder, type_def2, default_value) {
+    super();
+    this.encoder = encoder;
+    this.decoder = decoder;
+    this.type_def = type_def2;
+    this.default_value = default_value;
+  }
+};
+var PartialConverter = class extends CustomType {
+  constructor(encoder, decoder, fields_def, default_value) {
+    super();
+    this.encoder = encoder;
+    this.decoder = decoder;
+    this.fields_def = fields_def;
+    this.default_value = default_value;
+  }
+};
+function object3(converter) {
+  let $ = converter.default_value;
+  if (!$.isOk()) {
+    throw makeError(
+      "let_assert",
+      "convert",
+      84,
+      "object",
+      "Pattern match failed, no pattern matched the value.",
+      { value: $ }
+    );
+  }
+  let default_value = $[0];
+  return new Converter(
+    converter.encoder,
+    converter.decoder,
+    new Object2(converter.fields_def),
+    default_value
+  );
+}
+function success(c) {
+  return new PartialConverter(
+    (_) => {
+      return new ObjectValue(toList([]));
+    },
+    (_) => {
+      return new Ok(c);
+    },
+    toList([]),
+    new Ok(c)
+  );
+}
+function get_type(val) {
+  if (val instanceof BoolValue) {
+    return "BoolValue";
+  } else if (val instanceof DictValue) {
+    return "DictValue";
+  } else if (val instanceof EnumValue) {
+    return "EnumValue";
+  } else if (val instanceof FloatValue) {
+    return "FloatValue";
+  } else if (val instanceof IntValue) {
+    return "IntValue";
+  } else if (val instanceof ListValue) {
+    return "ListValue";
+  } else if (val instanceof NullValue) {
+    return "NullValue";
+  } else if (val instanceof ObjectValue) {
+    return "ObjectValue";
+  } else if (val instanceof OptionalValue) {
+    return "OptionalValue";
+  } else if (val instanceof ResultValue) {
+    return "ResultValue";
+  } else if (val instanceof StringValue) {
+    return "StringValue";
+  } else if (val instanceof DynamicValue) {
+    return "DynamicValue";
+  } else {
+    return "BitArrayValue";
+  }
+}
+function string3() {
+  return new Converter(
+    (v) => {
+      return new StringValue(v);
+    },
+    (v) => {
+      if (v instanceof StringValue) {
+        let val = v.value;
+        return new Ok(val);
+      } else {
+        let other = v;
+        return new Error(
+          toList([
+            new DecodeError("StringValue", get_type(other), toList([]))
+          ])
+        );
+      }
+    },
+    new String2(),
+    ""
+  );
+}
+function bool3() {
+  return new Converter(
+    (v) => {
+      return new BoolValue(v);
+    },
+    (v) => {
+      if (v instanceof BoolValue) {
+        let val = v.value;
+        return new Ok(val);
+      } else {
+        let other = v;
+        return new Error(
+          toList([
+            new DecodeError("BoolValue", get_type(other), toList([]))
+          ])
+        );
+      }
+    },
+    new Bool(),
+    false
+  );
+}
+function null$2() {
+  return new Converter(
+    (_) => {
+      return new NullValue();
+    },
+    (v) => {
+      if (v instanceof NullValue) {
+        return new Ok(void 0);
+      } else {
+        let other = v;
+        return new Error(
+          toList([
+            new DecodeError("NullValue", get_type(other), toList([]))
+          ])
+        );
+      }
+    },
+    new Null(),
+    void 0
+  );
+}
+function list3(of) {
+  return new Converter(
+    (v) => {
+      return new ListValue(
+        (() => {
+          let _pipe = v;
+          return map2(_pipe, of.encoder);
+        })()
+      );
+    },
+    (v) => {
+      if (v instanceof ListValue) {
+        let vals = v.value;
+        let _pipe = vals;
+        return fold(
+          _pipe,
+          new Ok(toList([])),
+          (result, val) => {
+            let $ = of.decoder(val);
+            if (result.isOk() && $.isOk()) {
+              let res = result[0];
+              let new_res = $[0];
+              return new Ok(append(res, toList([new_res])));
+            } else if (!result.isOk() && !$.isOk()) {
+              let errs = result[0];
+              let new_errs = $[0];
+              return new Error(append(errs, new_errs));
+            } else if (!$.isOk()) {
+              let errs = $[0];
+              return new Error(errs);
+            } else {
+              let errs = result[0];
+              return new Error(errs);
+            }
+          }
+        );
+      } else {
+        let other = v;
+        return new Error(
+          toList([
+            new DecodeError("ListValue", get_type(other), toList([]))
+          ])
+        );
+      }
+    },
+    new List2(of.type_def),
+    toList([])
+  );
+}
+function field2(field_name, field_getter, field_type, next) {
+  return new PartialConverter(
+    (base) => {
+      let value3 = field_getter(base);
+      if (!value3.isOk() && !value3[0]) {
+        return new NullValue();
+      } else {
+        let field_value = value3[0];
+        let converter = next(field_value);
+        let $ = converter.encoder(base);
+        if ($ instanceof ObjectValue) {
+          let fields = $.value;
+          return new ObjectValue(
+            prepend([field_name, field_type.encoder(field_value)], fields)
+          );
+        } else {
+          return new NullValue();
+        }
+      }
+    },
+    (v) => {
+      if (v instanceof ObjectValue) {
+        let values2 = v.value;
+        let field_value = (() => {
+          let _pipe = values2;
+          let _pipe$1 = key_find(_pipe, field_name);
+          let _pipe$2 = replace_error(
+            _pipe$1,
+            toList([
+              new DecodeError("Value", "None", toList([field_name]))
+            ])
+          );
+          return then$2(_pipe$2, field_type.decoder);
+        })();
+        return try$(field_value, (a2) => {
+          return next(a2).decoder(v);
+        });
+      } else {
+        return new Error(toList([]));
+      }
+    },
+    prepend(
+      [field_name, field_type.type_def],
+      next(field_type.default_value).fields_def
+    ),
+    next(field_type.default_value).default_value
+  );
+}
+function map5(converter, encode_map, decode_map2, default_value) {
+  return new Converter(
+    (v) => {
+      let a_value = encode_map(v);
+      return converter.encoder(a_value);
+    },
+    (v) => {
+      let _pipe = converter.decoder(v);
+      return then$2(_pipe, decode_map2);
+    },
+    converter.type_def,
+    default_value
+  );
+}
+function encode(converter) {
+  return converter.encoder;
+}
+function decode2(converter) {
+  return converter.decoder;
+}
+function type_def(converter) {
+  return converter.type_def;
+}
+
+// build/dev/javascript/gleam_regexp/gleam_regexp_ffi.mjs
+function check(regex, string4) {
+  regex.lastIndex = 0;
+  return regex.test(string4);
+}
+function compile(pattern, options) {
+  try {
+    let flags = "gu";
+    if (options.case_insensitive)
+      flags += "i";
+    if (options.multi_line)
+      flags += "m";
+    return new Ok(new RegExp(pattern, flags));
+  } catch (error2) {
+    const number = (error2.columnNumber || 0) | 0;
+    return new Error(new CompileError(error2.message, number));
+  }
+}
+
+// build/dev/javascript/gleam_regexp/gleam/regexp.mjs
+var CompileError = class extends CustomType {
+  constructor(error2, byte_index) {
+    super();
+    this.error = error2;
+    this.byte_index = byte_index;
+  }
+};
+var Options = class extends CustomType {
+  constructor(case_insensitive, multi_line) {
+    super();
+    this.case_insensitive = case_insensitive;
+    this.multi_line = multi_line;
+  }
+};
+function compile2(pattern, options) {
+  return compile(pattern, options);
+}
+function from_string(pattern) {
+  return compile2(pattern, new Options(false, false));
+}
+function check2(regexp, string4) {
+  return check(regexp, string4);
+}
+
+// build/dev/javascript/shared/shared.mjs
+var Uuid = class extends CustomType {
+  constructor(data) {
+    super();
+    this.data = data;
+  }
+};
+function uuid_converter() {
+  let _pipe = string3();
+  return map5(
+    _pipe,
+    (uuid) => {
+      return uuid.data;
+    },
+    (v) => {
+      let $ = from_string(
+        "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+      );
+      if (!$.isOk()) {
+        throw makeError(
+          "let_assert",
+          "shared",
+          15,
+          "",
+          "UUID regex should be valid !",
+          { value: $ }
+        );
+      }
+      let re = $[0];
+      let $1 = (() => {
+        let _pipe$1 = re;
+        return check2(_pipe$1, v);
+      })();
+      if (!$1) {
+        return new Error(
+          toList([new DecodeError("A valid UUID", v, toList([]))])
+        );
+      } else {
+        return new Ok(new Uuid(v));
+      }
+    },
+    new Uuid("00000000-0000-0000-0000-000000000000")
+  );
+}
+
+// build/dev/javascript/gleamrpc/gleamrpc.mjs
+var Query = class extends CustomType {
+};
+var Mutation = class extends CustomType {
+};
+var Procedure = class extends CustomType {
+  constructor(name, router, type_2, params_type, return_type) {
+    super();
+    this.name = name;
+    this.router = router;
+    this.type_ = type_2;
+    this.params_type = params_type;
+    this.return_type = return_type;
+  }
+};
+var GleamRPCError = class extends CustomType {
+  constructor(error2) {
+    super();
+    this.error = error2;
+  }
+};
+var ProcedureClient = class extends CustomType {
+  constructor(call3) {
+    super();
+    this.call = call3;
+  }
+};
+var ProcedureCall = class extends CustomType {
+  constructor(procedure, client2) {
+    super();
+    this.procedure = procedure;
+    this.client = client2;
+  }
+};
+function query(name, router) {
+  return new Procedure(
+    name,
+    router,
+    new Query(),
+    null$2(),
+    null$2()
+  );
+}
+function mutation(name, router) {
+  return new Procedure(
+    name,
+    router,
+    new Mutation(),
+    null$2(),
+    null$2()
+  );
+}
+function params(procedure, params_converter) {
+  let _record = procedure;
+  return new Procedure(
+    _record.name,
+    _record.router,
+    _record.type_,
+    params_converter,
+    _record.return_type
+  );
+}
+function returns(procedure, return_converter) {
+  let _record = procedure;
+  return new Procedure(
+    _record.name,
+    _record.router,
+    _record.type_,
+    _record.params_type,
+    return_converter
+  );
+}
+function with_client(procedure, client2) {
+  return new ProcedureCall(procedure, client2);
+}
+function call(procedure_call, params2, callback) {
+  return procedure_call.client.call(procedure_call.procedure, params2, callback);
+}
+
+// build/dev/javascript/shared/shared/answer.mjs
+var Answer = class extends CustomType {
+  constructor(id2, question_id, answer, correct) {
+    super();
+    this.id = id2;
+    this.question_id = question_id;
+    this.answer = answer;
+    this.correct = correct;
+  }
+};
+var CreateAnswer = class extends CustomType {
+  constructor(question_id, answer, correct) {
+    super();
+    this.question_id = question_id;
+    this.answer = answer;
+    this.correct = correct;
+  }
+};
+function answer_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "question_id",
+          (v) => {
+            return new Ok(v.question_id);
+          },
+          uuid_converter(),
+          (question_id) => {
+            return field2(
+              "answer",
+              (v) => {
+                return new Ok(v.answer);
+              },
+              string3(),
+              (answer) => {
+                return field2(
+                  "correct",
+                  (v) => {
+                    return new Ok(v.correct);
+                  },
+                  bool3(),
+                  (correct) => {
+                    return success(
+                      new Answer(id2, question_id, answer, correct)
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function create_answer_converter() {
+  return object3(
+    field2(
+      "question_id",
+      (v) => {
+        return new Ok(v.question_id);
+      },
+      uuid_converter(),
+      (question_id) => {
+        return field2(
+          "answer",
+          (v) => {
+            return new Ok(v.answer);
+          },
+          string3(),
+          (answer) => {
+            return field2(
+              "correct",
+              (v) => {
+                return new Ok(v.correct);
+              },
+              bool3(),
+              (correct) => {
+                return success(
+                  new CreateAnswer(question_id, answer, correct)
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function create_answer() {
+  let _pipe = mutation("create_answer", new None());
+  let _pipe$1 = params(_pipe, create_answer_converter());
+  return returns(_pipe$1, answer_converter());
+}
+function update_answer() {
+  let _pipe = mutation("update_answer", new None());
+  let _pipe$1 = params(_pipe, answer_converter());
+  return returns(_pipe$1, answer_converter());
+}
+function delete_answer() {
+  let _pipe = mutation("delete_answer", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, null$2());
+}
+
+// build/dev/javascript/shared/shared/question.mjs
+var Question = class extends CustomType {
+  constructor(id2, qwiz_id, question2) {
+    super();
+    this.id = id2;
+    this.qwiz_id = qwiz_id;
+    this.question = question2;
+  }
+};
+var QuestionWithAnswers = class extends CustomType {
+  constructor(id2, qwiz_id, question2, answers) {
+    super();
+    this.id = id2;
+    this.qwiz_id = qwiz_id;
+    this.question = question2;
+    this.answers = answers;
+  }
+};
+var CreateQuestion = class extends CustomType {
+  constructor(qwiz_id, question2) {
+    super();
+    this.qwiz_id = qwiz_id;
+    this.question = question2;
+  }
+};
+function question_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "qwiz_id",
+          (v) => {
+            return new Ok(v.qwiz_id);
+          },
+          uuid_converter(),
+          (qwiz_id) => {
+            return field2(
+              "question",
+              (v) => {
+                return new Ok(v.question);
+              },
+              string3(),
+              (question2) => {
+                return success(new Question(id2, qwiz_id, question2));
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function question_with_answers_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "qwiz_id",
+          (v) => {
+            return new Ok(v.qwiz_id);
+          },
+          uuid_converter(),
+          (qwiz_id) => {
+            return field2(
+              "question",
+              (v) => {
+                return new Ok(v.question);
+              },
+              string3(),
+              (question2) => {
+                return field2(
+                  "answers",
+                  (v) => {
+                    return new Ok(v.answers);
+                  },
+                  list3(answer_converter()),
+                  (answers) => {
+                    return success(
+                      new QuestionWithAnswers(id2, qwiz_id, question2, answers)
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function create_question_converter() {
+  return object3(
+    field2(
+      "qwiz_id",
+      (v) => {
+        return new Ok(v.qwiz_id);
+      },
+      uuid_converter(),
+      (qwiz_id) => {
+        return field2(
+          "question",
+          (v) => {
+            return new Ok(v.question);
+          },
+          string3(),
+          (question2) => {
+            return success(new CreateQuestion(qwiz_id, question2));
+          }
+        );
+      }
+    )
+  );
+}
+function get_question() {
+  let _pipe = query("get_question", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, question_with_answers_converter());
+}
+function create_question() {
+  let _pipe = mutation("create_question", new None());
+  let _pipe$1 = params(_pipe, create_question_converter());
+  return returns(_pipe$1, question_with_answers_converter());
+}
+function update_question() {
+  let _pipe = mutation("update_question", new None());
+  let _pipe$1 = params(_pipe, question_converter());
+  return returns(_pipe$1, question_with_answers_converter());
+}
+function delete_question() {
+  let _pipe = mutation("delete_question", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, null$2());
+}
+
+// build/dev/javascript/shared/shared/qwiz.mjs
+var Qwiz = class extends CustomType {
+  constructor(id2, name, owner) {
+    super();
+    this.id = id2;
+    this.name = name;
+    this.owner = owner;
+  }
+};
+var QwizWithQuestions = class extends CustomType {
+  constructor(id2, name, owner, questions) {
+    super();
+    this.id = id2;
+    this.name = name;
+    this.owner = owner;
+    this.questions = questions;
+  }
+};
+var CreateQwiz = class extends CustomType {
+  constructor(name, owner) {
+    super();
+    this.name = name;
+    this.owner = owner;
+  }
+};
+function qwiz_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "name",
+          (v) => {
+            return new Ok(v.name);
+          },
+          string3(),
+          (name) => {
+            return field2(
+              "owner",
+              (v) => {
+                return new Ok(v.owner);
+              },
+              uuid_converter(),
+              (owner) => {
+                return success(new Qwiz(id2, name, owner));
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function qwiz_with_questions_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "name",
+          (v) => {
+            return new Ok(v.name);
+          },
+          string3(),
+          (name) => {
+            return field2(
+              "owner",
+              (v) => {
+                return new Ok(v.owner);
+              },
+              uuid_converter(),
+              (owner) => {
+                return field2(
+                  "questions",
+                  (v) => {
+                    return new Ok(v.questions);
+                  },
+                  list3(question_converter()),
+                  (questions) => {
+                    return success(
+                      new QwizWithQuestions(id2, name, owner, questions)
+                    );
+                  }
+                );
+              }
+            );
+          }
+        );
+      }
+    )
+  );
+}
+function upsert_qwiz_converter() {
+  return object3(
+    field2(
+      "name",
+      (v) => {
+        return new Ok(v.name);
+      },
+      string3(),
+      (name) => {
+        return field2(
+          "owner",
+          (v) => {
+            return new Ok(v.owner);
+          },
+          uuid_converter(),
+          (owner) => {
+            return success(new CreateQwiz(name, owner));
+          }
+        );
+      }
+    )
+  );
+}
+function get_qwizes() {
+  let _pipe = query("get_qwizes", new None());
+  let _pipe$1 = params(_pipe, null$2());
+  return returns(_pipe$1, list3(qwiz_converter()));
+}
+function get_qwiz() {
+  let _pipe = query("get_qwiz", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, qwiz_with_questions_converter());
+}
+function create_qwiz() {
+  let _pipe = mutation("create_qwiz", new None());
+  let _pipe$1 = params(_pipe, upsert_qwiz_converter());
+  return returns(_pipe$1, qwiz_with_questions_converter());
+}
+function update_qwiz() {
+  let _pipe = mutation("update_qwiz", new None());
+  let _pipe$1 = params(_pipe, qwiz_converter());
+  return returns(_pipe$1, qwiz_with_questions_converter());
+}
+function delete_qwiz() {
+  let _pipe = mutation("delete_qwiz", new None());
+  let _pipe$1 = params(_pipe, uuid_converter());
+  return returns(_pipe$1, null$2());
+}
+
+// build/dev/javascript/shared/shared/user.mjs
+var User = class extends CustomType {
+  constructor(id2, pseudo) {
+    super();
+    this.id = id2;
+    this.pseudo = pseudo;
+  }
+};
+var LoginData = class extends CustomType {
+  constructor(pseudo, password) {
+    super();
+    this.pseudo = pseudo;
+    this.password = password;
+  }
+};
+function user_converter() {
+  return object3(
+    field2(
+      "id",
+      (v) => {
+        return new Ok(v.id);
+      },
+      uuid_converter(),
+      (id2) => {
+        return field2(
+          "pseudo",
+          (v) => {
+            return new Ok(v.pseudo);
+          },
+          string3(),
+          (pseudo) => {
+            return success(new User(id2, pseudo));
+          }
+        );
+      }
+    )
+  );
+}
+function login_data_converter() {
+  return object3(
+    field2(
+      "pseudo",
+      (v) => {
+        return new Ok(v.pseudo);
+      },
+      string3(),
+      (pseudo) => {
+        return field2(
+          "password",
+          (v) => {
+            return new Ok(v.password);
+          },
+          string3(),
+          (password) => {
+            return success(new LoginData(pseudo, password));
+          }
+        );
+      }
+    )
+  );
+}
+function login() {
+  let _pipe = query("login", new None());
+  let _pipe$1 = params(_pipe, login_data_converter());
+  return returns(_pipe$1, user_converter());
+}
+
+// build/dev/javascript/convert_http_query/convert/http/query.mjs
+var KeyNotFound = class extends CustomType {
+  constructor(key2) {
+    super();
+    this.key = key2;
+  }
+};
+var DecodeError3 = class extends CustomType {
+  constructor(errors) {
+    super();
+    this.errors = errors;
+  }
+};
+function encode_dict_key(key2) {
+  if (key2 instanceof BoolValue) {
+    let v = key2.value;
+    return to_string2(v);
+  } else if (key2 instanceof FloatValue) {
+    let v = key2.value;
+    return float_to_string(v);
+  } else if (key2 instanceof IntValue) {
+    let v = key2.value;
+    return to_string(v);
+  } else if (key2 instanceof StringValue) {
+    let v = key2.value;
+    return v;
+  } else if (key2 instanceof BitArrayValue) {
+    let v = key2.value;
+    return base64_url_encode(v, true);
+  } else {
+    return "";
+  }
+}
+function get_value(query2, key2, callback) {
+  let _pipe = key_pop(query2, key2);
+  let _pipe$1 = replace_error(_pipe, new KeyNotFound(key2));
+  return then$2(_pipe$1, (q) => {
+    return callback(q[0]);
+  });
+}
+function decode_bit_array2(query2, location2) {
+  return get_value(
+    query2,
+    join(location2, "."),
+    (v) => {
+      let _pipe = base64_url_decode(v);
+      let _pipe$1 = map3(
+        _pipe,
+        (var0) => {
+          return new BitArrayValue(var0);
+        }
+      );
+      return replace_error(
+        _pipe$1,
+        new DecodeError3(
+          toList([
+            new DecodeError("A base64 encoded bit array", v, location2)
+          ])
+        )
+      );
+    }
+  );
+}
+function decode_bool2(query2, location2) {
+  return get_value(
+    query2,
+    join(location2, "."),
+    (v) => {
+      if (v === "True") {
+        return new Ok(new BoolValue(true));
+      } else if (v === "False") {
+        return new Ok(new BoolValue(false));
+      } else {
+        return new Error(
+          new DecodeError3(
+            toList([new DecodeError("True or False", v, location2)])
+          )
+        );
+      }
+    }
+  );
+}
+function decode_int2(query2, location2) {
+  return get_value(
+    query2,
+    join(location2, "."),
+    (v) => {
+      let _pipe = parse_int(v);
+      let _pipe$1 = map3(
+        _pipe,
+        (var0) => {
+          return new IntValue(var0);
+        }
+      );
+      return replace_error(
+        _pipe$1,
+        new DecodeError3(
+          toList([
+            new DecodeError(
+              "An integer string representation",
+              v,
+              location2
+            )
+          ])
+        )
+      );
+    }
+  );
+}
+function decode_float2(query2, location2) {
+  return get_value(
+    query2,
+    join(location2, "."),
+    (v) => {
+      let _pipe = parse_float(v);
+      let _pipe$1 = map3(
+        _pipe,
+        (var0) => {
+          return new FloatValue(var0);
+        }
+      );
+      return replace_error(
+        _pipe$1,
+        new DecodeError3(
+          toList([
+            new DecodeError(
+              "A float string representation",
+              v,
+              location2
+            )
+          ])
+        )
+      );
+    }
+  );
+}
+function decode_string2(query2, location2) {
+  return get_value(
+    query2,
+    join(location2, "."),
+    (v) => {
+      return new Ok(new StringValue(v));
+    }
+  );
+}
+function decode_dict_key(key2, key_type, location2) {
+  let path = join(location2, ".");
+  return guard(
+    !starts_with(key2, path),
+    new Error(
+      new DecodeError3(
+        toList([
+          new DecodeError(
+            "A string starting with the path",
+            key2,
+            location2
+          )
+        ])
+      )
+    ),
+    () => {
+      let keyvalue = drop_start(key2, string_length(path) + 1);
+      if (key_type instanceof Bool) {
+        if (keyvalue === "True") {
+          return new Ok(new BoolValue(true));
+        } else if (keyvalue === "False") {
+          return new Ok(new BoolValue(false));
+        } else {
+          return new Error(
+            new DecodeError3(
+              toList([new DecodeError("True or False", key2, location2)])
+            )
+          );
+        }
+      } else if (key_type instanceof Float) {
+        let _pipe = parse_float(keyvalue);
+        let _pipe$1 = map3(
+          _pipe,
+          (var0) => {
+            return new FloatValue(var0);
+          }
+        );
+        return replace_error(
+          _pipe$1,
+          new DecodeError3(
+            toList([
+              new DecodeError(
+                "A float string representation",
+                key2,
+                location2
+              )
+            ])
+          )
+        );
+      } else if (key_type instanceof Int) {
+        let _pipe = parse_int(keyvalue);
+        let _pipe$1 = map3(
+          _pipe,
+          (var0) => {
+            return new IntValue(var0);
+          }
+        );
+        return replace_error(
+          _pipe$1,
+          new DecodeError3(
+            toList([
+              new DecodeError(
+                "An integer string representation",
+                key2,
+                location2
+              )
+            ])
+          )
+        );
+      } else if (key_type instanceof String2) {
+        return new Ok(new StringValue(keyvalue));
+      } else if (key_type instanceof BitArray2) {
+        let _pipe = base64_url_decode(keyvalue);
+        let _pipe$1 = map3(
+          _pipe,
+          (var0) => {
+            return new BitArrayValue(var0);
+          }
+        );
+        return replace_error(
+          _pipe$1,
+          new DecodeError3(
+            toList([
+              new DecodeError(
+                "A base64 encoded bit array",
+                key2,
+                location2
+              )
+            ])
+          )
+        );
+      } else {
+        return new Error(
+          new DecodeError3(
+            toList([
+              new DecodeError("Unsupported key type", key2, location2)
+            ])
+          )
+        );
+      }
+    }
+  );
+}
+function query_decode_error_to_decode_errors(err) {
+  if (err instanceof KeyNotFound) {
+    let key2 = err.key;
+    return toList([
+      new DecodeError("Key not found", "", split2(key2, "."))
+    ]);
+  } else {
+    let errors = err.errors;
+    return errors;
+  }
+}
+function decode_sub_value(of, location2) {
+  if (of instanceof BitArray2) {
+    return (_capture) => {
+      return decode_bit_array2(_capture, location2);
+    };
+  } else if (of instanceof Bool) {
+    return (_capture) => {
+      return decode_bool2(_capture, location2);
+    };
+  } else if (of instanceof Dict2) {
+    let k = of.key;
+    let v = of.value;
+    return (_capture) => {
+      return decode_dict(_capture, k, v, location2);
+    };
+  } else if (of instanceof Dynamic) {
+    return (_) => {
+      return new Ok(new DynamicValue(identity(void 0)));
+    };
+  } else if (of instanceof Enum) {
+    let variants = of.variants;
+    return (_capture) => {
+      return decode_enum(_capture, variants, location2);
+    };
+  } else if (of instanceof Float) {
+    return (v) => {
+      return decode_float2(v, location2);
+    };
+  } else if (of instanceof Int) {
+    return (v) => {
+      return decode_int2(v, location2);
+    };
+  } else if (of instanceof List2) {
+    let els = of.of;
+    return (_capture) => {
+      return decode_list2(_capture, els, location2, 0, toList([]));
+    };
+  } else if (of instanceof Null) {
+    return (_) => {
+      return new Ok(new NullValue());
+    };
+  } else if (of instanceof Object2) {
+    let fields = of.fields;
+    return (_capture) => {
+      return decode_object(_capture, fields, location2);
+    };
+  } else if (of instanceof Optional) {
+    return (_capture) => {
+      return decode_optional(_capture, of, location2);
+    };
+  } else if (of instanceof Result2) {
+    let ok = of.result;
+    let err = of.error;
+    return (_capture) => {
+      return decode_result2(_capture, ok, err, location2);
+    };
+  } else {
+    return (_capture) => {
+      return decode_string2(_capture, location2);
+    };
+  }
+}
+function decode_dict(query2, key_type, value_type, location2) {
+  let res = (() => {
+    let _pipe = filter(
+      query2,
+      (query_el) => {
+        let _pipe2 = query_el[0];
+        return starts_with(_pipe2, join(location2, "."));
+      }
+    );
+    let _pipe$1 = map2(
+      _pipe,
+      (query_el) => {
+        let key2 = decode_dict_key(query_el[0], key_type, location2);
+        let value3 = decode_sub_value(
+          value_type,
+          split2(query_el[0], ".")
+        )(query2);
+        if (key2.isOk() && value3.isOk()) {
+          let k = key2[0];
+          let v = value3[0];
+          return new Ok([k, v]);
+        } else if (!key2.isOk() && key2[0] instanceof DecodeError3) {
+          let error2 = key2[0].errors;
+          return new Error(new DecodeError3(error2));
+        } else if (!value3.isOk() && value3[0] instanceof DecodeError3) {
+          let error2 = value3[0].errors;
+          return new Error(new DecodeError3(error2));
+        } else if (!key2.isOk() && key2[0] instanceof KeyNotFound) {
+          return new Error(new KeyNotFound(query_el[0]));
+        } else {
+          return new Error(new KeyNotFound(query_el[0]));
+        }
+      }
+    );
+    return partition(_pipe$1);
+  })();
+  return new Ok(
+    new DictValue(
+      (() => {
+        let _pipe = res[0];
+        return from_list(_pipe);
+      })()
+    )
+  );
+}
+function decode_list2(loop$query, loop$of, loop$location, loop$index, loop$elements) {
+  while (true) {
+    let query2 = loop$query;
+    let of = loop$of;
+    let location2 = loop$location;
+    let index3 = loop$index;
+    let elements2 = loop$elements;
+    let $ = decode_sub_value(
+      of,
+      append(location2, toList([to_string(index3)]))
+    )(query2);
+    if (!$.isOk() && $[0] instanceof KeyNotFound) {
+      return new Ok(new ListValue(reverse(elements2)));
+    } else if (!$.isOk() && $[0] instanceof DecodeError3) {
+      let err = $;
+      return err;
+    } else {
+      let v = $[0];
+      loop$query = query2;
+      loop$of = of;
+      loop$location = location2;
+      loop$index = index3 + 1;
+      loop$elements = prepend(v, elements2);
+    }
+  }
+}
+function decode_result2(query2, ok_type, error_type, location2) {
+  let $ = decode_sub_value(ok_type, append(location2, toList(["ok"])))(
+    query2
+  );
+  let $1 = decode_sub_value(
+    error_type,
+    append(location2, toList(["error"]))
+  )(query2);
+  if ($.isOk()) {
+    let ok = $[0];
+    return new Ok(new ResultValue(new Ok(ok)));
+  } else if ($1.isOk()) {
+    let error2 = $1[0];
+    return new Ok(new ResultValue(new Error(error2)));
+  } else if (!$.isOk() && $[0] instanceof DecodeError3) {
+    let error2 = $[0].errors;
+    return new Error(new DecodeError3(error2));
+  } else if (!$1.isOk() && $1[0] instanceof DecodeError3) {
+    let error2 = $1[0].errors;
+    return new Error(new DecodeError3(error2));
+  } else {
+    return new Error(new KeyNotFound(join(location2, ".") + ".ok"));
+  }
+}
+function decode_optional(query2, of, location2) {
+  let $ = decode_sub_value(of, location2)(query2);
+  if ($.isOk()) {
+    let v = $[0];
+    return new Ok(new OptionalValue(new Some(v)));
+  } else if (!$.isOk() && $[0] instanceof KeyNotFound) {
+    return new Ok(new OptionalValue(new None()));
+  } else {
+    let err = $;
+    return err;
+  }
+}
+function decode_object(query2, fields, location2) {
+  let _pipe = try_map(
+    fields,
+    (f) => {
+      return map3(
+        decode_sub_value(f[1], append(location2, toList([f[0]])))(query2),
+        (v) => {
+          return [f[0], v];
+        }
+      );
+    }
+  );
+  return map3(
+    _pipe,
+    (var0) => {
+      return new ObjectValue(var0);
+    }
+  );
+}
+function decode_enum(query2, variants, location2) {
+  let _pipe = find_map(
+    variants,
+    (variant) => {
+      return decode_sub_value(
+        variant[1],
+        append(location2, toList([variant[0]]))
+      )(query2);
+    }
+  );
+  return replace_error(
+    _pipe,
+    new DecodeError3(
+      toList([
+        new DecodeError("One of the enum variants", "", location2)
+      ])
+    )
+  );
+}
+function decode_value(of) {
+  let decode_fn = (() => {
+    if (of instanceof BitArray2) {
+      return (_capture) => {
+        return decode_bit_array2(_capture, toList(["bit_array"]));
+      };
+    } else if (of instanceof Bool) {
+      return (_capture) => {
+        return decode_bool2(_capture, toList(["bool"]));
+      };
+    } else if (of instanceof Dict2) {
+      let k = of.key;
+      let v = of.value;
+      return (_capture) => {
+        return decode_dict(_capture, k, v, toList(["dict"]));
+      };
+    } else if (of instanceof Dynamic) {
+      return (query2) => {
+        return new Ok(new DynamicValue(identity(query2)));
+      };
+    } else if (of instanceof Enum) {
+      let variants = of.variants;
+      return (_capture) => {
+        return decode_enum(_capture, variants, toList([]));
+      };
+    } else if (of instanceof Float) {
+      return (_capture) => {
+        return decode_float2(_capture, toList(["float"]));
+      };
+    } else if (of instanceof Int) {
+      return (_capture) => {
+        return decode_int2(_capture, toList(["int"]));
+      };
+    } else if (of instanceof List2) {
+      let els = of.of;
+      return (_capture) => {
+        return decode_list2(_capture, els, toList(["list"]), 0, toList([]));
+      };
+    } else if (of instanceof Null) {
+      return (_) => {
+        return new Ok(new NullValue());
+      };
+    } else if (of instanceof Object2) {
+      let fields = of.fields;
+      return (_capture) => {
+        return decode_object(_capture, fields, toList([]));
+      };
+    } else if (of instanceof Optional) {
+      let el = of.of;
+      return (_capture) => {
+        return decode_optional(_capture, el, toList(["optional"]));
+      };
+    } else if (of instanceof Result2) {
+      let ok = of.result;
+      let err = of.error;
+      return (_capture) => {
+        return decode_result2(_capture, ok, err, toList(["result"]));
+      };
+    } else {
+      return (_capture) => {
+        return decode_string2(_capture, toList(["string"]));
+      };
+    }
+  })();
+  return (query2) => {
+    let _pipe = decode_fn(query2);
+    return map_error(_pipe, query_decode_error_to_decode_errors);
+  };
+}
+function decode3(query2, converter) {
+  let _pipe = decode_value(
+    (() => {
+      let _pipe2 = converter;
+      return type_def(_pipe2);
+    })()
+  )(query2);
+  return then$2(_pipe, decode2(converter));
+}
+function encode_sub_value(val, path) {
+  let prefix = join(path, ".");
+  if (val instanceof BoolValue) {
+    let v = val.value;
+    return toList([[prefix, to_string2(v)]]);
+  } else if (val instanceof DictValue) {
+    let v = val.value;
+    return encode_dict(v, path);
+  } else if (val instanceof EnumValue) {
+    let variant = val.variant;
+    let v = val.value;
+    return encode_enum(variant, v, path);
+  } else if (val instanceof FloatValue) {
+    let v = val.value;
+    return toList([[prefix, float_to_string(v)]]);
+  } else if (val instanceof IntValue) {
+    let v = val.value;
+    return toList([[prefix, to_string(v)]]);
+  } else if (val instanceof ListValue) {
+    let v = val.value;
+    return encode_list(v, path);
+  } else if (val instanceof NullValue) {
+    return toList([]);
+  } else if (val instanceof ObjectValue) {
+    let v = val.value;
+    return encode_object(v, path);
+  } else if (val instanceof OptionalValue) {
+    let v = val.value;
+    return encode_optional(v, path);
+  } else if (val instanceof ResultValue) {
+    let v = val.value;
+    return encode_result(v, path);
+  } else if (val instanceof StringValue) {
+    let v = val.value;
+    return toList([[prefix, v]]);
+  } else if (val instanceof BitArrayValue) {
+    let v = val.value;
+    return toList([[prefix, base64_url_encode(v, true)]]);
+  } else {
+    return toList([]);
+  }
+}
+function encode_dict(val, path) {
+  let result_partition = (() => {
+    let _pipe2 = val;
+    let _pipe$12 = map_to_list(_pipe2);
+    let _pipe$2 = map2(
+      _pipe$12,
+      (kv) => {
+        let $ = encode_dict_key(kv[0]);
+        if ($ === "") {
+          return new Error(void 0);
+        } else {
+          let key2 = $;
+          return new Ok(
+            encode_sub_value(kv[1], append(path, toList([key2])))
+          );
+        }
+      }
+    );
+    return partition(_pipe$2);
+  })();
+  let _pipe = result_partition[0];
+  let _pipe$1 = reverse(_pipe);
+  return flatten(_pipe$1);
+}
+function encode_object(val, path) {
+  let _pipe = val;
+  return flat_map(
+    _pipe,
+    (value3) => {
+      return encode_sub_value(value3[1], append(path, toList([value3[0]])));
+    }
+  );
+}
+function encode_list(val, path) {
+  let _pipe = val;
+  let _pipe$1 = index_fold(
+    _pipe,
+    toList([]),
+    (acc, value3, index3) => {
+      return flatten(
+        toList([
+          encode_sub_value(
+            value3,
+            append(path, toList([to_string(index3)]))
+          ),
+          acc
+        ])
+      );
+    }
+  );
+  return reverse(_pipe$1);
+}
+function encode_result(val, path) {
+  if (val.isOk()) {
+    let v = val[0];
+    return encode_sub_value(v, append(path, toList(["ok"])));
+  } else {
+    let v = val[0];
+    return encode_sub_value(v, append(path, toList(["error"])));
+  }
+}
+function encode_optional(val, path) {
+  if (val instanceof None) {
+    return toList([]);
+  } else {
+    let v = val[0];
+    return encode_sub_value(v, path);
+  }
+}
+function encode_enum(variant, v, path) {
+  return encode_sub_value(v, append(path, toList([variant])));
+}
+function encode_value(val) {
+  if (val instanceof BoolValue) {
+    let v = val.value;
+    return toList([["bool", to_string2(v)]]);
+  } else if (val instanceof DictValue) {
+    let v = val.value;
+    return encode_dict(v, toList(["dict"]));
+  } else if (val instanceof EnumValue) {
+    let variant = val.variant;
+    let v = val.value;
+    return encode_enum(variant, v, toList([]));
+  } else if (val instanceof FloatValue) {
+    let v = val.value;
+    return toList([["float", float_to_string(v)]]);
+  } else if (val instanceof IntValue) {
+    let v = val.value;
+    return toList([["int", to_string(v)]]);
+  } else if (val instanceof ListValue) {
+    let v = val.value;
+    return encode_list(v, toList(["list"]));
+  } else if (val instanceof NullValue) {
+    return toList([]);
+  } else if (val instanceof ObjectValue) {
+    let v = val.value;
+    return encode_object(v, toList([]));
+  } else if (val instanceof OptionalValue) {
+    let v = val.value;
+    return encode_optional(v, toList(["optional"]));
+  } else if (val instanceof ResultValue) {
+    let v = val.value;
+    return encode_result(v, toList(["result"]));
+  } else if (val instanceof StringValue) {
+    let v = val.value;
+    return toList([["string", v]]);
+  } else if (val instanceof BitArrayValue) {
+    let v = val.value;
+    return toList([["bit_array", base64_url_encode(v, true)]]);
+  } else {
+    return toList([]);
+  }
+}
+function encode2(value3, converter) {
+  let _pipe = value3;
+  let _pipe$1 = encode(converter)(_pipe);
+  return encode_value(_pipe$1);
 }
 
 // build/dev/javascript/gleam_stdlib/gleam/uri.mjs
@@ -3697,8 +5567,8 @@ function parse_userinfo_loop(loop$original, loop$uri_string, loop$pieces, loop$s
     }
   }
 }
-function parse_authority_pieces(string3, pieces) {
-  return parse_userinfo_loop(string3, string3, pieces, 0);
+function parse_authority_pieces(string4, pieces) {
+  return parse_userinfo_loop(string4, string4, pieces, 0);
 }
 function parse_authority_with_slashes(uri_string, pieces) {
   if (uri_string === "//") {
@@ -3964,19 +5834,44 @@ function to_string4(uri) {
   return concat2(parts$5);
 }
 
+// build/dev/javascript/lustre/lustre/element/html.mjs
+function text2(content) {
+  return text(content);
+}
+function h1(attrs, children2) {
+  return element("h1", attrs, children2);
+}
+function div(attrs, children2) {
+  return element("div", attrs, children2);
+}
+function p(attrs, children2) {
+  return element("p", attrs, children2);
+}
+function a(attrs, children2) {
+  return element("a", attrs, children2);
+}
+function br(attrs) {
+  return element("br", attrs, toList([]));
+}
+function button(attrs, children2) {
+  return element("button", attrs, children2);
+}
+function form(attrs, children2) {
+  return element("form", attrs, children2);
+}
+function input(attrs) {
+  return element("input", attrs, toList([]));
+}
+function label(attrs, children2) {
+  return element("label", attrs, children2);
+}
+
 // build/dev/javascript/modem/modem.ffi.mjs
 var defaults = {
   handle_external_links: false,
   handle_internal_links: true
 };
 var initial_location = window?.location?.href;
-var do_initial_uri = () => {
-  if (!initial_location) {
-    return new Error(void 0);
-  } else {
-    return new Ok(uri_from_url(new URL(initial_location)));
-  }
-};
 var do_init = (dispatch, options = defaults) => {
   document.addEventListener("click", (event2) => {
     const a2 = find_anchor(event2.target);
@@ -4115,1051 +6010,350 @@ function push(path, query2, fragment) {
   );
 }
 
-// build/dev/javascript/convert/convert.mjs
-var String2 = class extends CustomType {
-};
-var Bool = class extends CustomType {
-};
-var Float = class extends CustomType {
-};
-var Int = class extends CustomType {
-};
-var Null = class extends CustomType {
-};
-var List2 = class extends CustomType {
-  constructor(of) {
-    super();
-    this.of = of;
+// build/dev/javascript/gleam_javascript/gleam_javascript_ffi.mjs
+var PromiseLayer = class _PromiseLayer {
+  constructor(promise) {
+    this.promise = promise;
+  }
+  static wrap(value3) {
+    return value3 instanceof Promise ? new _PromiseLayer(value3) : value3;
+  }
+  static unwrap(value3) {
+    return value3 instanceof _PromiseLayer ? value3.promise : value3;
   }
 };
-var Dict2 = class extends CustomType {
-  constructor(key2, value3) {
-    super();
-    this.key = key2;
-    this.value = value3;
-  }
-};
-var Object2 = class extends CustomType {
-  constructor(fields) {
-    super();
-    this.fields = fields;
-  }
-};
-var Optional = class extends CustomType {
-  constructor(of) {
-    super();
-    this.of = of;
-  }
-};
-var Result2 = class extends CustomType {
-  constructor(result, error2) {
-    super();
-    this.result = result;
-    this.error = error2;
-  }
-};
-var Enum = class extends CustomType {
-  constructor(variants) {
-    super();
-    this.variants = variants;
-  }
-};
-var BitArray2 = class extends CustomType {
-};
-var StringValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var BoolValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var FloatValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var IntValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var NullValue = class extends CustomType {
-};
-var ListValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var DictValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var ObjectValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var OptionalValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var ResultValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var EnumValue = class extends CustomType {
-  constructor(variant, value3) {
-    super();
-    this.variant = variant;
-    this.value = value3;
-  }
-};
-var DynamicValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var BitArrayValue = class extends CustomType {
-  constructor(value3) {
-    super();
-    this.value = value3;
-  }
-};
-var Converter = class extends CustomType {
-  constructor(encoder, decoder, type_def2, default_value) {
-    super();
-    this.encoder = encoder;
-    this.decoder = decoder;
-    this.type_def = type_def2;
-    this.default_value = default_value;
-  }
-};
-var PartialConverter = class extends CustomType {
-  constructor(encoder, decoder, fields_def, default_value) {
-    super();
-    this.encoder = encoder;
-    this.decoder = decoder;
-    this.fields_def = fields_def;
-    this.default_value = default_value;
-  }
-};
-function object3(converter) {
-  let $ = converter.default_value;
-  if (!$.isOk()) {
-    throw makeError(
-      "let_assert",
-      "convert",
-      84,
-      "object",
-      "Pattern match failed, no pattern matched the value.",
-      { value: $ }
-    );
-  }
-  let default_value = $[0];
-  return new Converter(
-    converter.encoder,
-    converter.decoder,
-    new Object2(converter.fields_def),
-    default_value
+function resolve(value3) {
+  return Promise.resolve(PromiseLayer.wrap(value3));
+}
+function then_await(promise, fn) {
+  return promise.then((value3) => fn(PromiseLayer.unwrap(value3)));
+}
+function map_promise(promise, fn) {
+  return promise.then(
+    (value3) => PromiseLayer.wrap(fn(PromiseLayer.unwrap(value3)))
   );
-}
-function success(c) {
-  return new PartialConverter(
-    (_) => {
-      return new ObjectValue(toList([]));
-    },
-    (_) => {
-      return new Ok(c);
-    },
-    toList([]),
-    new Ok(c)
-  );
-}
-function get_type(val) {
-  if (val instanceof BoolValue) {
-    return "BoolValue";
-  } else if (val instanceof DictValue) {
-    return "DictValue";
-  } else if (val instanceof EnumValue) {
-    return "EnumValue";
-  } else if (val instanceof FloatValue) {
-    return "FloatValue";
-  } else if (val instanceof IntValue) {
-    return "IntValue";
-  } else if (val instanceof ListValue) {
-    return "ListValue";
-  } else if (val instanceof NullValue) {
-    return "NullValue";
-  } else if (val instanceof ObjectValue) {
-    return "ObjectValue";
-  } else if (val instanceof OptionalValue) {
-    return "OptionalValue";
-  } else if (val instanceof ResultValue) {
-    return "ResultValue";
-  } else if (val instanceof StringValue) {
-    return "StringValue";
-  } else if (val instanceof DynamicValue) {
-    return "DynamicValue";
-  } else {
-    return "BitArrayValue";
-  }
-}
-function string2() {
-  return new Converter(
-    (v) => {
-      return new StringValue(v);
-    },
-    (v) => {
-      if (v instanceof StringValue) {
-        let val = v.value;
-        return new Ok(val);
-      } else {
-        let other = v;
-        return new Error(
-          toList([
-            new DecodeError("StringValue", get_type(other), toList([]))
-          ])
-        );
-      }
-    },
-    new String2(),
-    ""
-  );
-}
-function bool3() {
-  return new Converter(
-    (v) => {
-      return new BoolValue(v);
-    },
-    (v) => {
-      if (v instanceof BoolValue) {
-        let val = v.value;
-        return new Ok(val);
-      } else {
-        let other = v;
-        return new Error(
-          toList([
-            new DecodeError("BoolValue", get_type(other), toList([]))
-          ])
-        );
-      }
-    },
-    new Bool(),
-    false
-  );
-}
-function null$2() {
-  return new Converter(
-    (_) => {
-      return new NullValue();
-    },
-    (v) => {
-      if (v instanceof NullValue) {
-        return new Ok(void 0);
-      } else {
-        let other = v;
-        return new Error(
-          toList([
-            new DecodeError("NullValue", get_type(other), toList([]))
-          ])
-        );
-      }
-    },
-    new Null(),
-    void 0
-  );
-}
-function list3(of) {
-  return new Converter(
-    (v) => {
-      return new ListValue(
-        (() => {
-          let _pipe = v;
-          return map2(_pipe, of.encoder);
-        })()
-      );
-    },
-    (v) => {
-      if (v instanceof ListValue) {
-        let vals = v.value;
-        let _pipe = vals;
-        return fold(
-          _pipe,
-          new Ok(toList([])),
-          (result, val) => {
-            let $ = of.decoder(val);
-            if (result.isOk() && $.isOk()) {
-              let res = result[0];
-              let new_res = $[0];
-              return new Ok(append3(res, toList([new_res])));
-            } else if (!result.isOk() && !$.isOk()) {
-              let errs = result[0];
-              let new_errs = $[0];
-              return new Error(append3(errs, new_errs));
-            } else if (!$.isOk()) {
-              let errs = $[0];
-              return new Error(errs);
-            } else {
-              let errs = result[0];
-              return new Error(errs);
-            }
-          }
-        );
-      } else {
-        let other = v;
-        return new Error(
-          toList([
-            new DecodeError("ListValue", get_type(other), toList([]))
-          ])
-        );
-      }
-    },
-    new List2(of.type_def),
-    toList([])
-  );
-}
-function field2(field_name, field_getter, field_type, next) {
-  return new PartialConverter(
-    (base) => {
-      let value3 = field_getter(base);
-      if (!value3.isOk() && !value3[0]) {
-        return new NullValue();
-      } else {
-        let field_value = value3[0];
-        let converter = next(field_value);
-        let $ = converter.encoder(base);
-        if ($ instanceof ObjectValue) {
-          let fields = $.value;
-          return new ObjectValue(
-            prepend([field_name, field_type.encoder(field_value)], fields)
-          );
-        } else {
-          return new NullValue();
-        }
-      }
-    },
-    (v) => {
-      if (v instanceof ObjectValue) {
-        let values2 = v.value;
-        let field_value = (() => {
-          let _pipe = values2;
-          let _pipe$1 = key_find(_pipe, field_name);
-          let _pipe$2 = replace_error(
-            _pipe$1,
-            toList([
-              new DecodeError("Value", "None", toList([field_name]))
-            ])
-          );
-          return then$(_pipe$2, field_type.decoder);
-        })();
-        return try$(field_value, (a2) => {
-          return next(a2).decoder(v);
-        });
-      } else {
-        return new Error(toList([]));
-      }
-    },
-    prepend(
-      [field_name, field_type.type_def],
-      next(field_type.default_value).fields_def
-    ),
-    next(field_type.default_value).default_value
-  );
-}
-function map5(converter, encode_map, decode_map2, default_value) {
-  return new Converter(
-    (v) => {
-      let a_value = encode_map(v);
-      return converter.encoder(a_value);
-    },
-    (v) => {
-      let _pipe = converter.decoder(v);
-      return then$(_pipe, decode_map2);
-    },
-    converter.type_def,
-    default_value
-  );
-}
-function encode(converter) {
-  return converter.encoder;
-}
-function decode2(converter) {
-  return converter.decoder;
-}
-function type_def(converter) {
-  return converter.type_def;
 }
 
-// build/dev/javascript/gleam_regexp/gleam_regexp_ffi.mjs
-function check(regex, string3) {
-  regex.lastIndex = 0;
-  return regex.test(string3);
-}
-function compile(pattern, options) {
-  try {
-    let flags = "gu";
-    if (options.case_insensitive)
-      flags += "i";
-    if (options.multi_line)
-      flags += "m";
-    return new Ok(new RegExp(pattern, flags));
-  } catch (error2) {
-    const number = (error2.columnNumber || 0) | 0;
-    return new Error(new CompileError(error2.message, number));
-  }
-}
-
-// build/dev/javascript/gleam_regexp/gleam/regexp.mjs
-var CompileError = class extends CustomType {
-  constructor(error2, byte_index) {
-    super();
-    this.error = error2;
-    this.byte_index = byte_index;
-  }
-};
-var Options = class extends CustomType {
-  constructor(case_insensitive, multi_line) {
-    super();
-    this.case_insensitive = case_insensitive;
-    this.multi_line = multi_line;
-  }
-};
-function compile2(pattern, options) {
-  return compile(pattern, options);
-}
-function from_string(pattern) {
-  return compile2(pattern, new Options(false, false));
-}
-function check2(regexp, string3) {
-  return check(regexp, string3);
-}
-
-// build/dev/javascript/shared/shared.mjs
-var Uuid = class extends CustomType {
-  constructor(data) {
-    super();
-    this.data = data;
-  }
-};
-function uuid_converter() {
-  let _pipe = string2();
-  return map5(
+// build/dev/javascript/gleam_javascript/gleam/javascript/promise.mjs
+function try_await(promise, callback) {
+  let _pipe = promise;
+  return then_await(
     _pipe,
-    (uuid) => {
-      return uuid.data;
-    },
-    (v) => {
-      let $ = from_string(
-        "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-      );
-      if (!$.isOk()) {
-        throw makeError(
-          "let_assert",
-          "shared",
-          15,
-          "",
-          "UUID regex should be valid !",
-          { value: $ }
-        );
-      }
-      let re = $[0];
-      let $1 = (() => {
-        let _pipe$1 = re;
-        return check2(_pipe$1, v);
-      })();
-      if (!$1) {
-        return new Error(
-          toList([new DecodeError("A valid UUID", v, toList([]))])
-        );
+    (result) => {
+      if (result.isOk()) {
+        let a2 = result[0];
+        return callback(a2);
       } else {
-        return new Ok(new Uuid(v));
+        let e = result[0];
+        return resolve(new Error(e));
       }
-    },
-    new Uuid("00000000-0000-0000-0000-000000000000")
+    }
   );
 }
 
-// build/dev/javascript/gleamrpc/gleamrpc.mjs
-var Query = class extends CustomType {
-};
-var Mutation = class extends CustomType {
-};
-var Procedure = class extends CustomType {
-  constructor(name, router, type_2, params_type, return_type) {
-    super();
-    this.name = name;
-    this.router = router;
-    this.type_ = type_2;
-    this.params_type = params_type;
-    this.return_type = return_type;
+// build/dev/javascript/plinth/document_ffi.mjs
+function getElementById(id2) {
+  let found = document.getElementById(id2);
+  if (!found) {
+    return new Error();
   }
-};
-var GleamRPCError = class extends CustomType {
-  constructor(error2) {
-    super();
-    this.error = error2;
-  }
-};
-var ProcedureClient = class extends CustomType {
-  constructor(call3) {
-    super();
-    this.call = call3;
-  }
-};
-var ProcedureCall = class extends CustomType {
-  constructor(procedure, client2) {
-    super();
-    this.procedure = procedure;
-    this.client = client2;
-  }
-};
-function query(name, router) {
-  return new Procedure(
-    name,
-    router,
-    new Query(),
-    null$2(),
-    null$2()
-  );
-}
-function mutation(name, router) {
-  return new Procedure(
-    name,
-    router,
-    new Mutation(),
-    null$2(),
-    null$2()
-  );
-}
-function params(procedure, params_converter) {
-  let _record = procedure;
-  return new Procedure(
-    _record.name,
-    _record.router,
-    _record.type_,
-    params_converter,
-    _record.return_type
-  );
-}
-function returns(procedure, return_converter) {
-  let _record = procedure;
-  return new Procedure(
-    _record.name,
-    _record.router,
-    _record.type_,
-    _record.params_type,
-    return_converter
-  );
-}
-function with_client(procedure, client2) {
-  return new ProcedureCall(procedure, client2);
-}
-function call(procedure_call, params2, callback) {
-  return procedure_call.client.call(procedure_call.procedure, params2, callback);
+  return new Ok(found);
 }
 
-// build/dev/javascript/shared/shared/answer.mjs
-var Answer = class extends CustomType {
-  constructor(id2, question_id, answer, correct) {
-    super();
-    this.id = id2;
-    this.question_id = question_id;
-    this.answer = answer;
-    this.correct = correct;
+// build/dev/javascript/plinth/element_ffi.mjs
+function getAttribute(element2, name) {
+  let attribute2 = element2.getAttribute(name);
+  if (attribute2) {
+    return new Ok(attribute2);
   }
-};
-var CreateAnswer = class extends CustomType {
-  constructor(question_id, answer, correct) {
-    super();
-    this.question_id = question_id;
-    this.answer = answer;
-    this.correct = correct;
+  return new Error();
+}
+function value2(element2) {
+  let value3 = element2.value;
+  if (value3 != void 0) {
+    return new Ok(value3);
   }
-};
-function answer_converter() {
-  return object3(
-    field2(
-      "id",
-      (v) => {
-        return new Ok(v.id);
-      },
-      uuid_converter(),
-      (id2) => {
-        return field2(
-          "question_id",
-          (v) => {
-            return new Ok(v.question_id);
-          },
-          uuid_converter(),
-          (question_id) => {
-            return field2(
-              "answer",
-              (v) => {
-                return new Ok(v.answer);
-              },
-              string2(),
-              (answer) => {
-                return field2(
-                  "correct",
-                  (v) => {
-                    return new Ok(v.correct);
-                  },
-                  bool3(),
-                  (correct) => {
-                    return success(
-                      new Answer(id2, question_id, answer, correct)
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
+  return new Error();
 }
-function create_answer_converter() {
-  return object3(
-    field2(
-      "question_id",
-      (v) => {
-        return new Ok(v.question_id);
-      },
-      uuid_converter(),
-      (question_id) => {
-        return field2(
-          "answer",
-          (v) => {
-            return new Ok(v.answer);
-          },
-          string2(),
-          (answer) => {
-            return field2(
-              "correct",
-              (v) => {
-                return new Ok(v.correct);
-              },
-              bool3(),
-              (correct) => {
-                return success(
-                  new CreateAnswer(question_id, answer, correct)
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
-}
-function create_answer() {
-  let _pipe = mutation("create_answer", new None());
-  let _pipe$1 = params(_pipe, create_answer_converter());
-  return returns(_pipe$1, answer_converter());
-}
-function update_answer() {
-  let _pipe = mutation("update_answer", new None());
-  let _pipe$1 = params(_pipe, answer_converter());
-  return returns(_pipe$1, answer_converter());
-}
-function delete_answer() {
-  let _pipe = mutation("delete_answer", new None());
-  let _pipe$1 = params(_pipe, uuid_converter());
-  return returns(_pipe$1, null$2());
+function getChecked(el) {
+  return el.checked;
 }
 
-// build/dev/javascript/shared/shared/question.mjs
-var Question = class extends CustomType {
-  constructor(id2, qwiz_id, question) {
-    super();
-    this.id = id2;
-    this.qwiz_id = qwiz_id;
-    this.question = question;
+// build/dev/javascript/plinth/window_ffi.mjs
+function self() {
+  return globalThis;
+}
+function alert(message) {
+  window.alert(message);
+}
+function prompt(message, defaultValue) {
+  let text3 = window.prompt(message, defaultValue);
+  if (text3 !== null) {
+    return new Ok(text3);
+  } else {
+    return new Error();
   }
-};
-var QuestionWithAnswers = class extends CustomType {
-  constructor(id2, qwiz_id, question, answers) {
-    super();
-    this.id = id2;
-    this.qwiz_id = qwiz_id;
-    this.question = question;
-    this.answers = answers;
+}
+function addEventListener3(type, listener) {
+  return window.addEventListener(type, listener);
+}
+function document2(window2) {
+  return window2.document;
+}
+async function requestWakeLock() {
+  try {
+    return new Ok(await window.navigator.wakeLock.request("screen"));
+  } catch (error2) {
+    return new Error(error2.toString());
   }
-};
-var CreateQuestion = class extends CustomType {
-  constructor(qwiz_id, question) {
-    super();
-    this.qwiz_id = qwiz_id;
-    this.question = question;
+}
+function location() {
+  return window.location.href;
+}
+function locationOf(w) {
+  try {
+    return new Ok(w.location.href);
+  } catch (error2) {
+    return new Error(error2.toString());
   }
-};
-function question_converter() {
-  return object3(
-    field2(
-      "id",
-      (v) => {
-        return new Ok(v.id);
-      },
-      uuid_converter(),
-      (id2) => {
-        return field2(
-          "qwiz_id",
-          (v) => {
-            return new Ok(v.qwiz_id);
-          },
-          uuid_converter(),
-          (qwiz_id) => {
-            return field2(
-              "question",
-              (v) => {
-                return new Ok(v.question);
-              },
-              string2(),
-              (question) => {
-                return success(new Question(id2, qwiz_id, question));
-              }
-            );
-          }
-        );
-      }
-    )
-  );
 }
-function question_with_answers_converter() {
-  return object3(
-    field2(
-      "id",
-      (v) => {
-        return new Ok(v.id);
-      },
-      uuid_converter(),
-      (id2) => {
-        return field2(
-          "qwiz_id",
-          (v) => {
-            return new Ok(v.qwiz_id);
-          },
-          uuid_converter(),
-          (qwiz_id) => {
-            return field2(
-              "question",
-              (v) => {
-                return new Ok(v.question);
-              },
-              string2(),
-              (question) => {
-                return field2(
-                  "answers",
-                  (v) => {
-                    return new Ok(v.answers);
-                  },
-                  list3(answer_converter()),
-                  (answers) => {
-                    return success(
-                      new QuestionWithAnswers(id2, qwiz_id, question, answers)
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
+function setLocation(w, url) {
+  w.location.href = url;
 }
-function create_question_converter() {
-  return object3(
-    field2(
-      "qwiz_id",
-      (v) => {
-        return new Ok(v.qwiz_id);
-      },
-      uuid_converter(),
-      (qwiz_id) => {
-        return field2(
-          "question",
-          (v) => {
-            return new Ok(v.question);
-          },
-          string2(),
-          (question) => {
-            return success(new CreateQuestion(qwiz_id, question));
-          }
-        );
-      }
-    )
-  );
+function origin() {
+  return window.location.origin;
 }
-function create_question() {
-  let _pipe = mutation("create_question", new None());
-  let _pipe$1 = params(_pipe, create_question_converter());
-  return returns(_pipe$1, question_with_answers_converter());
+function pathname() {
+  return window.location.pathname;
 }
-function update_question() {
-  let _pipe = mutation("update_question", new None());
-  let _pipe$1 = params(_pipe, question_converter());
-  return returns(_pipe$1, question_with_answers_converter());
+function reload() {
+  return window.location.reload();
 }
-function delete_question() {
-  let _pipe = mutation("delete_question", new None());
-  let _pipe$1 = params(_pipe, uuid_converter());
-  return returns(_pipe$1, null$2());
+function reloadOf(w) {
+  return w.location.reload();
 }
-
-// build/dev/javascript/shared/shared/qwiz.mjs
-var Qwiz = class extends CustomType {
-  constructor(id2, name, owner) {
-    super();
-    this.id = id2;
-    this.name = name;
-    this.owner = owner;
+function focus2(w) {
+  return w.focus();
+}
+function getHash2() {
+  const hash = window.location.hash;
+  if (hash == "") {
+    return new Error();
   }
-};
-var QwizWithQuestions = class extends CustomType {
-  constructor(id2, name, owner, questions) {
-    super();
-    this.id = id2;
-    this.name = name;
-    this.owner = owner;
-    this.questions = questions;
+  return new Ok(decodeURIComponent(hash.slice(1)));
+}
+function getSearch() {
+  const search = window.location.search;
+  if (search == "") {
+    return new Error();
   }
-};
-var CreateQwiz = class extends CustomType {
-  constructor(name, owner) {
-    super();
-    this.name = name;
-    this.owner = owner;
+  return new Ok(decodeURIComponent(search.slice(1)));
+}
+function innerHeight(w) {
+  return w.innerHeight;
+}
+function innerWidth(w) {
+  return w.innerWidth;
+}
+function outerHeight(w) {
+  return w.outerHeight;
+}
+function outerWidth(w) {
+  return w.outerWidth;
+}
+function screenX(w) {
+  return w.screenX;
+}
+function screenY(w) {
+  return w.screenY;
+}
+function screenTop(w) {
+  return w.screenTop;
+}
+function screenLeft(w) {
+  return w.screenLeft;
+}
+function scrollX(w) {
+  return w.scrollX;
+}
+function scrollY(w) {
+  return w.scrollY;
+}
+function open(url, target2, features) {
+  try {
+    return new Ok(window.open(url, target2, features));
+  } catch (error2) {
+    return new Error(error2.toString());
   }
-};
-function qwiz_converter() {
-  return object3(
-    field2(
-      "id",
-      (v) => {
-        return new Ok(v.id);
-      },
-      uuid_converter(),
-      (id2) => {
-        return field2(
-          "name",
-          (v) => {
-            return new Ok(v.name);
-          },
-          string2(),
-          (name) => {
-            return field2(
-              "owner",
-              (v) => {
-                return new Ok(v.owner);
-              },
-              uuid_converter(),
-              (owner) => {
-                return success(new Qwiz(id2, name, owner));
-              }
-            );
-          }
-        );
-      }
-    )
-  );
 }
-function qwiz_with_questions_converter() {
-  return object3(
-    field2(
-      "id",
-      (v) => {
-        return new Ok(v.id);
-      },
-      uuid_converter(),
-      (id2) => {
-        return field2(
-          "name",
-          (v) => {
-            return new Ok(v.name);
-          },
-          string2(),
-          (name) => {
-            return field2(
-              "owner",
-              (v) => {
-                return new Ok(v.owner);
-              },
-              uuid_converter(),
-              (owner) => {
-                return field2(
-                  "questions",
-                  (v) => {
-                    return new Ok(v.questions);
-                  },
-                  list3(question_converter()),
-                  (questions) => {
-                    return success(
-                      new QwizWithQuestions(id2, name, owner, questions)
-                    );
-                  }
-                );
-              }
-            );
-          }
-        );
-      }
-    )
-  );
+function close(w) {
+  w.close();
 }
-function upsert_qwiz_converter() {
-  return object3(
-    field2(
-      "name",
-      (v) => {
-        return new Ok(v.name);
-      },
-      string2(),
-      (name) => {
-        return field2(
-          "owner",
-          (v) => {
-            return new Ok(v.owner);
-          },
-          uuid_converter(),
-          (owner) => {
-            return success(new CreateQwiz(name, owner));
-          }
-        );
-      }
-    )
-  );
+function closed(w) {
+  return w.closed;
 }
-function create_qwiz() {
-  let _pipe = mutation("create_qwiz", new None());
-  let _pipe$1 = params(_pipe, upsert_qwiz_converter());
-  return returns(_pipe$1, qwiz_with_questions_converter());
+function queueMicrotask(callback) {
+  return window.queueMicrotask(callback);
 }
-function update_qwiz() {
-  let _pipe = mutation("update_qwiz", new None());
-  let _pipe$1 = params(_pipe, qwiz_converter());
-  return returns(_pipe$1, qwiz_with_questions_converter());
+function requestAnimationFrame(callback) {
+  return window.requestAnimationFrame(callback);
 }
-function delete_qwiz() {
-  let _pipe = mutation("delete_qwiz", new None());
-  let _pipe$1 = params(_pipe, uuid_converter());
-  return returns(_pipe$1, null$2());
+function cancelAnimationFrame(callback) {
+  return window.cancelAnimationFrame(callback);
 }
-
-// build/dev/javascript/shared/shared/user.mjs
-var User = class extends CustomType {
-  constructor(id2, pseudo) {
-    super();
-    this.id = id2;
-    this.pseudo = pseudo;
+function eval_(string) {
+  try {
+    return new Ok(eval(string));
+  } catch (error2) {
+    return new Error(error2.toString());
   }
-};
-var LoginData = class extends CustomType {
-  constructor(pseudo, password) {
-    super();
-    this.pseudo = pseudo;
-    this.password = password;
+}
+async function import_(string4) {
+  try {
+    return new Ok(await import(string4));
+  } catch (error2) {
+    return new Error(error2.toString());
   }
-};
-function user_converter() {
-  return object3(
-    field2(
-      "id",
-      (v) => {
-        return new Ok(v.id);
-      },
-      uuid_converter(),
-      (id2) => {
-        return field2(
-          "pseudo",
-          (v) => {
-            return new Ok(v.pseudo);
-          },
-          string2(),
-          (pseudo) => {
-            return success(new User(id2, pseudo));
-          }
-        );
-      }
-    )
-  );
 }
-function login_data_converter() {
-  return object3(
-    field2(
-      "pseudo",
-      (v) => {
-        return new Ok(v.pseudo);
-      },
-      string2(),
-      (pseudo) => {
-        return field2(
-          "password",
-          (v) => {
-            return new Ok(v.password);
-          },
-          string2(),
-          (password) => {
-            return success(new LoginData(pseudo, password));
-          }
-        );
-      }
-    )
-  );
-}
-function login() {
-  let _pipe = query("login", new None());
-  let _pipe$1 = params(_pipe, login_data_converter());
-  return returns(_pipe$1, user_converter());
-}
-
-// build/dev/javascript/client/client/model/route.mjs
-var HomeRoute = class extends CustomType {
-};
-var QwizesRoute = class extends CustomType {
-};
-var QwizRoute = class extends CustomType {
-};
-var QuestionRoute = class extends CustomType {
-};
 
 // build/dev/javascript/client/client/model/router.mjs
-var RouteDef = class extends CustomType {
-  constructor(route_id, path, on_load, view_fn) {
+var RouteIdentifier = class extends CustomType {
+  constructor(route_id, path, param_converter) {
     super();
     this.route_id = route_id;
     this.path = path;
-    this.on_load = on_load;
+    this.param_converter = param_converter;
+  }
+};
+var RouteInRouter = class extends CustomType {
+  constructor(route_id, path, on_load4, view_fn) {
+    super();
+    this.route_id = route_id;
+    this.path = path;
+    this.on_load = on_load4;
     this.view_fn = view_fn;
   }
 };
 var Router = class extends CustomType {
-  constructor(routes, default_route, to_msg) {
+  constructor(routes, to_msg, error_page, error_route) {
     super();
     this.routes = routes;
-    this.default_route = default_route;
     this.to_msg = to_msg;
+    this.error_page = error_page;
+    this.error_route = error_route;
   }
 };
-function init3(routes, default_route, to_msg) {
-  return new Router(routes, default_route, to_msg);
+function init3(to_msg, error_page, error_route) {
+  return new Router(toList([]), to_msg, error_page, error_route);
+}
+function std_error_page() {
+  return (route_id, path, query2) => {
+    return div(
+      toList([]),
+      toList([
+        h1(
+          toList([]),
+          toList([text2("An error happened with this page")])
+        ),
+        br(toList([])),
+        (() => {
+          if (route_id instanceof None) {
+            return p(
+              toList([]),
+              toList([
+                text2("No route found at path /"),
+                text2(
+                  (() => {
+                    let _pipe = path;
+                    return join(_pipe, "/");
+                  })()
+                )
+              ])
+            );
+          } else {
+            let route_id$1 = route_id[0];
+            return p(
+              toList([]),
+              toList([
+                text2("Route found: "),
+                text2(inspect2(route_id$1))
+              ])
+            );
+          }
+        })(),
+        br(toList([])),
+        p(
+          toList([]),
+          toList([
+            text2("Query provided: "),
+            text2(query_to_string(query2))
+          ])
+        )
+      ])
+    );
+  };
+}
+function route_data_to_router_route(identifier, on_load4, view_fn, error_page) {
+  return new RouteInRouter(
+    identifier.route_id,
+    identifier.path,
+    (model, query2) => {
+      let param = (() => {
+        let _pipe = query2;
+        return decode3(_pipe, identifier.param_converter);
+      })();
+      if (!param.isOk()) {
+        return from(
+          (_) => {
+            return console_error(
+              "Wrong query for route " + inspect2(identifier.route_id) + " : " + query_to_string(
+                query2
+              )
+            );
+          }
+        );
+      } else {
+        let param$1 = param[0];
+        return on_load4(model, param$1);
+      }
+    },
+    (model, query2) => {
+      let param = (() => {
+        let _pipe = query2;
+        return decode3(_pipe, identifier.param_converter);
+      })();
+      if (!param.isOk()) {
+        return error_page(
+          new Some(identifier.route_id),
+          identifier.path,
+          query2
+        );
+      } else {
+        let param$1 = param[0];
+        return view_fn(model, param$1);
+      }
+    }
+  );
+}
+function register(router, route, on_load4, view_fn) {
+  let new_route = route_data_to_router_route(
+    route,
+    on_load4,
+    view_fn,
+    router.error_page
+  );
+  let _record = router;
+  return new Router(
+    prepend(new_route, router.routes),
+    _record.to_msg,
+    _record.error_page,
+    _record.error_route
+  );
+}
+function get_query_from_uri(uri) {
+  let _pipe = uri.query;
+  let _pipe$1 = unwrap(_pipe, "");
+  return parse_query(_pipe$1);
 }
 function test_route(loop$route_path, loop$uri_path) {
   while (true) {
@@ -5193,32 +6387,21 @@ function find_route_by_uri(routes, uri) {
     }
   );
 }
-function get_route_and_query(routes, uri) {
-  return try$(
-    (() => {
-      let _pipe = uri.query;
-      let _pipe$1 = unwrap(_pipe, "");
-      return parse_query(_pipe$1);
-    })(),
-    (query2) => {
-      return try$(
-        find_route_by_uri(routes, uri),
-        (route) => {
-          return new Ok([route, query2]);
-        }
-      );
-    }
-  );
-}
 function init_effect(router) {
   return init2(
     (uri) => {
-      let _pipe = get_route_and_query(router.routes, uri);
-      let _pipe$1 = unwrap2(_pipe, [router.default_route, toList([])]);
-      let _pipe$2 = ((def) => {
-        return [def[0].route_id, def[1]];
-      })(_pipe$1);
-      return router.to_msg(_pipe$2);
+      let query2 = (() => {
+        let _pipe = get_query_from_uri(uri);
+        return unwrap2(_pipe, toList([]));
+      })();
+      let route_id = (() => {
+        let _pipe = find_route_by_uri(router.routes, uri);
+        let _pipe$1 = map3(_pipe, (route) => {
+          return route.route_id;
+        });
+        return unwrap2(_pipe$1, router.error_route);
+      })();
+      return router.to_msg([route_id, query2]);
     }
   );
 }
@@ -5230,241 +6413,356 @@ function find_route_by_route(routes, route_id) {
     }
   );
 }
-function on_change(router, route, params2, model) {
+function on_change(router, route, query2, model) {
   let $ = find_route_by_route(router.routes, route);
   if (!$.isOk()) {
     return none();
   } else {
-    let route_def2 = $[0];
-    return route_def2.on_load(model, params2);
+    let route_def = $[0];
+    return route_def.on_load(model, query2);
   }
 }
-function go_to(router, route, query2) {
-  let $ = find_route_by_route(router.routes, route);
-  if (!$.isOk()) {
-    console_error("Route not registered: " + inspect2(route));
-    return none();
-  } else {
-    let route_def2 = $[0];
-    return push(
-      "/" + (() => {
-        let _pipe = route_def2.path;
-        return join(_pipe, "/");
-      })(),
-      new Some(
-        (() => {
-          let _pipe = query2;
-          return query_to_string(_pipe);
-        })()
-      ),
-      new None()
-    );
-  }
+function go_to(route, param) {
+  let path = "/" + (() => {
+    let _pipe = route.path;
+    return join(_pipe, "/");
+  })();
+  let query2 = (() => {
+    let _pipe = param;
+    let _pipe$1 = encode2(_pipe, route.param_converter);
+    return query_to_string(_pipe$1);
+  })();
+  return push(path, new Some(query2), new None());
 }
-function view(router, route, model, params2) {
-  let _pipe = find_route_by_route(router.routes, route);
-  let _pipe$1 = unwrap2(_pipe, router.default_route);
-  return ((route_def2) => {
-    return route_def2.view_fn(model, params2);
-  })(_pipe$1);
+function href2(route, param) {
+  let path = "/" + (() => {
+    let _pipe = route.path;
+    return join(_pipe, "/");
+  })();
+  let query2 = (() => {
+    let _pipe = param;
+    let _pipe$1 = encode2(_pipe, route.param_converter);
+    return query_to_string(_pipe$1);
+  })();
+  return href(path + "?" + query2);
 }
-function initial_route(router) {
-  return try$(
-    do_initial_uri(),
-    (uri) => {
-      let _pipe = router.routes;
-      return find_route_by_uri(_pipe, uri);
+function view(router) {
+  return (model) => {
+    let $ = (() => {
+      let _pipe = location();
+      return parse(_pipe);
+    })();
+    if (!$.isOk()) {
+      return router.error_page(new None(), toList([]), toList([]));
+    } else {
+      let uri = $[0];
+      let $1 = get_query_from_uri(uri);
+      if (!$1.isOk()) {
+        return router.error_page(new None(), toList([]), toList([]));
+      } else {
+        let query2 = $1[0];
+        let _pipe = find_route_by_uri(router.routes, uri);
+        let _pipe$1 = map3(
+          _pipe,
+          (route_def) => {
+            return route_def.view_fn(model, query2);
+          }
+        );
+        return unwrap2(
+          _pipe$1,
+          router.error_page(new None(), toList([]), query2)
+        );
+      }
     }
+  };
+}
+function no_load(_, _1) {
+  return none();
+}
+
+// build/dev/javascript/client/client/model/route.mjs
+var ErrorRoute = class extends CustomType {
+};
+var HomeRoute = class extends CustomType {
+};
+var QwizesRoute = class extends CustomType {
+};
+var CreateQwizRoute = class extends CustomType {
+};
+var QwizRoute = class extends CustomType {
+};
+var CreateQuestionRoute = class extends CustomType {
+};
+var QuestionRoute = class extends CustomType {
+};
+var CreateAnswerRoute = class extends CustomType {
+};
+var UpdateAnswerRoute = class extends CustomType {
+};
+var UpdateQuestionRoute = class extends CustomType {
+};
+var UpdateQwizRoute = class extends CustomType {
+};
+function home() {
+  return new RouteIdentifier(
+    new HomeRoute(),
+    toList([]),
+    null$2()
+  );
+}
+function qwiz() {
+  return new RouteIdentifier(
+    new QwizRoute(),
+    toList(["qwiz"]),
+    uuid_converter()
+  );
+}
+function qwizes() {
+  return new RouteIdentifier(
+    new QwizesRoute(),
+    toList(["qwizes"]),
+    null$2()
+  );
+}
+function question() {
+  return new RouteIdentifier(
+    new QuestionRoute(),
+    toList(["question"]),
+    uuid_converter()
+  );
+}
+function create_answer2() {
+  return new RouteIdentifier(
+    new CreateAnswerRoute(),
+    toList(["answer", "create"]),
+    null$2()
+  );
+}
+function create_question2() {
+  return new RouteIdentifier(
+    new CreateQuestionRoute(),
+    toList(["question", "create"]),
+    null$2()
+  );
+}
+function create_qwiz2() {
+  return new RouteIdentifier(
+    new CreateQwizRoute(),
+    toList(["qwiz", "create"]),
+    null$2()
+  );
+}
+function update_answer2() {
+  return new RouteIdentifier(
+    new UpdateAnswerRoute(),
+    toList(["answer", "update"]),
+    uuid_converter()
+  );
+}
+function update_question2() {
+  return new RouteIdentifier(
+    new UpdateQuestionRoute(),
+    toList(["question", "update"]),
+    uuid_converter()
+  );
+}
+function update_qwiz2() {
+  return new RouteIdentifier(
+    new UpdateQwizRoute(),
+    toList(["qwiz", "update"]),
+    uuid_converter()
   );
 }
 
-// build/dev/javascript/convert_http_query/convert/http/query.mjs
-function encode_dict_key(key2) {
-  if (key2 instanceof BoolValue) {
-    let v = key2.value;
-    return to_string2(v);
-  } else if (key2 instanceof FloatValue) {
-    let v = key2.value;
-    return float_to_string(v);
-  } else if (key2 instanceof IntValue) {
-    let v = key2.value;
-    return to_string(v);
-  } else if (key2 instanceof StringValue) {
-    let v = key2.value;
-    return v;
-  } else if (key2 instanceof BitArrayValue) {
-    let v = key2.value;
-    return base64_url_encode(v, true);
-  } else {
-    return "";
+// build/dev/javascript/client/client/model/model.mjs
+var Model2 = class extends CustomType {
+  constructor(route, params2, router, user, qwizes2, qwiz2, question2) {
+    super();
+    this.route = route;
+    this.params = params2;
+    this.router = router;
+    this.user = user;
+    this.qwizes = qwizes2;
+    this.qwiz = qwiz2;
+    this.question = question2;
   }
-}
-function encode_sub_value(val, path) {
-  let prefix = join(path, ".");
-  if (val instanceof BoolValue) {
-    let v = val.value;
-    return toList([[prefix, to_string2(v)]]);
-  } else if (val instanceof DictValue) {
-    let v = val.value;
-    return encode_dict(v, path);
-  } else if (val instanceof EnumValue) {
-    let variant = val.variant;
-    let v = val.value;
-    return encode_enum(variant, v, path);
-  } else if (val instanceof FloatValue) {
-    let v = val.value;
-    return toList([[prefix, float_to_string(v)]]);
-  } else if (val instanceof IntValue) {
-    let v = val.value;
-    return toList([[prefix, to_string(v)]]);
-  } else if (val instanceof ListValue) {
-    let v = val.value;
-    return encode_list(v, path);
-  } else if (val instanceof NullValue) {
-    return toList([]);
-  } else if (val instanceof ObjectValue) {
-    let v = val.value;
-    return encode_object(v, path);
-  } else if (val instanceof OptionalValue) {
-    let v = val.value;
-    return encode_optional(v, path);
-  } else if (val instanceof ResultValue) {
-    let v = val.value;
-    return encode_result(v, path);
-  } else if (val instanceof StringValue) {
-    let v = val.value;
-    return toList([[prefix, v]]);
-  } else if (val instanceof BitArrayValue) {
-    let v = val.value;
-    return toList([[prefix, base64_url_encode(v, true)]]);
-  } else {
-    return toList([]);
+};
+var ChangeRoute = class extends CustomType {
+  constructor(route, query2) {
+    super();
+    this.route = route;
+    this.query = query2;
   }
-}
-function encode_dict(val, path) {
-  let result_partition = (() => {
-    let _pipe2 = val;
-    let _pipe$12 = map_to_list(_pipe2);
-    let _pipe$2 = map2(
-      _pipe$12,
-      (kv) => {
-        let $ = encode_dict_key(kv[0]);
-        if ($ === "") {
-          return new Error(void 0);
-        } else {
-          let key2 = $;
-          return new Ok(
-            encode_sub_value(kv[1], append3(path, toList([key2])))
-          );
-        }
-      }
-    );
-    return partition(_pipe$2);
-  })();
-  let _pipe = result_partition[0];
-  let _pipe$1 = reverse(_pipe);
-  return flatten(_pipe$1);
-}
-function encode_object(val, path) {
-  let _pipe = val;
-  return flat_map(
-    _pipe,
-    (value3) => {
-      return encode_sub_value(value3[1], append3(path, toList([value3[0]])));
-    }
-  );
-}
-function encode_list(val, path) {
-  let _pipe = val;
-  let _pipe$1 = index_fold(
-    _pipe,
-    toList([]),
-    (acc, value3, index3) => {
-      return flatten(
-        toList([
-          encode_sub_value(
-            value3,
-            append3(path, toList([to_string(index3)]))
-          ),
-          acc
-        ])
-      );
-    }
-  );
-  return reverse(_pipe$1);
-}
-function encode_result(val, path) {
-  if (val.isOk()) {
-    let v = val[0];
-    return encode_sub_value(v, append3(path, toList(["ok"])));
-  } else {
-    let v = val[0];
-    return encode_sub_value(v, append3(path, toList(["error"])));
+};
+var SetUser = class extends CustomType {
+  constructor(user) {
+    super();
+    this.user = user;
   }
-}
-function encode_optional(val, path) {
-  if (val instanceof None) {
-    return toList([]);
-  } else {
-    let v = val[0];
-    return encode_sub_value(v, path);
+};
+var SetQwizes = class extends CustomType {
+  constructor(qwizes2) {
+    super();
+    this.qwizes = qwizes2;
   }
-}
-function encode_enum(variant, v, path) {
-  return encode_sub_value(v, append3(path, toList([variant])));
-}
-function encode_value(val) {
-  if (val instanceof BoolValue) {
-    let v = val.value;
-    return toList([["bool", to_string2(v)]]);
-  } else if (val instanceof DictValue) {
-    let v = val.value;
-    return encode_dict(v, toList(["dict"]));
-  } else if (val instanceof EnumValue) {
-    let variant = val.variant;
-    let v = val.value;
-    return encode_enum(variant, v, toList([]));
-  } else if (val instanceof FloatValue) {
-    let v = val.value;
-    return toList([["float", float_to_string(v)]]);
-  } else if (val instanceof IntValue) {
-    let v = val.value;
-    return toList([["int", to_string(v)]]);
-  } else if (val instanceof ListValue) {
-    let v = val.value;
-    return encode_list(v, toList(["list"]));
-  } else if (val instanceof NullValue) {
-    return toList([]);
-  } else if (val instanceof ObjectValue) {
-    let v = val.value;
-    return encode_object(v, toList([]));
-  } else if (val instanceof OptionalValue) {
-    let v = val.value;
-    return encode_optional(v, toList(["optional"]));
-  } else if (val instanceof ResultValue) {
-    let v = val.value;
-    return encode_result(v, toList(["result"]));
-  } else if (val instanceof StringValue) {
-    let v = val.value;
-    return toList([["string", v]]);
-  } else if (val instanceof BitArrayValue) {
-    let v = val.value;
-    return toList([["bit_array", base64_url_encode(v, true)]]);
-  } else {
-    return toList([]);
+};
+var SetQwiz = class extends CustomType {
+  constructor(qwiz2) {
+    super();
+    this.qwiz = qwiz2;
   }
-}
-function encode2(value3, converter) {
-  let _pipe = value3;
-  let _pipe$1 = encode(converter)(_pipe);
-  return encode_value(_pipe$1);
-}
+};
+var SetQuestion = class extends CustomType {
+  constructor(question2) {
+    super();
+    this.question = question2;
+  }
+};
+var UserMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var QwizMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var QuestionMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var AnswerMsg = class extends CustomType {
+  constructor(msg) {
+    super();
+    this.msg = msg;
+  }
+};
+var Login = class extends CustomType {
+  constructor(username, password) {
+    super();
+    this.username = username;
+    this.password = password;
+  }
+};
+var CreateQwiz2 = class extends CustomType {
+  constructor(data) {
+    super();
+    this.data = data;
+  }
+};
+var QwizCreated = class extends CustomType {
+  constructor(qwiz2) {
+    super();
+    this.qwiz = qwiz2;
+  }
+};
+var DeleteQwiz = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var QwizDeleted = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var UpdateQwiz = class extends CustomType {
+  constructor(new_qwiz) {
+    super();
+    this.new_qwiz = new_qwiz;
+  }
+};
+var QwizUpdated = class extends CustomType {
+  constructor(qwiz2) {
+    super();
+    this.qwiz = qwiz2;
+  }
+};
+var CreateQuestion2 = class extends CustomType {
+  constructor(data) {
+    super();
+    this.data = data;
+  }
+};
+var QuestionCreated = class extends CustomType {
+  constructor(question2) {
+    super();
+    this.question = question2;
+  }
+};
+var DeleteQuestion = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var QuestionDeleted = class extends CustomType {
+  constructor(id2) {
+    super();
+    this.id = id2;
+  }
+};
+var UpdateQuestion = class extends CustomType {
+  constructor(new_question) {
+    super();
+    this.new_question = new_question;
+  }
+};
+var QuestionUpdated = class extends CustomType {
+  constructor(question2) {
+    super();
+    this.question = question2;
+  }
+};
+var CreateAnswer2 = class extends CustomType {
+  constructor(data) {
+    super();
+    this.data = data;
+  }
+};
+var AnswerCreated = class extends CustomType {
+  constructor(answer) {
+    super();
+    this.answer = answer;
+  }
+};
+var DeleteAnswer = class extends CustomType {
+  constructor(answer_id) {
+    super();
+    this.answer_id = answer_id;
+  }
+};
+var AnswerDeleted = class extends CustomType {
+  constructor(answer_id) {
+    super();
+    this.answer_id = answer_id;
+  }
+};
+var UpdateAnswer = class extends CustomType {
+  constructor(new_answer) {
+    super();
+    this.new_answer = new_answer;
+  }
+};
+var AnswerUpdated = class extends CustomType {
+  constructor(answer) {
+    super();
+    this.answer = answer;
+  }
+};
 
 // build/dev/javascript/convert_json/convert/json.mjs
 function encode_value2(val) {
   if (val instanceof StringValue) {
     let v = val.value;
-    return string(v);
+    return string2(v);
   } else if (val instanceof BoolValue) {
     let v = val.value;
     return bool2(v);
@@ -5503,23 +6801,23 @@ function encode_value2(val) {
     if (v.isOk()) {
       let res = v[0];
       return object2(
-        toList([["type", string("ok")], ["value", encode_value2(res)]])
+        toList([["type", string2("ok")], ["value", encode_value2(res)]])
       );
     } else {
       let err = v[0];
       return object2(
-        toList([["type", string("error")], ["value", encode_value2(err)]])
+        toList([["type", string2("error")], ["value", encode_value2(err)]])
       );
     }
   } else if (val instanceof EnumValue) {
     let variant = val.variant;
     let v = val.value;
     return object2(
-      toList([["variant", string(variant)], ["value", encode_value2(v)]])
+      toList([["variant", string2(variant)], ["value", encode_value2(v)]])
     );
   } else if (val instanceof BitArrayValue) {
     let v = val.value;
-    return string(base64_url_encode(v, true));
+    return string2(base64_url_encode(v, true));
   } else {
     return null$();
   }
@@ -5529,7 +6827,7 @@ function json_encode(value3, converter) {
   let _pipe$1 = encode(converter)(_pipe);
   return encode_value2(_pipe$1);
 }
-function decode_value(of) {
+function decode_value2(of) {
   if (of instanceof String2) {
     return (val) => {
       let _pipe = val;
@@ -5570,7 +6868,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = list(dynamic)(_pipe);
-      let _pipe$2 = then$(
+      let _pipe$2 = then$2(
         _pipe$1,
         (val_list) => {
           return fold(
@@ -5579,7 +6877,7 @@ function decode_value(of) {
             (result, list_el) => {
               let $ = (() => {
                 let _pipe$22 = list_el;
-                return decode_value(el)(_pipe$22);
+                return decode_value2(el)(_pipe$22);
               })();
               if (result.isOk() && $.isOk()) {
                 let result_list = result[0];
@@ -5594,7 +6892,7 @@ function decode_value(of) {
               } else {
                 let errs = result[0];
                 let new_errs = $[0];
-                return new Error(append3(errs, new_errs));
+                return new Error(append(errs, new_errs));
               }
             }
           );
@@ -5611,9 +6909,9 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = list(
-        list(any(toList([decode_value(k), decode_value(v)])))
+        list(any(toList([decode_value2(k), decode_value2(v)])))
       )(_pipe);
-      let _pipe$2 = then$(
+      let _pipe$2 = then$2(
         _pipe$1,
         (_capture) => {
           return fold(
@@ -5661,7 +6959,7 @@ function decode_value(of) {
         (result, f) => {
           let $ = (() => {
             let _pipe2 = val;
-            return field(f[0], decode_value(f[1]))(_pipe2);
+            return field(f[0], decode_value2(f[1]))(_pipe2);
           })();
           if (result.isOk() && $.isOk()) {
             let field_list = result[0];
@@ -5676,7 +6974,7 @@ function decode_value(of) {
           } else {
             let errs = result[0];
             let new_errs = $[0];
-            return new Error(append3(errs, new_errs));
+            return new Error(append(errs, new_errs));
           }
         }
       );
@@ -5692,7 +6990,7 @@ function decode_value(of) {
     let of$1 = of.of;
     return (val) => {
       let _pipe = val;
-      let _pipe$1 = optional(decode_value(of$1))(_pipe);
+      let _pipe$1 = optional(decode_value2(of$1))(_pipe);
       return map3(
         _pipe$1,
         (var0) => {
@@ -5712,7 +7010,7 @@ function decode_value(of) {
         (type_val) => {
           if (type_val === "ok") {
             let _pipe = val;
-            let _pipe$1 = field("value", decode_value(res))(_pipe);
+            let _pipe$1 = field("value", decode_value2(res))(_pipe);
             let _pipe$2 = map3(
               _pipe$1,
               (var0) => {
@@ -5727,7 +7025,7 @@ function decode_value(of) {
             );
           } else if (type_val === "error") {
             let _pipe = val;
-            let _pipe$1 = field("value", decode_value(err))(_pipe);
+            let _pipe$1 = field("value", decode_value2(err))(_pipe);
             let _pipe$2 = map3(
               _pipe$1,
               (var0) => {
@@ -5789,7 +7087,7 @@ function decode_value(of) {
                 (() => {
                   let _pipe = val;
                   let _pipe$1 = field("value", dynamic)(_pipe);
-                  return then$(_pipe$1, decode_value(variant_def));
+                  return then$2(_pipe$1, decode_value2(variant_def));
                 })(),
                 (variant_value) => {
                   return new Ok(new EnumValue(variant_name, variant_value));
@@ -5804,7 +7102,7 @@ function decode_value(of) {
     return (val) => {
       let _pipe = val;
       let _pipe$1 = decode_string(_pipe);
-      let _pipe$2 = then$(
+      let _pipe$2 = then$2(
         _pipe$1,
         (v) => {
           let _pipe$22 = base64_url_decode(v);
@@ -5830,8 +7128,8 @@ function decode_value(of) {
 function json_decode(converter) {
   return (value3) => {
     let _pipe = value3;
-    let _pipe$1 = decode_value(type_def(converter))(_pipe);
-    return then$(_pipe$1, decode2(converter));
+    let _pipe$1 = decode_value2(type_def(converter))(_pipe);
+    return then$2(_pipe$1, decode2(converter));
   };
 }
 
@@ -5926,14 +7224,14 @@ function to_uri(request) {
   );
 }
 function from_uri(uri) {
-  return then$(
+  return then$2(
     (() => {
       let _pipe = uri.scheme;
       let _pipe$1 = unwrap(_pipe, "");
       return scheme_from_string(_pipe$1);
     })(),
     (scheme) => {
-      return then$(
+      return then$2(
         (() => {
           let _pipe = uri.host;
           return to_result(_pipe, void 0);
@@ -6004,7 +7302,7 @@ function set_method(req, method) {
 function to(url) {
   let _pipe = url;
   let _pipe$1 = parse(_pipe);
-  return then$(_pipe$1, from_uri);
+  return then$2(_pipe$1, from_uri);
 }
 function set_path(req, path) {
   let _record = req;
@@ -6029,47 +7327,6 @@ var Response = class extends CustomType {
     this.body = body2;
   }
 };
-
-// build/dev/javascript/gleam_javascript/gleam_javascript_ffi.mjs
-var PromiseLayer = class _PromiseLayer {
-  constructor(promise) {
-    this.promise = promise;
-  }
-  static wrap(value3) {
-    return value3 instanceof Promise ? new _PromiseLayer(value3) : value3;
-  }
-  static unwrap(value3) {
-    return value3 instanceof _PromiseLayer ? value3.promise : value3;
-  }
-};
-function resolve(value3) {
-  return Promise.resolve(PromiseLayer.wrap(value3));
-}
-function then_await(promise, fn) {
-  return promise.then((value3) => fn(PromiseLayer.unwrap(value3)));
-}
-function map_promise(promise, fn) {
-  return promise.then(
-    (value3) => PromiseLayer.wrap(fn(PromiseLayer.unwrap(value3)))
-  );
-}
-
-// build/dev/javascript/gleam_javascript/gleam/javascript/promise.mjs
-function try_await(promise, callback) {
-  let _pipe = promise;
-  return then_await(
-    _pipe,
-    (result) => {
-      if (result.isOk()) {
-        let a2 = result[0];
-        return callback(a2);
-      } else {
-        let e = result[0];
-        return resolve(new Error(e));
-      }
-    }
-  );
-}
 
 // build/dev/javascript/gleam_fetch/gleam_fetch_ffi.mjs
 async function raw_send(request) {
@@ -6322,218 +7579,45 @@ function exec_procedure(procedure, data, on_success) {
     }
   );
 }
-
-// build/dev/javascript/client/client/services/question_service.mjs
-function create_question2(data, cb) {
-  return exec_procedure(create_question(), data, cb);
+function get_element(id2) {
+  let _pipe = getElementById(id2);
+  return replace_error(
+    _pipe,
+    toList([
+      new DecodeError("DOM element", "Element not found", toList([id2]))
+    ])
+  );
 }
-function update_question2(question, cb) {
-  return exec_procedure(update_question(), question, cb);
+function get_value2(element2) {
+  let _pipe = element2;
+  let _pipe$1 = value2(_pipe);
+  return replace_error(
+    _pipe$1,
+    toList([
+      new DecodeError(
+        "A value",
+        "",
+        toList([
+          (() => {
+            let _pipe$2 = element2;
+            let _pipe$3 = getAttribute(_pipe$2, "id");
+            return unwrap2(_pipe$3, "");
+          })()
+        ])
+      )
+    ])
+  );
 }
-function delete_question2(id2, cb) {
-  return exec_procedure(delete_question(), id2, cb);
+function get_checked(element2) {
+  let _pipe = element2;
+  return getChecked(_pipe);
 }
-
-// build/dev/javascript/client/client/services/qwiz_service.mjs
-function create_qwiz2(data, cb) {
-  return exec_procedure(create_qwiz(), data, cb);
-}
-function update_qwiz2(qwiz, cb) {
-  return exec_procedure(update_qwiz(), qwiz, cb);
-}
-function delete_qwiz2(id2, cb) {
-  return exec_procedure(delete_qwiz(), id2, cb);
-}
-
-// build/dev/javascript/client/client/model/model.mjs
-var Model2 = class extends CustomType {
-  constructor(route, params2, router, user, qwizes, qwiz, question) {
-    super();
-    this.route = route;
-    this.params = params2;
-    this.router = router;
-    this.user = user;
-    this.qwizes = qwizes;
-    this.qwiz = qwiz;
-    this.question = question;
-  }
-};
-var ChangeRoute = class extends CustomType {
-  constructor(route, query2) {
-    super();
-    this.route = route;
-    this.query = query2;
-  }
-};
-var SetUser = class extends CustomType {
-  constructor(user) {
-    super();
-    this.user = user;
-  }
-};
-var SetQwizes = class extends CustomType {
-  constructor(qwizes) {
-    super();
-    this.qwizes = qwizes;
-  }
-};
-var SetQwiz = class extends CustomType {
-  constructor(qwiz) {
-    super();
-    this.qwiz = qwiz;
-  }
-};
-var SetQuestion = class extends CustomType {
-  constructor(question) {
-    super();
-    this.question = question;
-  }
-};
-var UserMsg = class extends CustomType {
-  constructor(msg) {
-    super();
-    this.msg = msg;
-  }
-};
-var QwizMsg = class extends CustomType {
-  constructor(msg) {
-    super();
-    this.msg = msg;
-  }
-};
-var QuestionMsg = class extends CustomType {
-  constructor(msg) {
-    super();
-    this.msg = msg;
-  }
-};
-var AnswerMsg = class extends CustomType {
-  constructor(msg) {
-    super();
-    this.msg = msg;
-  }
-};
-var Login = class extends CustomType {
-  constructor(username, password) {
-    super();
-    this.username = username;
-    this.password = password;
-  }
-};
-var CreateQwiz2 = class extends CustomType {
-  constructor(data) {
-    super();
-    this.data = data;
-  }
-};
-var QwizCreated = class extends CustomType {
-  constructor(qwiz) {
-    super();
-    this.qwiz = qwiz;
-  }
-};
-var DeleteQwiz = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var QwizDeleted = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var UpdateQwiz = class extends CustomType {
-  constructor(new_qwiz) {
-    super();
-    this.new_qwiz = new_qwiz;
-  }
-};
-var QwizUpdated = class extends CustomType {
-  constructor(qwiz) {
-    super();
-    this.qwiz = qwiz;
-  }
-};
-var CreateQuestion2 = class extends CustomType {
-  constructor(data) {
-    super();
-    this.data = data;
-  }
-};
-var QuestionCreated = class extends CustomType {
-  constructor(question) {
-    super();
-    this.question = question;
-  }
-};
-var DeleteQuestion = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var QuestionDeleted = class extends CustomType {
-  constructor(id2) {
-    super();
-    this.id = id2;
-  }
-};
-var UpdateQuestion = class extends CustomType {
-  constructor(new_question) {
-    super();
-    this.new_question = new_question;
-  }
-};
-var QuestionUpdated = class extends CustomType {
-  constructor(question) {
-    super();
-    this.question = question;
-  }
-};
-var CreateAnswer2 = class extends CustomType {
-  constructor(data) {
-    super();
-    this.data = data;
-  }
-};
-var AnswerCreated = class extends CustomType {
-  constructor(answer) {
-    super();
-    this.answer = answer;
-  }
-};
-var DeleteAnswer = class extends CustomType {
-  constructor(answer_id) {
-    super();
-    this.answer_id = answer_id;
-  }
-};
-var AnswerDeleted = class extends CustomType {
-  constructor(answer_id) {
-    super();
-    this.answer_id = answer_id;
-  }
-};
-var UpdateAnswer = class extends CustomType {
-  constructor(new_answer) {
-    super();
-    this.new_answer = new_answer;
-  }
-};
-var AnswerUpdated = class extends CustomType {
-  constructor(answer) {
-    super();
-    this.answer = answer;
-  }
-};
 
 // build/dev/javascript/client/client/services/answer_service.mjs
-function create_answer2(data, cb) {
+function create_answer3(data, cb) {
   return exec_procedure(create_answer(), data, cb);
 }
-function update_answer2(answer, cb) {
+function update_answer3(answer, cb) {
   return exec_procedure(update_answer(), answer, cb);
 }
 function delete_answer2(id2, cb) {
@@ -6582,7 +7666,7 @@ function handle_message(model, msg) {
       model,
       from(
         (dispatch) => {
-          return create_answer2(
+          return create_answer3(
             data,
             (a2) => {
               let _pipe = new AnswerCreated(a2);
@@ -6599,7 +7683,7 @@ function handle_message(model, msg) {
       model,
       from(
         (dispatch) => {
-          return update_answer2(
+          return update_answer3(
             data,
             (a2) => {
               let _pipe = new AnswerUpdated(a2);
@@ -6629,30 +7713,10 @@ function handle_message(model, msg) {
     ];
   } else if (msg instanceof AnswerCreated) {
     let answer = msg.answer;
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(
-          _pipe,
-          new QuestionRoute(),
-          toList([["id", answer.question_id.data]])
-        );
-      })()
-    ];
+    return [model, go_to(question(), answer.question_id)];
   } else if (msg instanceof AnswerUpdated) {
     let a2 = msg.answer;
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(
-          _pipe,
-          new QuestionRoute(),
-          toList([["id", a2.question_id.data]])
-        );
-      })()
-    ];
+    return [model, go_to(question(), a2.question_id)];
   } else {
     let id2 = msg.answer_id;
     return [
@@ -6664,6 +7728,35 @@ function handle_message(model, msg) {
     ];
   }
 }
+function create(question_id, answer, correct) {
+  let _pipe = new CreateAnswer(question_id, answer, correct);
+  let _pipe$1 = new CreateAnswer2(_pipe);
+  return new AnswerMsg(_pipe$1);
+}
+function update(answer) {
+  let _pipe = answer;
+  let _pipe$1 = new UpdateAnswer(_pipe);
+  return new AnswerMsg(_pipe$1);
+}
+function delete$2(id2) {
+  let _pipe = id2;
+  let _pipe$1 = new DeleteAnswer(_pipe);
+  return new AnswerMsg(_pipe$1);
+}
+
+// build/dev/javascript/client/client/services/question_service.mjs
+function get_question2(question_id, cb) {
+  return exec_procedure(get_question(), question_id, cb);
+}
+function create_question3(data, cb) {
+  return exec_procedure(create_question(), data, cb);
+}
+function update_question3(question2, cb) {
+  return exec_procedure(update_question(), question2, cb);
+}
+function delete_question2(id2, cb) {
+  return exec_procedure(delete_question(), id2, cb);
+}
 
 // build/dev/javascript/client/client/handlers/question_handler.mjs
 function handle_message2(model, msg) {
@@ -6673,10 +7766,10 @@ function handle_message2(model, msg) {
       model,
       from(
         (dispatch) => {
-          return create_question2(
+          return create_question3(
             data,
-            (question) => {
-              let _pipe = new QuestionCreated(question);
+            (question2) => {
+              let _pipe = new QuestionCreated(question2);
               let _pipe$1 = new QuestionMsg(_pipe);
               return dispatch(_pipe$1);
             }
@@ -6690,7 +7783,7 @@ function handle_message2(model, msg) {
       model,
       from(
         (dispatch) => {
-          return update_question2(
+          return update_question3(
             q,
             (q2) => {
               let _pipe = new QuestionUpdated(q2);
@@ -6719,51 +7812,57 @@ function handle_message2(model, msg) {
       )
     ];
   } else if (msg instanceof QuestionCreated) {
-    let question = msg.question;
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(
-          _pipe,
-          new QuestionRoute(),
-          toList([["id", question.id.data]])
-        );
-      })()
-    ];
+    let question2 = msg.question;
+    return [model, go_to(question(), question2.id)];
   } else if (msg instanceof QuestionUpdated) {
     let q = msg.question;
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(
-          _pipe,
-          new QuestionRoute(),
-          toList([["id", q.id.data]])
-        );
-      })()
-    ];
+    return [model, go_to(question(), q.id)];
   } else {
     return [
       model,
       (() => {
         let $ = model.qwiz;
         if ($ instanceof None) {
-          let _pipe = model.router;
-          return go_to(_pipe, new QwizesRoute(), toList([]));
+          return go_to(qwizes(), void 0);
         } else {
-          let qwiz = $[0];
-          let _pipe = model.router;
-          return go_to(
-            _pipe,
-            new QwizRoute(),
-            toList([["id", qwiz.id.data]])
-          );
+          let qwiz2 = $[0];
+          return go_to(qwiz(), qwiz2.id);
         }
       })()
     ];
   }
+}
+function create2(qwiz_id, question2) {
+  let _pipe = new CreateQuestion(qwiz_id, question2);
+  let _pipe$1 = new CreateQuestion2(_pipe);
+  return new QuestionMsg(_pipe$1);
+}
+function update2(data) {
+  let _pipe = data;
+  let _pipe$1 = new UpdateQuestion(_pipe);
+  return new QuestionMsg(_pipe$1);
+}
+function delete$3(id2) {
+  let _pipe = id2;
+  let _pipe$1 = new DeleteQuestion(_pipe);
+  return new QuestionMsg(_pipe$1);
+}
+
+// build/dev/javascript/client/client/services/qwiz_service.mjs
+function get_qwizes2(cb) {
+  return exec_procedure(get_qwizes(), void 0, cb);
+}
+function get_qwiz2(id2, cb) {
+  return exec_procedure(get_qwiz(), id2, cb);
+}
+function create_qwiz3(data, cb) {
+  return exec_procedure(create_qwiz(), data, cb);
+}
+function update_qwiz3(qwiz2, cb) {
+  return exec_procedure(update_qwiz(), qwiz2, cb);
+}
+function delete_qwiz2(id2, cb) {
+  return exec_procedure(delete_qwiz(), id2, cb);
 }
 
 // build/dev/javascript/client/client/handlers/qwiz_handler.mjs
@@ -6774,7 +7873,7 @@ function handle_message3(model, msg) {
       model,
       from(
         (dispatch) => {
-          return create_qwiz2(
+          return create_qwiz3(
             data,
             (new_qwiz) => {
               let _pipe = new QwizCreated(new_qwiz);
@@ -6791,7 +7890,7 @@ function handle_message3(model, msg) {
       model,
       from(
         (dispatch) => {
-          return update_qwiz2(
+          return update_qwiz3(
             data,
             (qw) => {
               let _pipe = new QwizUpdated(qw);
@@ -6820,40 +7919,29 @@ function handle_message3(model, msg) {
       )
     ];
   } else if (msg instanceof QwizCreated) {
-    let qwiz = msg.qwiz;
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(
-          _pipe,
-          new QwizRoute(),
-          toList([["id", qwiz.id.data]])
-        );
-      })()
-    ];
+    let qwiz2 = msg.qwiz;
+    return [model, go_to(qwiz(), qwiz2.id)];
   } else if (msg instanceof QwizUpdated) {
-    let qwiz = msg.qwiz;
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(
-          _pipe,
-          new QwizRoute(),
-          toList([["id", qwiz.id.data]])
-        );
-      })()
-    ];
+    let qwiz2 = msg.qwiz;
+    return [model, go_to(qwiz(), qwiz2.id)];
   } else {
-    return [
-      model,
-      (() => {
-        let _pipe = model.router;
-        return go_to(_pipe, new QwizesRoute(), toList([]));
-      })()
-    ];
+    return [model, go_to(qwizes(), void 0)];
   }
+}
+function create3(name, owner) {
+  let _pipe = new CreateQwiz(name, owner);
+  let _pipe$1 = new CreateQwiz2(_pipe);
+  return new QwizMsg(_pipe$1);
+}
+function update3(data) {
+  let _pipe = data;
+  let _pipe$1 = new UpdateQwiz(_pipe);
+  return new QwizMsg(_pipe$1);
+}
+function delete$4(id2) {
+  let _pipe = id2;
+  let _pipe$1 = new DeleteQwiz(_pipe);
+  return new QwizMsg(_pipe$1);
 }
 
 // build/dev/javascript/client/client/services/user_service.mjs
@@ -6892,21 +7980,479 @@ function login3(user, password) {
   return new UserMsg(_pipe);
 }
 
-// build/dev/javascript/lustre/lustre/element/html.mjs
-function text2(content) {
-  return text(content);
-}
-function button(attrs, children2) {
-  return element("button", attrs, children2);
-}
-
 // build/dev/javascript/lustre/lustre/event.mjs
 function on2(name, handler) {
   return on(name, handler);
 }
+function on_click(msg) {
+  return on2("click", (_) => {
+    return new Ok(msg);
+  });
+}
+
+// build/dev/javascript/client/client/views/create_answer.mjs
+function no_question_view() {
+  return div(
+    toList([]),
+    toList([
+      h1(
+        toList([]),
+        toList([text2("Error: No question selected !")])
+      ),
+      a(
+        toList([href2(qwizes(), void 0)]),
+        toList([text2("Go back to qwizes")])
+      )
+    ])
+  );
+}
+var answer_title = "answer_title";
+var answer_correct = "answer_correct";
+function on_submit(question2, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(answer_title);
+      return then$2(_pipe, get_value2);
+    })(),
+    (title2) => {
+      return try$(
+        (() => {
+          let _pipe = get_element(answer_correct);
+          return map3(_pipe, get_checked);
+        })(),
+        (correct) => {
+          let _pipe = create(question2.id, title2, correct);
+          return new Ok(_pipe);
+        }
+      );
+    }
+  );
+}
+function create_view(question2) {
+  return div(
+    toList([]),
+    toList([
+      form(
+        toList([
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit(question2, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(toList([id(answer_title)]))
+            ])
+          ),
+          label(
+            toList([]),
+            toList([
+              text2("Correct answer ?"),
+              input(
+                toList([
+                  id(answer_correct),
+                  type_("checkbox")
+                ])
+              )
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Create")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view2(model, _) {
+  let $ = model.question;
+  if ($ instanceof None) {
+    return no_question_view();
+  } else {
+    let question2 = $[0];
+    return create_view(question2);
+  }
+}
+
+// build/dev/javascript/client/client/views/create_question.mjs
+function no_qwiz_view() {
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text2("Error: No qwiz selected !")])),
+      a(
+        toList([href2(qwizes(), void 0)]),
+        toList([text2("Go back to qwizes")])
+      )
+    ])
+  );
+}
+var question_title = "question_title";
+function on_submit2(qwiz2, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(question_title);
+      return then$2(_pipe, get_value2);
+    })(),
+    (title2) => {
+      let _pipe = create2(qwiz2.id, title2);
+      return new Ok(_pipe);
+    }
+  );
+}
+function create_view2(qwiz2) {
+  return div(
+    toList([]),
+    toList([
+      form(
+        toList([
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit2(qwiz2, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(toList([id(question_title)]))
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Create")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view3(model, _) {
+  let $ = model.qwiz;
+  if ($ instanceof None) {
+    return no_qwiz_view();
+  } else {
+    let qwiz2 = $[0];
+    return create_view2(qwiz2);
+  }
+}
+
+// build/dev/javascript/client/client/views/create_qwiz.mjs
+var qwiz_name = "qwiz_name";
+function on_submit3(model, v) {
+  prevent_default(v);
+  let $ = model.user;
+  if ($ instanceof None) {
+    console_error("No user logged in ! Log in before");
+    return new Error(
+      toList([new DecodeError("", "No user", toList([]))])
+    );
+  } else {
+    let user = $[0];
+    return try$(
+      (() => {
+        let _pipe = get_element(qwiz_name);
+        return then$2(_pipe, get_value2);
+      })(),
+      (name) => {
+        let _pipe = create3(name, user.id);
+        return new Ok(_pipe);
+      }
+    );
+  }
+}
+function view4(model, _) {
+  return form(
+    toList([
+      on2("submit", (_capture) => {
+        return on_submit3(model, _capture);
+      })
+    ]),
+    toList([
+      label(
+        toList([]),
+        toList([
+          text2("Name"),
+          input(toList([id(qwiz_name)]))
+        ])
+      ),
+      input(
+        toList([type_("submit"), value("Create")])
+      )
+    ])
+  );
+}
+
+// build/dev/javascript/client/client/views/edit_answer.mjs
+function no_answer_view(model) {
+  let return$ = (() => {
+    let $ = model.question;
+    let $1 = model.qwiz;
+    if ($ instanceof None && $1 instanceof None) {
+      return [href2(qwizes(), void 0), "Go back to qwizes"];
+    } else if ($ instanceof Some) {
+      let q = $[0];
+      return [href2(question(), q.id), "Go back to " + q.question];
+    } else {
+      let qw = $1[0];
+      return [href2(qwiz(), qw.id), "Go back to " + qw.name];
+    }
+  })();
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text2("Error: No answer selected !")])),
+      a(toList([return$[0]]), toList([text2(return$[1])]))
+    ])
+  );
+}
+var answer_title2 = "answer_title";
+var answer_correct2 = "answer_correct";
+function on_submit4(answer, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(answer_title2);
+      return then$2(_pipe, get_value2);
+    })(),
+    (title2) => {
+      return try$(
+        (() => {
+          let _pipe = get_element(answer_correct2);
+          return map3(_pipe, get_checked);
+        })(),
+        (correct) => {
+          let _pipe = update(
+            (() => {
+              let _record = answer;
+              return new Answer(
+                _record.id,
+                _record.question_id,
+                title2,
+                correct
+              );
+            })()
+          );
+          return new Ok(_pipe);
+        }
+      );
+    }
+  );
+}
+function update_view(answer) {
+  return div(
+    toList([]),
+    toList([
+      form(
+        toList([
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit4(answer, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(
+                toList([
+                  id(answer_title2),
+                  value(answer.answer)
+                ])
+              )
+            ])
+          ),
+          label(
+            toList([]),
+            toList([
+              text2("Correct answer ?"),
+              input(
+                toList([
+                  id(answer_correct2),
+                  type_("checkbox"),
+                  checked(answer.correct)
+                ])
+              )
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Save")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view5(model, param) {
+  let answer = (() => {
+    let _pipe = model.question;
+    return then$(
+      _pipe,
+      (q) => {
+        let _pipe$1 = q.answers;
+        let _pipe$2 = find2(
+          _pipe$1,
+          (a2) => {
+            return isEqual(a2.id, param);
+          }
+        );
+        return from_result(_pipe$2);
+      }
+    );
+  })();
+  if (answer instanceof None) {
+    return no_answer_view(model);
+  } else {
+    let answer$1 = answer[0];
+    return update_view(answer$1);
+  }
+}
+
+// build/dev/javascript/client/client/views/edit_question.mjs
+function no_question_view2() {
+  return div(
+    toList([]),
+    toList([
+      h1(
+        toList([]),
+        toList([text2("Error: No question selected !")])
+      ),
+      a(
+        toList([href2(qwizes(), void 0)]),
+        toList([text2("Go back to qwizes")])
+      )
+    ])
+  );
+}
+var question_title2 = "question_title";
+function on_submit5(question2, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(question_title2);
+      return then$2(_pipe, get_value2);
+    })(),
+    (title2) => {
+      let _pipe = update2(
+        new Question(question2.id, question2.qwiz_id, title2)
+      );
+      return new Ok(_pipe);
+    }
+  );
+}
+function update_view2(question2) {
+  return div(
+    toList([]),
+    toList([
+      form(
+        toList([
+          on2(
+            "submit",
+            (_capture) => {
+              return on_submit5(question2, _capture);
+            }
+          )
+        ]),
+        toList([
+          label(
+            toList([]),
+            toList([
+              text2("Title"),
+              input(toList([id(question_title2)]))
+            ])
+          ),
+          input(
+            toList([type_("submit"), value("Save")])
+          )
+        ])
+      )
+    ])
+  );
+}
+function view6(model, _) {
+  let $ = model.question;
+  if ($ instanceof None) {
+    return no_question_view2();
+  } else {
+    let question2 = $[0];
+    return update_view2(question2);
+  }
+}
+
+// build/dev/javascript/client/client/views/edit_qwiz.mjs
+function no_qwiz_view2() {
+  return div(
+    toList([]),
+    toList([
+      h1(toList([]), toList([text2("Error: No qwiz selected !")])),
+      a(
+        toList([href2(qwizes(), void 0)]),
+        toList([text2("Go back to qwizes")])
+      )
+    ])
+  );
+}
+var qwiz_name2 = "qwiz_name";
+function on_submit6(qwiz2, v) {
+  prevent_default(v);
+  return try$(
+    (() => {
+      let _pipe = get_element(qwiz_name2);
+      return then$2(_pipe, get_value2);
+    })(),
+    (name) => {
+      let _pipe = update3(
+        new Qwiz(qwiz2.id, name, qwiz2.owner)
+      );
+      return new Ok(_pipe);
+    }
+  );
+}
+function update_view3(qwiz2) {
+  return form(
+    toList([
+      on2("submit", (_capture) => {
+        return on_submit6(qwiz2, _capture);
+      })
+    ]),
+    toList([
+      label(
+        toList([]),
+        toList([
+          text2("Name"),
+          input(toList([id(qwiz_name2)]))
+        ])
+      ),
+      input(
+        toList([type_("submit"), value("Save")])
+      )
+    ])
+  );
+}
+function view7(model, _) {
+  let $ = model.qwiz;
+  if ($ instanceof None) {
+    return no_qwiz_view2();
+  } else {
+    let qwiz2 = $[0];
+    return update_view3(qwiz2);
+  }
+}
 
 // build/dev/javascript/client/client/views/home.mjs
-function view2(model, _) {
+function view8(model, _) {
   return button(
     toList([
       on2(
@@ -6920,14 +8466,240 @@ function view2(model, _) {
     toList([text2("Login")])
   );
 }
-function route_def() {
-  return new RouteDef(
-    new HomeRoute(),
+
+// build/dev/javascript/client/client/views/common.mjs
+function loading() {
+  return h1(toList([]), toList([text2("Loading")]));
+}
+
+// build/dev/javascript/client/client/views/question.mjs
+function on_load(model, id2) {
+  return from(
+    (dispatch) => {
+      return get_question2(
+        id2,
+        (qu) => {
+          let _pipe = new SetQuestion(qu);
+          return dispatch(_pipe);
+        }
+      );
+    }
+  );
+}
+function back_button(model) {
+  let link_data = (() => {
+    let $ = model.qwiz;
+    if ($ instanceof None) {
+      return [href2(qwizes(), void 0), "Back to qwizes"];
+    } else {
+      let qw = $[0];
+      return [href2(qwiz(), qw.id), "Back to " + qw.name];
+    }
+  })();
+  return a(toList([link_data[0]]), toList([text2(link_data[1])]));
+}
+function edit_answer_button(id2) {
+  return a(
+    toList([href2(update_answer2(), id2)]),
+    toList([text2("Edit")])
+  );
+}
+function delete_answer_button(id2) {
+  return button(
+    toList([on_click(delete$2(id2))]),
+    toList([text2("Remove")])
+  );
+}
+function answer_row(answer) {
+  return div(
     toList([]),
-    (_, _1) => {
-      return none();
+    toList([
+      text2(answer.answer),
+      edit_answer_button(answer.id),
+      delete_answer_button(answer.id)
+    ])
+  );
+}
+function answer_list(answers) {
+  return keyed(
+    (_capture) => {
+      return div(toList([]), _capture);
     },
-    view2
+    map2(answers, (a2) => {
+      return [a2.id.data, answer_row(a2)];
+    })
+  );
+}
+function edit_question_button(id2) {
+  return a(
+    toList([href2(update_question2(), id2)]),
+    toList([text2("Edit")])
+  );
+}
+function delete_question_button(id2) {
+  return button(
+    toList([on_click(delete$3(id2))]),
+    toList([text2("Delete")])
+  );
+}
+function create_answer_button() {
+  return a(
+    toList([href2(create_answer2(), void 0)]),
+    toList([text2("Add answer")])
+  );
+}
+function view9(model, _) {
+  let $ = model.question;
+  if ($ instanceof None) {
+    return loading();
+  } else {
+    let question2 = $[0];
+    return div(
+      toList([]),
+      toList([
+        div(
+          toList([]),
+          toList([
+            back_button(model),
+            h1(toList([]), toList([text2(question2.question)])),
+            edit_question_button(question2.id),
+            delete_question_button(question2.id)
+          ])
+        ),
+        answer_list(question2.answers),
+        create_answer_button()
+      ])
+    );
+  }
+}
+
+// build/dev/javascript/client/client/views/qwiz.mjs
+function on_load2(model, param) {
+  return from(
+    (dispatch) => {
+      return get_qwiz2(
+        param,
+        (qw) => {
+          let _pipe = new SetQwiz(qw);
+          return dispatch(_pipe);
+        }
+      );
+    }
+  );
+}
+function back_button2() {
+  let return$ = [qwizes(), void 0, "Back to qwizes"];
+  return a(
+    toList([href2(return$[0], return$[1])]),
+    toList([text2(return$[2])])
+  );
+}
+function question_row(question2) {
+  return a(
+    toList([href2(question(), question2.id)]),
+    toList([text2(question2.question)])
+  );
+}
+function question_list(questions) {
+  return keyed(
+    (_capture) => {
+      return div(toList([]), _capture);
+    },
+    map2(questions, (q) => {
+      return [q.id.data, question_row(q)];
+    })
+  );
+}
+function edit_qwiz_button(id2) {
+  return a(
+    toList([href2(update_qwiz2(), id2)]),
+    toList([text2("Edit")])
+  );
+}
+function delete_qwiz_button(id2) {
+  return button(
+    toList([on_click(delete$4(id2))]),
+    toList([text2("Delete")])
+  );
+}
+function create_question_button() {
+  return a(
+    toList([href2(create_question2(), void 0)]),
+    toList([text2("Add question")])
+  );
+}
+function view10(model, _) {
+  let $ = model.qwiz;
+  if ($ instanceof None) {
+    return loading();
+  } else {
+    let qwiz2 = $[0];
+    return div(
+      toList([]),
+      toList([
+        div(
+          toList([]),
+          toList([
+            back_button2(),
+            h1(toList([]), toList([text2(qwiz2.name)])),
+            edit_qwiz_button(qwiz2.id),
+            delete_qwiz_button(qwiz2.id)
+          ])
+        ),
+        question_list(qwiz2.questions),
+        create_question_button()
+      ])
+    );
+  }
+}
+
+// build/dev/javascript/client/client/views/qwizes.mjs
+function on_load3(model, _) {
+  return from(
+    (dispatch) => {
+      return get_qwizes2(
+        (qwizes2) => {
+          let _pipe = new SetQwizes(qwizes2);
+          return dispatch(_pipe);
+        }
+      );
+    }
+  );
+}
+function qwiz_row(qwiz2) {
+  return div(
+    toList([]),
+    toList([
+      a(
+        toList([href2(qwiz(), qwiz2.id)]),
+        toList([text2(qwiz2.name)])
+      )
+    ])
+  );
+}
+function create_qwiz_button() {
+  return a(
+    toList([href2(create_qwiz2(), void 0)]),
+    toList([text2("Create Qwiz")])
+  );
+}
+function view11(model, _) {
+  return div(
+    toList([]),
+    toList([
+      keyed(
+        (_capture) => {
+          return div(toList([]), _capture);
+        },
+        map2(
+          model.qwizes,
+          (qwiz2) => {
+            return [qwiz2.id.data, qwiz_row(qwiz2)];
+          }
+        )
+      ),
+      create_qwiz_button()
+    ])
   );
 }
 
@@ -6943,27 +8715,10 @@ function init4(router) {
       new None(),
       new None()
     ),
-    batch(
-      toList([
-        (() => {
-          let _pipe = router;
-          return init_effect(_pipe);
-        })(),
-        (() => {
-          let $ = (() => {
-            let _pipe = router;
-            return initial_route(_pipe);
-          })();
-          if ($.isOk()) {
-            let def = $[0];
-            return none();
-          } else {
-            let _pipe = router;
-            return go_to(_pipe, new HomeRoute(), toList([]));
-          }
-        })()
-      ])
-    )
+    (() => {
+      let _pipe = router;
+      return init_effect(_pipe);
+    })()
   ];
 }
 function update4(model, msg) {
@@ -7003,13 +8758,10 @@ function update4(model, msg) {
           _record.question
         );
       })(),
-      (() => {
-        let _pipe = model.router;
-        return go_to(_pipe, new QwizesRoute(), toList([]));
-      })()
+      go_to(qwizes(), void 0)
     ];
   } else if (msg instanceof SetQwizes) {
-    let qwizes = msg.qwizes;
+    let qwizes2 = msg.qwizes;
     return [
       (() => {
         let _record = model;
@@ -7018,7 +8770,7 @@ function update4(model, msg) {
           _record.params,
           _record.router,
           _record.user,
-          qwizes,
+          qwizes2,
           _record.qwiz,
           _record.question
         );
@@ -7026,7 +8778,7 @@ function update4(model, msg) {
       none()
     ];
   } else if (msg instanceof SetQwiz) {
-    let qwiz = msg.qwiz;
+    let qwiz2 = msg.qwiz;
     return [
       (() => {
         let _record = model;
@@ -7036,14 +8788,14 @@ function update4(model, msg) {
           _record.router,
           _record.user,
           _record.qwizes,
-          new Some(qwiz),
+          new Some(qwiz2),
           _record.question
         );
       })(),
       none()
     ];
   } else if (msg instanceof SetQuestion) {
-    let question = msg.question;
+    let question2 = msg.question;
     return [
       (() => {
         let _record = model;
@@ -7054,7 +8806,7 @@ function update4(model, msg) {
           _record.user,
           _record.qwizes,
           _record.qwiz,
-          new Some(question)
+          new Some(question2)
         );
       })(),
       none()
@@ -7073,25 +8825,83 @@ function update4(model, msg) {
     return handle_message(model, msg$1);
   }
 }
-function view3(model) {
-  let _pipe = model.router;
-  return view(_pipe, model.route, model, model.params);
-}
 function main() {
-  let router = init3(
-    toList([route_def()]),
-    route_def(),
-    (route_data) => {
-      return new ChangeRoute(route_data[0], route_data[1]);
-    }
-  );
-  let app = application(init4, update4, view3);
+  let router = (() => {
+    let _pipe = init3(
+      (route_data) => {
+        return new ChangeRoute(route_data[0], route_data[1]);
+      },
+      std_error_page(),
+      new ErrorRoute()
+    );
+    let _pipe$1 = register(
+      _pipe,
+      home(),
+      no_load,
+      view8
+    );
+    let _pipe$2 = register(
+      _pipe$1,
+      qwizes(),
+      on_load3,
+      view11
+    );
+    let _pipe$3 = register(
+      _pipe$2,
+      qwiz(),
+      on_load2,
+      view10
+    );
+    let _pipe$4 = register(
+      _pipe$3,
+      question(),
+      on_load,
+      view9
+    );
+    let _pipe$5 = register(
+      _pipe$4,
+      create_qwiz2(),
+      no_load,
+      view4
+    );
+    let _pipe$6 = register(
+      _pipe$5,
+      create_question2(),
+      no_load,
+      view3
+    );
+    let _pipe$7 = register(
+      _pipe$6,
+      create_answer2(),
+      no_load,
+      view2
+    );
+    let _pipe$8 = register(
+      _pipe$7,
+      update_qwiz2(),
+      no_load,
+      view7
+    );
+    let _pipe$9 = register(
+      _pipe$8,
+      update_question2(),
+      no_load,
+      view6
+    );
+    return register(
+      _pipe$9,
+      update_answer2(),
+      no_load,
+      view5
+    );
+  })();
+  let app = application(init4, update4, view(router));
   let $ = start2(app, "#app", router);
   if (!$.isOk()) {
     throw makeError(
       "let_assert",
       "client",
-      32,
+      58,
       "main",
       "Pattern match failed, no pattern matched the value.",
       { value: $ }

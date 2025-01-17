@@ -6,11 +6,13 @@ import gleam/option
 import gleam/result
 import gleam/string
 import gleam/uri
+import lustre
 import lustre/attribute
 import lustre/effect
 import lustre/element
 import lustre/element/html
 import modem
+import plinth/browser/window
 
 // This is experimental
 pub type RouteIdentifier(route, param) {
@@ -165,12 +167,12 @@ fn test_route(route_path: List(String), uri_path: List(String)) -> Bool {
 pub fn on_change(
   router: Router(route, model, msg),
   route: route,
-  params: List(#(String, String)),
+  query: List(#(String, String)),
   model: model,
 ) -> effect.Effect(msg) {
   case find_route_by_route(router.routes, route) {
     Error(_) -> effect.none()
-    Ok(route_def) -> route_def.on_load(model, params)
+    Ok(route_def) -> route_def.on_load(model, query)
   }
 }
 
@@ -210,13 +212,22 @@ pub fn href(
 
 pub fn view(
   router: Router(route, model, msg),
-  route: route,
-  model: model,
-  query: List(#(String, String)),
-) -> element.Element(msg) {
-  find_route_by_route(router.routes, route)
-  |> result.map(fn(route_def) { route_def.view_fn(model, query) })
-  |> result.unwrap(router.error_page(option.Some(route), [], query))
+) -> fn(model) -> element.Element(msg) {
+  fn(model: model) {
+    case window.location() |> uri.parse {
+      Error(_) -> router.error_page(option.None, [], [])
+      Ok(uri) -> {
+        case get_query_from_uri(uri) {
+          Error(_) -> router.error_page(option.None, [], [])
+          Ok(query) -> {
+            find_route_by_uri(router.routes, uri)
+            |> result.map(fn(route_def) { route_def.view_fn(model, query) })
+            |> result.unwrap(router.error_page(option.None, [], query))
+          }
+        }
+      }
+    }
+  }
 }
 
 pub fn initial_route(
@@ -231,4 +242,103 @@ pub fn initial_route(
 
 pub fn no_load(_model, _param) -> effect.Effect(msg) {
   effect.none()
+}
+
+pub fn application(
+  init: fn(flags) -> #(model, effect.Effect(msg)),
+  update: fn(model, msg) -> #(model, effect.Effect(msg)),
+  router: Router(route, model, msg),
+) {
+  lustre.application(
+    router_init(init, router),
+    router_update(update, router),
+    router_view(router),
+  )
+}
+
+pub type RouterModel(model) {
+  RouterModel(model: model)
+}
+
+pub type RouterMsg(route, msg) {
+  RouterErrorMsg
+  OnRouteChange(route: route, query: List(#(String, String)))
+  UserMsg(msg: msg)
+}
+
+pub type RouterRoute(route) {
+  ErrorRoute
+  UserRoute(route: route)
+}
+
+pub fn router_init(
+  init: fn(flags) -> #(model, effect.Effect(msg)),
+  router: Router(route, model, msg),
+) -> fn(flags) -> #(RouterModel(model), effect.Effect(RouterMsg(route, msg))) {
+  fn(flags: flags) {
+    let init_result = init(flags)
+
+    #(
+      RouterModel(init_result.0),
+      effect.batch(
+        [init_effect(router), init_result.1]
+        |> list.map(fn(eff_msg) { effect.map(eff_msg, UserMsg) }),
+      ),
+    )
+  }
+}
+
+pub fn router_update(
+  update: fn(model, msg) -> #(model, effect.Effect(msg)),
+  router: Router(route, model, msg),
+) -> fn(RouterModel(model), RouterMsg(route, msg)) ->
+  #(RouterModel(model), effect.Effect(RouterMsg(route, msg))) {
+  fn(model: RouterModel(model), msg: RouterMsg(route, msg)) {
+    case msg {
+      UserMsg(msg) -> {
+        let update_result = update(model.model, msg)
+        #(RouterModel(update_result.0), effect.map(update_result.1, UserMsg))
+      }
+      OnRouteChange(route, query) -> #(
+        model,
+        router |> on_change(route, query, model.model) |> effect.map(UserMsg),
+      )
+    }
+  }
+}
+
+pub fn router_view(
+  router: Router(route, model, msg),
+) -> fn(RouterModel(model)) -> element.Element(RouterMsg(route, msg)) {
+  fn(model: RouterModel(model)) {
+    view(router)(model.model) |> element.map(UserMsg)
+  }
+}
+
+pub fn app_init(error_page: ErrorPageFn(route, msg)) {
+  Router(
+    routes: [],
+    to_msg: fn(data: #(RouterRoute(route), List(#(String, String)))) -> RouterMsg(
+      route,
+      msg,
+    ) {
+      case data.0 {
+        ErrorRoute -> todo
+        UserRoute(route) -> OnRouteChange(route, data.1)
+      }
+    },
+    error_page: fn(
+      route: option.Option(RouterRoute(route)),
+      path: List(String),
+      query: List(#(String, String)),
+    ) -> element.Element(RouterMsg(route, msg)) {
+      let route_opt = case route {
+        option.None | option.Some(ErrorRoute) -> option.None
+        option.Some(UserRoute(route)) -> option.Some(route)
+      }
+
+      error_page(route_opt, path, query) |> element.map(UserMsg)
+    },
+    error_route: ErrorRoute,
+  )
 }

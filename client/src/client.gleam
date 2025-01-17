@@ -18,7 +18,6 @@ import client/views/qwizes as qwizes_view
 import gleam/option
 import lustre
 import lustre/effect
-import lustre/element
 
 pub fn main() {
   let router =
@@ -54,25 +53,20 @@ pub fn main() {
     )
     |> router.register(route.update_answer(), router.no_load, edit_answer.view)
 
-  let app = lustre.application(init, update, view)
-  let assert Ok(_) = lustre.start(app, "#app", router)
+  let app = router.application(init, update, router)
+  let assert Ok(_) = lustre.start(app, "#app", Nil)
   Nil
 }
 
-fn init(
-  router: router.Router(route.Route, model.Model, model.Msg),
-) -> #(model.Model, effect.Effect(model.Msg)) {
+fn init(_) -> #(model.Model, effect.Effect(model.Msg)) {
   #(
     model.Model(
       user: option.None,
       qwizes: [],
-      route: route.HomeRoute,
       qwiz: option.None,
       question: option.None,
-      router:,
-      params: [],
     ),
-    router |> router.init_effect(),
+    effect.none(),
   )
 }
 
@@ -104,8 +98,4 @@ fn update(
     model.QuestionMsg(msg) -> question_handler.handle_message(model, msg)
     model.AnswerMsg(msg) -> answer_handler.handle_message(model, msg)
   }
-}
-
-fn view(model: model.Model) -> element.Element(model.Msg) {
-  model.router |> router.view(model.route, model, model.params)
 }

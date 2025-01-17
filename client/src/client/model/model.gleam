@@ -1,5 +1,3 @@
-import client/model/route
-import client/model/router
 import gleam/option
 import shared
 import shared/answer
@@ -9,9 +7,6 @@ import shared/user
 
 pub type Model {
   Model(
-    route: route.Route,
-    params: List(#(String, String)),
-    router: router.Router(route.Route, Model, Msg),
     user: option.Option(user.User),
     qwizes: List(qwiz.Qwiz),
     qwiz: option.Option(qwiz.QwizWithQuestions),
@@ -20,8 +15,6 @@ pub type Model {
 }
 
 pub type Msg {
-  ChangeRoute(route: route.Route, query: List(#(String, String)))
-
   // Model Change Messages
   SetUser(user: user.User)
   SetQwizes(qwizes: List(qwiz.Qwiz))
